@@ -4,4 +4,5 @@ dist/
 .vscode
 .env
 dist-build/
-app.log
+app.log"allure-results/" 
+"allure-report/"   
