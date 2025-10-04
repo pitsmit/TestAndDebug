@@ -66,7 +66,9 @@ jobs:
       - name: Unzip artifacts
         run: |
           unzip -q test-results.zip -d extracted-results || echo "No zip file found"
-          ls -la extracted-results/
+          echo "=== Extracted contents ==="
+          find extracted-results -type f -name "*.html" | head -10
+          find extracted-results -name "allure-report" -type d
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -79,23 +81,35 @@ jobs:
 
       - name: Generate Allure HTML Report
         run: |
+          # Создаем папку для отчета
+          mkdir -p allure-report
+          
           # Ищем allure-report (уже сгенерированный HTML)
           if [ -d "extracted-results/allure-report" ]; then
             echo "Found allure-report in root"
-            cp -r extracted-results/allure-report/* allure-report/
+            cp -r extracted-results/allure-report/. allure-report/
           elif [ -d "extracted-results/Server/allure-report" ]; then
             echo "Found allure-report in Server folder"
-            cp -r extracted-results/Server/allure-report/* allure-report/
+            cp -r extracted-results/Server/allure-report/. allure-report/
           else
             echo "❌ No allure-report found, generating from results..."
             # Генерируем из сырых результатов
             if [ -d "extracted-results/test-results" ]; then
               allure generate extracted-results/test-results -o allure-report --clean
+            elif [ -d "extracted-results/Server/allure-results" ]; then
+              allure generate extracted-results/Server/allure-results -o allure-report --clean
+            elif [ -d "extracted-results/allure-results" ]; then
+              allure generate extracted-results/allure-results -o allure-report --clean
             else
-              echo "❌ No test results found"
+              echo "❌ No test results found anywhere"
+              echo "Available directories:"
+              find extracted-results -type d | grep -v node_modules
               exit 1
             fi
           fi
+          
+          echo "=== Allure report contents ==="
+          ls -la allure-report/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
