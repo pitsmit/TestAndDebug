@@ -14,9 +14,8 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        # Используем package.json для кэширования
         cache: 'npm'
-        cache-dependency-path: 'Server/package.json'
+        cache-dependency-path: Server/package-lock.json
     
     - name: Install dependencies
       run: |
@@ -38,4 +37,5 @@ jobs:
         path: |
           Server/coverage/
           Server/allure-results/
+          Server/allure-report/
         retention-days: 30
