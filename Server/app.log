@@ -136,3 +136,13 @@
 {"level":50,"time":"2025-10-03T15:25:04.269Z","pid":17828,"hostname":"LAPTOP-7FFNEF67","msg":"Неверный пароль"}
 {"level":50,"time":"2025-10-03T15:25:19.868Z","pid":18168,"hostname":"LAPTOP-7FFNEF67","msg":"Пользователь с логином new_login не найден"}
 {"level":50,"time":"2025-10-03T15:25:19.887Z","pid":18168,"hostname":"LAPTOP-7FFNEF67","msg":"Неверный пароль"}
+{"level":50,"time":"2025-10-04T13:46:58.507Z","pid":1516,"hostname":"LAPTOP-7FFNEF67","msg":"Неверный пароль"}
+{"level":50,"time":"2025-10-04T13:46:58.514Z","pid":1516,"hostname":"LAPTOP-7FFNEF67","msg":"Пользователь с логином new_login не найден"}
+{"level":50,"time":"2025-10-04T15:28:23.034Z","pid":6776,"hostname":"LAPTOP-7FFNEF67","msg":"Пользователь с логином new_login не найден"}
+{"level":50,"time":"2025-10-04T15:28:23.041Z","pid":6776,"hostname":"LAPTOP-7FFNEF67","msg":"Неверный пароль"}
+{"level":50,"time":"2025-10-04T17:24:35.693Z","pid":11404,"hostname":"LAPTOP-7FFNEF67","msg":"Пользователь с логином new_login не найден"}
+{"level":50,"time":"2025-10-04T17:24:35.721Z","pid":11404,"hostname":"LAPTOP-7FFNEF67","msg":"Неверный пароль"}
+{"level":50,"time":"2025-10-04T17:36:19.334Z","pid":15744,"hostname":"LAPTOP-7FFNEF67","msg":"Неверный пароль"}
+{"level":50,"time":"2025-10-04T17:36:19.342Z","pid":15744,"hostname":"LAPTOP-7FFNEF67","msg":"Пользователь с логином new_login не найден"}
+{"level":50,"time":"2025-10-04T17:37:11.342Z","pid":12468,"hostname":"LAPTOP-7FFNEF67","msg":"Пользователь с логином new_login не найден"}
+{"level":50,"time":"2025-10-04T17:37:11.358Z","pid":12468,"hostname":"LAPTOP-7FFNEF67","msg":"Неверный пароль"}

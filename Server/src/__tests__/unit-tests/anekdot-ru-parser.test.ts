@@ -1,6 +1,6 @@
 import { describe, test, expect, jest, beforeEach } from '@jest/globals';
-import { AnekdotRuParser } from "@Core/Services/parsers";
-import { HTMLMother } from "./helpers/HTMLMother";
+import { AnekdotRuParser } from "@Services/parsers";
+import { HTMLMother } from "../helpers/HTMLMother";
 import {parameter, step} from "allure-js-commons";
 import {FixturecreateMockCheerioElement} from "@/__tests__/mocks/cheerio.mock";
 export const mockCheerio = require('cheerio');

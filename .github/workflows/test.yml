@@ -6,6 +6,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:13-alpine
+        env:
+          POSTGRES_DB: anekdot_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -14,11 +29,54 @@ jobs:
         run: |
           docker build -f Dockerfile.test -t my-tests .
 
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for database..."
+            sleep 2
+          done
+
+      - name: Initialize test database
+        run: |
+          # Создаем таблицы в тестовой БД
+          PGPASSWORD=password psql -h localhost -U postgres -d anekdot_test -c "
+          CREATE TABLE IF NOT EXISTS anekdot (
+            id SERIAL PRIMARY KEY,
+            content TEXT NOT NULL,
+            hasbadwords BOOLEAN,
+            loaddate TIMESTAMP
+          );
+          
+          CREATE TABLE IF NOT EXISTS actor (
+            id SERIAL PRIMARY KEY,
+            login VARCHAR(10) UNIQUE CHECK (login ~ '^[A-Za-z0-9]+$'),
+            password VARCHAR(10) CHECK (password ~ '^[A-Za-z0-9]+$'),
+            name VARCHAR(10) UNIQUE CHECK (name ~ '^[A-Za-z0-9]+$'),
+            role INTEGER DEFAULT 0
+          );
+          
+          CREATE TABLE IF NOT EXISTS favourites (
+            id SERIAL PRIMARY KEY,
+            userid INTEGER,
+            anekdotid INTEGER REFERENCES anekdot
+          );
+          
+          CREATE TABLE IF NOT EXISTS nonstandartlexic (
+            id SERIAL PRIMARY KEY,
+            word VARCHAR NOT NULL
+          );"
+
       - name: Run tests in container
         run: |
           docker run --rm \
             -e JWT_SECRET="test_jwt_secret_for_testing" \
             -e NODE_ENV="test" \
+            -e DATABASE_NAME="anekdot_test" \
+            -e HOST="localhost" \
+            -e PORT="5432" \
+            -e USER="postgres" \
+            -e PASSWORD="password" \
+            --network host \
             -v "$(pwd)/test-results:/app/allure-results" \
             my-tests
 

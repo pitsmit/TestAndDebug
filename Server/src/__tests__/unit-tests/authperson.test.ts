@@ -3,7 +3,7 @@ import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import {step, parameter} from "allure-js-commons";
 import {AuthDataMother} from "@/__tests__/helpers/AuthDataMother";
 import { container } from "@Facade/container";
-import { mockDBConnection, mockClient } from "./mocks/DBmocks";
+import { mockDBConnection, mockClient } from "../mocks/DBmocks";
 import { Person } from "@Essences/person";
 import { PersonRepository } from "@Repository/PersonRepository";
 import {SQLBuilder} from "@/__tests__/helpers/SQLBuilder";

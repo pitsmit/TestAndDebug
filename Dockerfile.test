@@ -1,16 +1,17 @@
 # Dockerfile.test
 FROM node:18-alpine
 
-# Устанавливаем системные зависимости
+# Устанавливаем системные зависимости + PostgreSQL client
 RUN apk add --no-cache \
     git \
     openssh-client \
-    openjdk11-jre
+    openjdk11-jre \
+    postgresql-client
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем ВЕСЬ проект Server
+# Копируем ВЕСЬ проект
 COPY Server/ ./
 COPY shared/ ../shared/
 
