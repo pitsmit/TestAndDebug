@@ -1,8 +1,8 @@
 /** @type {import('jest').Config} */
 const config = {
     preset: "ts-jest",
-    randomize: true,
-    showSeed: true,
+    randomize: false,
+    showSeed: false,
     testEnvironment: "allure-jest/node",
     moduleNameMapper: {
         '^@Facade/(.*)$': '<rootDir>/src/Facade/$1',
@@ -16,7 +16,7 @@ const config = {
         '^@/(.*)$': '<rootDir>/src/$1',
     },
     roots: ['<rootDir>/src'],
-    testMatch: ['**/__tests__/unit-tests/*.test.ts'],
+    testMatch: ['**/__tests__/integration-tests/**/*.test.ts'],
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
 };
 

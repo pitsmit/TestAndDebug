@@ -53,8 +53,6 @@ export class TestDBConnection {
         INSERT INTO favourites (userid, anekdotid) VALUES 
         (2, 1)
       `);
-
-            console.log('✅ Test database initialized');
         } finally {
             client.release();
         }
