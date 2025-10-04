@@ -1,0 +1,105 @@
+name: Deploy Allure Report to Pages
+
+on:
+  workflow_run:
+    workflows: ["Node.js Tests"]
+    types:
+      - completed
+  workflow_dispatch:  # Разрешает ручной запуск
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download test artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const runId = context.payload.workflow_run.id;
+            
+            // Получаем список артефактов
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner,
+              repo,
+              run_id: runId,
+            });
+            
+            // Ищем наш артефакт с результатами тестов
+            const testArtifact = artifacts.data.artifacts.find(
+              artifact => artifact.name === "test-results"
+            );
+            
+            if (testArtifact) {
+              // Скачиваем артефакт
+              const download = await github.rest.actions.downloadArtifact({
+                owner,
+                repo,
+                artifact_id: testArtifact.id,
+                archive_format: 'zip',
+              });
+            
+              // Сохраняем файл
+              const fs = require('fs');
+              fs.writeFileSync('${{github.workspace}}/test-results.zip', Buffer.from(download.data));
+              console.log('✅ Artifact downloaded successfully');
+            } else {
+              console.log('❌ No test-results artifact found');
+            }
+
+      - name: Unzip artifacts
+        run: |
+          unzip -q test-results.zip -d extracted-results || echo "No zip file found"
+          ls -la extracted-results/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Allure
+        run: |
+          npm install -g allure-commandline
+
+      - name: Generate Allure HTML Report
+        run: |
+          # Ищем allure-results в распакованных артефактах
+          if [ -d "extracted-results/Server/allure-results" ]; then
+            echo "Found allure-results in Server folder"
+            allure generate extracted-results/Server/allure-results -o allure-report --clean
+          elif [ -d "extracted-results/allure-results" ]; then
+            echo "Found allure-results in root"
+            allure generate extracted-results/allure-results -o allure-report --clean
+          else
+            echo "❌ No allure-results found"
+            find extracted-results -name "allure-results" -type d
+            exit 1
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: './allure-report/'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
