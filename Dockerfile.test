@@ -12,6 +12,7 @@ WORKDIR /app
 
 # Копируем ВЕСЬ проект Server
 COPY Server/ ./
+COPY shared/ ../shared/
 
 # Устанавливаем зависимости
 RUN npm ci
