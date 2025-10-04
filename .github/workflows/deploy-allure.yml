@@ -2,7 +2,7 @@ name: Deploy Allure Report to Pages
 
 on:
   workflow_run:
-    workflows: ["Node.js Tests"]
+    workflows: ["Node.js Tests in Docker Container"]
     types:
       - completed
   workflow_dispatch:
@@ -79,17 +79,22 @@ jobs:
 
       - name: Generate Allure HTML Report
         run: |
-          # Ищем allure-results в распакованных артефактах
-          if [ -d "extracted-results/Server/allure-results" ]; then
-            echo "Found allure-results in Server folder"
-            allure generate extracted-results/Server/allure-results -o allure-report --clean
-          elif [ -d "extracted-results/allure-results" ]; then
-            echo "Found allure-results in root"
-            allure generate extracted-results/allure-results -o allure-report --clean
+          # Ищем allure-report (уже сгенерированный HTML)
+          if [ -d "extracted-results/allure-report" ]; then
+            echo "Found allure-report in root"
+            cp -r extracted-results/allure-report/* allure-report/
+          elif [ -d "extracted-results/Server/allure-report" ]; then
+            echo "Found allure-report in Server folder"
+            cp -r extracted-results/Server/allure-report/* allure-report/
           else
-            echo "❌ No allure-results found"
-            find extracted-results -name "allure-results" -type d
-            exit 1
+            echo "❌ No allure-report found, generating from results..."
+            # Генерируем из сырых результатов
+            if [ -d "extracted-results/test-results" ]; then
+              allure generate extracted-results/test-results -o allure-report --clean
+            else
+              echo "❌ No test results found"
+              exit 1
+            fi
           fi
 
       - name: Setup Pages
