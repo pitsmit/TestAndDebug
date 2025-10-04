@@ -20,4 +20,4 @@ const config = {
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
 };
 
-export default config;
+module.exports = config;
