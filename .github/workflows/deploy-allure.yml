@@ -5,7 +5,7 @@ on:
     workflows: ["Node.js Tests"]
     types:
       - completed
-  workflow_dispatch:  # Разрешает ручной запуск
+  workflow_dispatch:
 
 permissions:
   contents: read

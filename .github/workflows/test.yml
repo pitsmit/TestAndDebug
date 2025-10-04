@@ -1,46 +1,33 @@
-name: Node.js Tests
+name: Node.js Tests in Docker Compose
 
 on: [push, pull_request]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: Server/package-lock.json
-
-      - name: Install dependencies
+      - name: Run tests with Docker Compose
         run: |
-          cd Server
-          npm ci
-
-      - name: Run tests
-        run: |
-          cd Server
-          npm run test:ci
-        env:
-          JWT_SECRET: "test_jwt_secret_for_testing"
-          NODE_ENV: test
+          docker-compose -f docker-compose.test.yml run --rm tests
 
       - name: Generate Allure HTML Report
         run: |
-          cd Server
-          npx allure generate allure-results -o allure-report --clean
+          npm install -g allure-commandline
+          allure generate test-results -o allure-report --clean
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
-            Server/coverage/
-            Server/allure-results/
-            Server/allure-report/
+            allure-report/
+            test-results/
           retention-days: 30
+
+      - name: Cleanup
+        run: |
+          docker-compose -f docker-compose.test.yml down

@@ -1,0 +1,27 @@
+# Dockerfile.test
+FROM node:18-alpine
+
+# Устанавливаем системные зависимости
+RUN apk add --no-cache \
+    git \
+    openssh-client \
+    openjdk11-jre  # Для Allure
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем файлы проекта
+COPY Server/package*.json ./
+COPY Server/tsconfig.json ./
+COPY Server/jest.config.js ./
+COPY Server/jest.setup.ts ./
+
+# Устанавливаем зависимости
+RUN npm ci
+
+# Копируем весь код
+COPY Server/src/ ./src/
+COPY Server/__tests__/ ./__tests__/
+
+# Команда для запуска тестов
+CMD ["sh", "-c", "npm run test:ci"]
