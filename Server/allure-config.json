@@ -1,0 +1,11 @@
+{
+  "allure": {
+    "resultsDir": "allure-results",
+    "history": {
+      "trend": {
+        "enabled": true,
+        "limit": 20
+      }
+    }
+  }
+}

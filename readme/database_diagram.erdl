@@ -1,0 +1,36 @@
+//Modify this code to update the diagram
+
+Client
+-
+ID serial PK
+login varchar(10) UNIQUE
+password varchar(10)
+name varchar(10)
+
+Admin
+-
+ID serial PK
+login varchar(10) UNIQUE
+password varchar(10)
+name varchar(10)
+
+Anekdot
+-
+ID serial PK
+content text
+hasbadwords boolean
+loaddate TIMESTAMP
+
+NonStandartLexic
+-
+ID serial PK
+word varchar
+
+Favourites
+-
+ID serial PK
+UserID int FK > Client.ID
+AnekdotID int FK > Anekdot.ID
+
+
+//POSITION({"Client":{"x":50,"y":50,"w":230},"Admin":{"x":330,"y":50,"w":230},"Anekdot":{"x":610,"y":50,"w":230},"NonStandartLexic":{"x":624,"y":266,"w":230},"Favourites":{"x":330,"y":260,"w":230}})

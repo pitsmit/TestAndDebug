@@ -1,0 +1,41 @@
+name: Node.js Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: Server/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd Server
+        npm ci
+        
+    - name: Run tests
+      run: |
+        cd Server
+        npm run test:ci
+      env:
+        JWT_SECRET: "test_jwt_secret_for_testing"
+        NODE_ENV: test
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          Server/coverage/
+          Server/allure-results/
+          Server/allure-report/
+        retention-days: 30
