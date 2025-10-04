@@ -8,7 +8,7 @@
     "build": "tsc",
     "server": "ts-node -r tsconfig-paths/register src/server.ts",
     "test": "jest",
-    "test:integration": "jest --testPathPattern=\"integration\" --verbose",
+    "test:integration": "jest --testPathPatterns=\"integration\" --verbose",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:history": "node -e \"const fs = require('fs'); if(fs.existsSync('allure-report/history')) { const fsExtra = require('fs-extra'); fsExtra.copySync('allure-report/history', 'allure-results/history'); console.log('History copied'); } else { console.log('No history found'); }\"",
     "allure:serve": "allure serve allure-results",
