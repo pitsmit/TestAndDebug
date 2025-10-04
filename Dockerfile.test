@@ -5,23 +5,16 @@ FROM node:18-alpine
 RUN apk add --no-cache \
     git \
     openssh-client \
-    openjdk11-jre  # Для Allure
+    openjdk11-jre
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы проекта
-COPY Server/package*.json ./
-COPY Server/tsconfig.json ./
-COPY Server/jest.config.js ./
-COPY Server/jest.setup.ts ./
+# Копируем ВЕСЬ проект Server
+COPY Server/ ./
 
 # Устанавливаем зависимости
 RUN npm ci
-
-# Копируем весь код
-COPY Server/src/ ./src/
-COPY Server/__tests__/ ./__tests__/
 
 # Команда для запуска тестов
 CMD ["sh", "-c", "npm run test:ci"]
