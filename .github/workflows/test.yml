@@ -12,7 +12,7 @@ jobs:
         env:
           POSTGRES_DB: anekdot_test
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
+          POSTGRES_PASSWORD: 1234
         options: >-
           --health-cmd pg_isready
           --health-interval 10s

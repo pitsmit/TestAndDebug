@@ -9,6 +9,7 @@ import { TestDBConfigProvider } from "@/__tests__/helpers/TestDBConfigProvider";
 import { IDBConfigProvider } from "@IRepository/IDBConfigProvider";
 import { IDBconnection } from "@IRepository/IDBconnection";
 import '@Facade/bindings'
+import {DBconnection} from "@Repository/DBconnection";
 
 describe('Действия админа с анекдотами', () => {
     const personbuilder = new PersonBuilder();
@@ -19,10 +20,10 @@ describe('Действия админа с анекдотами', () => {
     let dbConnection: IDBconnection;
 
     beforeAll(async () => {
-        await testDBHelper.ensureTestDatabase();
-
         await container.unbind("IDBConfigProvider");
+        await container.unbind("IDBconnection");
         container.bind<IDBConfigProvider>("IDBConfigProvider").to(TestDBConfigProvider).inSingletonScope();
+        container.bind<IDBconnection>("IDBconnection").to(DBconnection).inSingletonScope();
 
         adminmanager = container.get<IAdminManager>("IAdminManager");
         dbConnection = container.get<IDBconnection>("IDBconnection");
