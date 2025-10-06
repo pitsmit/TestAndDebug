@@ -12,7 +12,6 @@ import '@Facade/bindings'
 import { DBconnection } from "@Repository/DBconnection";
 
 // написать ещё 1 integration test
-// вынести работу с базой хз куда и создание чтобы было тут где то хз
 // e2e тест
 // разобраться со скриптами
 

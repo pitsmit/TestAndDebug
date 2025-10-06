@@ -36,14 +36,6 @@ jobs:
             sleep 2
           done
 
-      - name: Initialize test database
-        run: |
-          # Используем тот же код что и в тестах!
-          docker run --rm \
-            --network host \
-            my-tests \
-            sh -c "npm run test:db:init"
-
       - name: Run unit tests
         id: unit-tests
         run: |
