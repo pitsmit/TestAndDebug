@@ -17,7 +17,8 @@ const config = {
     },
     roots: ['<rootDir>/src'],
     testMatch: ['**/__tests__/integration-tests/**/*.test.ts'],
-    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
+    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+    setupFiles: ['<rootDir>/jest.polyfills.js']
 };
 
 module.exports = config;

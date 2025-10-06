@@ -15,5 +15,5 @@ module.exports = {
         '^@Core/(.*)$': '<rootDir>/src/Core/$1',
         '^@shared/(.*)$': '<rootDir>/../shared/$1',
     },
-    setupFiles: ['<rootDir>/../.env.test']
+    setupFiles: ['<rootDir>/../.env.test', '<rootDir>/jest.polyfills.js']
 };
