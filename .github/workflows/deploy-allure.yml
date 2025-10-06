@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}  # Запускаем при любом завершении тестов
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -61,6 +61,8 @@ jobs:
               console.log('✅ Artifact downloaded successfully');
             } else {
               console.log('❌ No test-results artifact found');
+              // Завершаем шаг с ошибкой, если артефакта нет
+              throw new Error('No test-results artifact found');
             }
 
       - name: Unzip artifacts
