@@ -27,6 +27,8 @@ export class TestDBHelper {
             client.release();
             await systemPool.end();
         }
+
+        await this.initializeSchema();
     }
 
     private async initializeSchema(): Promise<void> {
