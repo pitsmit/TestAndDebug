@@ -13,7 +13,8 @@
     "allure:history": "node -e \"const fs = require('fs'); if(fs.existsSync('allure-report/history')) { const fsExtra = require('fs-extra'); fsExtra.copySync('allure-report/history', 'allure-results/history'); console.log('History copied'); } else { console.log('No history found'); }\"",
     "allure:serve": "allure serve allure-results",
     "test:with-trend": "npm run test && npm run test:integration && npm run allure:history && npm run allure:generate && npm run allure:serve",
-    "test:ci": "npm run test && npm run test:integration && npm run allure:history && npm run allure:generate"
+    "test:ci": "npm run test && npm run test:integration && npm run allure:history && npm run allure:generate",
+    "test:db:init": "ts-node src/__tests__/helpers/test-db-initializer.ts"
   },
   "dependencies": {
     "axios": "^1.8.4",

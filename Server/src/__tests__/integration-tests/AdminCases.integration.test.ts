@@ -9,7 +9,12 @@ import { TestDBConfigProvider } from "@/__tests__/helpers/TestDBConfigProvider";
 import { IDBConfigProvider } from "@IRepository/IDBConfigProvider";
 import { IDBconnection } from "@IRepository/IDBconnection";
 import '@Facade/bindings'
-import {DBconnection} from "@Repository/DBconnection";
+import { DBconnection } from "@Repository/DBconnection";
+
+// написать ещё 1 integration test
+// вынести работу с базой хз куда и создание чтобы было тут где то хз
+// e2e тест
+// разобраться со скриптами
 
 describe('Действия админа с анекдотами', () => {
     const personbuilder = new PersonBuilder();
@@ -20,6 +25,8 @@ describe('Действия админа с анекдотами', () => {
     let dbConnection: IDBconnection;
 
     beforeAll(async () => {
+        await testDBHelper.ensureTestDatabase();
+
         await container.unbind("IDBConfigProvider");
         await container.unbind("IDBconnection");
         container.bind<IDBConfigProvider>("IDBConfigProvider").to(TestDBConfigProvider).inSingletonScope();
@@ -67,7 +74,6 @@ describe('Действия админа с анекдотами', () => {
 
         // ASSERT
         await step('Проверка', async () => {
-            const dbConnection = container.get<IDBconnection>("IDBconnection");
             const client = await dbConnection.connect();
             try {
                 const result = await client.query('SELECT * FROM anekdot WHERE id = $1', [anekdot_id]);
@@ -106,7 +112,6 @@ describe('Действия админа с анекдотами', () => {
 
         // ASSERT
         await step('Проверка', async () => {
-            const dbConnection = container.get<IDBconnection>("IDBconnection");
             const client = await dbConnection.connect();
             try {
                 const result = await client.query('SELECT * FROM anekdot WHERE id = $1', [anekdot_id]);

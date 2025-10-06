@@ -38,32 +38,11 @@ jobs:
 
       - name: Initialize test database
         run: |
-          PGPASSWORD=password psql -h localhost -U postgres -d anekdot_test -c "
-          CREATE TABLE IF NOT EXISTS anekdot (
-            id SERIAL PRIMARY KEY,
-            content TEXT NOT NULL,
-            hasbadwords BOOLEAN,
-            loaddate TIMESTAMP
-          );
-          
-          CREATE TABLE IF NOT EXISTS actor (
-            id SERIAL PRIMARY KEY,
-            login VARCHAR(10) UNIQUE CHECK (login ~ '^[A-Za-z0-9]+$'),
-            password VARCHAR(10) CHECK (password ~ '^[A-Za-z0-9]+$'),
-            name VARCHAR(10) UNIQUE CHECK (name ~ '^[A-Za-z0-9]+$'),
-            role INTEGER DEFAULT 0
-          );
-          
-          CREATE TABLE IF NOT EXISTS favourites (
-            id SERIAL PRIMARY KEY,
-            userid INTEGER,
-            anekdotid INTEGER REFERENCES anekdot
-          );
-          
-          CREATE TABLE IF NOT EXISTS nonstandartlexic (
-            id SERIAL PRIMARY KEY,
-            word VARCHAR NOT NULL
-          );"
+          # Используем тот же код что и в тестах!
+          docker run --rm \
+            --network host \
+            my-tests \
+            sh -c "npm run test:db:init"
 
       - name: Run unit tests
         id: unit-tests

@@ -1,15 +1,10 @@
 import { injectable } from "inversify";
 import { IDBConfigProvider, IDBConfig } from "@IRepository/IDBConfigProvider";
+import { TEST_DB_CONFIG } from "./test-config";
 
 @injectable()
 export class TestDBConfigProvider implements IDBConfigProvider {
     getConfig(): IDBConfig {
-        return {
-            user: 'postgres',
-            host: 'localhost',
-            database: 'anekdot_test',
-            password: 'password',
-            port: 5432,
-        };
+        return TEST_DB_CONFIG;
     }
 }
