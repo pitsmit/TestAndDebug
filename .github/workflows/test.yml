@@ -72,13 +72,11 @@ jobs:
             --network host \
             -v "$(pwd)/test-results:/app/allure-results" \
             my-tests \
-            sh -c "npm run test" || echo "::warning::Unit tests failed"
-
-      - name: Check unit tests result
-        if: steps.unit-tests.outcome != 'success'
-        run: exit 1
+            sh -c "npm run test"
 
       - name: Run integration tests
+        id: integration-tests
+        if: steps.unit-tests.outcome == 'success'  # Запускаем только если unit-тесты прошли
         run: |
           docker run --rm \
             --network host \
@@ -87,11 +85,13 @@ jobs:
             sh -c "npm run test:integration"
 
       - name: Generate Allure HTML Report
+        if: always()  # Генерируем отчет всегда, даже если тесты упали
         run: |
           npm install -g allure-commandline
           allure generate test-results -o allure-report --clean
 
       - name: Upload test results
+        if: always()  # Загружаем артефакты всегда
         uses: actions/upload-artifact@v4
         with:
           name: test-results
@@ -99,3 +99,14 @@ jobs:
             allure-report/
             test-results/
           retention-days: 30
+
+      - name: Final status
+        if: always()
+        run: |
+          if [ "${{ steps.unit-tests.outcome }}" == "success" ] && [ "${{ steps.integration-tests.outcome }}" == "success" ]; then
+            echo "✅ All tests passed"
+          elif [ "${{ steps.unit-tests.outcome }}" != "success" ]; then
+            echo "❌ Unit tests failed - integration tests were skipped"
+          else
+            echo "❌ Integration tests failed"
+          fi
