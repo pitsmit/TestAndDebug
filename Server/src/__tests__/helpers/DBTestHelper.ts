@@ -1,75 +1,69 @@
-// Server/src/__tests__/integration/helpers/DBTestHelper.ts
-import { Pool, PoolClient } from "pg";
-import * as dotenv from "dotenv";
+import { IDBConfig } from "@IRepository/IDBConfigProvider";
+import {IDBconnection} from "@IRepository/IDBconnection";
+import {Pool} from "pg";
 
-// Загружаем env переменные
-dotenv.config();
-
-// Конфигурация для тестовой БД (берет из env или значения по умолчанию для CI)
-const TEST_DB_CONFIG = {
-    user: process.env.USER || 'postgres',
-    host: process.env.HOST || 'localhost',
-    database: process.env.DATABASE_NAME || 'anekdot_test',
-    password: process.env.PASSWORD || 'password',
-    port: parseInt(process.env.PORT || '5432'),
+export const TEST_DB_CONFIG: IDBConfig = {
+    user: 'postgres',
+    host: 'localhost',
+    database: 'anekdot_test',
+    password: '1234',
+    port: 5432,
 };
 
-export class TestDBConnection {
-    private readonly _pool: Pool;
+export class TestDBHelper {
+    private testDBName = 'anekdot_test';
 
-    constructor() {
-        this._pool = new Pool(TEST_DB_CONFIG);
-    }
+    async ensureTestDatabase(): Promise<void> {
+        const systemPool = new Pool({
+            ...TEST_DB_CONFIG,
+            database: 'postgres'
+        });
 
-    get pool(): Pool {
-        return this._pool;
-    }
-
-    async connect(): Promise<PoolClient> {
-        return await this._pool.connect();
-    }
-
-    async initTestDB(): Promise<void> {
-        const client = await this.connect();
+        const client = await systemPool.connect();
         try {
-            // Очищаем все таблицы
-            await client.query('TRUNCATE TABLE favourites, anekdot, actor, nonstandartlexic RESTART IDENTITY CASCADE');
+            const result = await client.query(
+                "SELECT 1 FROM pg_database WHERE datname = $1",
+                [this.testDBName]
+            );
 
-            // Добавляем тестовые данные
+            if (result.rowCount === 0) {
+                await client.query(`CREATE DATABASE ${this.testDBName}`);
+            }
+        } finally {
+            client.release();
+            await systemPool.end();
+        }
+    }
+
+    async fillTestDB(dbConnection: IDBconnection): Promise<void> {
+        const client = await dbConnection.connect();
+        try {
             await client.query(`
                 INSERT INTO actor (login, password, name, role) VALUES
                                                                     ('admin', 'adminpass', 'adminuser', 2),
                                                                     ('user1', 'user1pass', 'regularuse', 0)
             `);
-
             await client.query(`
                 INSERT INTO anekdot (content, hasbadwords, loaddate) VALUES
                                                                          ('Test joke content 1', false, NOW()),
                                                                          ('Test joke content 2', false, NOW()),
                                                                          ('Test joke content 3', true, NOW())
             `);
-
             await client.query(`
-        INSERT INTO favourites (userid, anekdotid) VALUES 
-        (2, 1)
-      `);
+                INSERT INTO favourites (userid, anekdotid) VALUES
+                    (2, 1)
+            `);
         } finally {
             client.release();
         }
     }
 
-    async cleanTestDB(): Promise<void> {
-        const client = await this.connect();
+    async cleanTestDB(dbConnection: IDBconnection): Promise<void> {
+        const client = await dbConnection.connect();
         try {
             await client.query('TRUNCATE TABLE favourites, anekdot, actor, nonstandartlexic RESTART IDENTITY CASCADE');
         } finally {
             client.release();
-        }
-    }
-
-    async close(): Promise<void> {
-        if (this._pool) {
-            await this._pool.end();
         }
     }
 }

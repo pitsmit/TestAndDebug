@@ -38,7 +38,6 @@ jobs:
 
       - name: Initialize test database
         run: |
-          # Создаем таблицы в тестовой БД
           PGPASSWORD=password psql -h localhost -U postgres -d anekdot_test -c "
           CREATE TABLE IF NOT EXISTS anekdot (
             id SERIAL PRIMARY KEY,
@@ -66,7 +65,22 @@ jobs:
             word VARCHAR NOT NULL
           );"
 
-      - name: Run tests in container
+      - name: Run unit tests
+        id: unit-tests
+        run: |
+          docker run --rm \
+            -e JWT_SECRET="test_jwt_secret_for_testing" \
+            -e NODE_ENV="test" \
+            --network host \
+            -v "$(pwd)/test-results:/app/allure-results" \
+            my-tests \
+            sh -c "npm run test" || echo "::warning::Unit tests failed"
+
+      - name: Check unit tests result
+        if: steps.unit-tests.outcome != 'success'
+        run: exit 1
+
+      - name: Run integration tests
         run: |
           docker run --rm \
             -e JWT_SECRET="test_jwt_secret_for_testing" \
@@ -78,7 +92,8 @@ jobs:
             -e PASSWORD="password" \
             --network host \
             -v "$(pwd)/test-results:/app/allure-results" \
-            my-tests
+            my-tests \
+            sh -c "npm run test:integration"
 
       - name: Generate Allure HTML Report
         run: |

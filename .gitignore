@@ -7,3 +7,4 @@ dist-build/
 app.log
 allure-results/
 allure-report/
+Server/app.log

@@ -1,22 +1,17 @@
 # Dockerfile.test
 FROM node:18-alpine
 
-# Устанавливаем системные зависимости + PostgreSQL client
 RUN apk add --no-cache \
     git \
     openssh-client \
     openjdk11-jre \
     postgresql-client
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем ВЕСЬ проект
 COPY Server/ ./
 COPY shared/ ../shared/
 
-# Устанавливаем зависимости
 RUN npm ci
 
-# Команда для запуска тестов
 CMD ["sh", "-c", "npm run test:ci"]

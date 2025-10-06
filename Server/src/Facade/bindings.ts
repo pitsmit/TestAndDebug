@@ -14,12 +14,16 @@ import { IAnekdotDirector, SiteAnekdotDirector, TextAnekdotDirector } from '@Cor
 import {AnekdotBuilder} from '@Core/Services/anekdotbuilder';
 import { AnekdotRuParser, AnekdotovStreetParser, ISiteParser } from '@Core/Services/parsers';
 import {LentaManager} from "@Core/Essences/LentaManager";
+import { DBConfigProvider } from '@Repository/DBConfigProvider';
+import { IDBConfigProvider } from '@IRepository/IDBConfigProvider';
+
+container.bind<IDBConfigProvider>("IDBConfigProvider").to(DBConfigProvider).inSingletonScope();
+container.bind("IDBconnection").to(DBconnection).inSingletonScope();
 
 container.bind("IPersonRepository").to(PersonRepository).inSingletonScope();
 container.bind("IAnekdotRepository").to(AnekdotRepository).inSingletonScope();
 container.bind("INonStandartLexicRepository").to(NonStandartLexicRepository).inSingletonScope();
 container.bind("IUserFavouritesRepository").to(UserFavouritesRepository).inSingletonScope();
-container.bind("IDBconnection").to(DBconnection).inSingletonScope();
 
 container.bind("IAuthService").to(AuthService).inSingletonScope();
 container.bind("IPersonFabric").to(PersonFabric).inSingletonScope();
