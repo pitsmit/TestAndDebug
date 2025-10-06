@@ -69,8 +69,6 @@ jobs:
         id: unit-tests
         run: |
           docker run --rm \
-            -e JWT_SECRET="test_jwt_secret_for_testing" \
-            -e NODE_ENV="test" \
             --network host \
             -v "$(pwd)/test-results:/app/allure-results" \
             my-tests \
@@ -83,13 +81,6 @@ jobs:
       - name: Run integration tests
         run: |
           docker run --rm \
-            -e JWT_SECRET="test_jwt_secret_for_testing" \
-            -e NODE_ENV="test" \
-            -e DATABASE_NAME="anekdot_test" \
-            -e HOST="localhost" \
-            -e PORT="5432" \
-            -e USER="postgres" \
-            -e PASSWORD="password" \
             --network host \
             -v "$(pwd)/test-results:/app/allure-results" \
             my-tests \
