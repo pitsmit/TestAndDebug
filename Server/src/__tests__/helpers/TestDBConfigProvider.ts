@@ -8,7 +8,7 @@ export class TestDBConfigProvider implements IDBConfigProvider {
             user: 'postgres',
             host: 'localhost',
             database: 'anekdot_test',
-            password: '1234',
+            password: 'password',
             port: 5432,
         };
     }
