@@ -71,42 +71,56 @@ jobs:
           docker run --rm \
             --network host \
             -v "$(pwd)/test-results:/app/allure-results" \
+            -v "$(pwd)/allure-history:/app/allure-history" \
             my-tests \
             sh -c "npm run test"
 
       - name: Run integration tests
         id: integration-tests
-        if: steps.unit-tests.outcome == 'success'  # Запускаем только если unit-тесты прошли
+        if: steps.unit-tests.outcome == 'success'
         run: |
           docker run --rm \
             --network host \
             -v "$(pwd)/test-results:/app/allure-results" \
+            -v "$(pwd)/allure-history:/app/allure-history" \
             my-tests \
             sh -c "npm run test:integration"
 
-      - name: Generate Allure HTML Report
-        if: always()  # Генерируем отчет всегда, даже если тесты упали
+      - name: Download previous allure history
+        uses: actions/cache@v4
+        with:
+          path: allure-history
+          key: allure-history-${{ github.ref }}
+          restore-keys: |
+            allure-history-
+
+      - name: Generate Allure HTML Report with history
+        if: always()
         run: |
           npm install -g allure-commandline
-          allure generate test-results -o allure-report --clean
+          
+          # Создаем директорию для истории если её нет
+          mkdir -p allure-history
+          
+          # Генерируем отчет с историей
+          allure generate test-results -o allure-report --clean --history-dir allure-history
+          
+          # Копируем историю в отчет для следующего запуска
+          cp -r allure-history/. allure-report/history/ || echo "No history to copy"
+
+      - name: Save allure history
+        uses: actions/cache@v4
+        with:
+          path: allure-history
+          key: allure-history-${{ github.ref }}
 
       - name: Upload test results
-        if: always()  # Загружаем артефакты всегда
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
             allure-report/
             test-results/
+            allure-history/
           retention-days: 30
-
-      - name: Final status
-        if: always()
-        run: |
-          if [ "${{ steps.unit-tests.outcome }}" == "success" ] && [ "${{ steps.integration-tests.outcome }}" == "success" ]; then
-            echo "✅ All tests passed"
-          elif [ "${{ steps.unit-tests.outcome }}" != "success" ]; then
-            echo "❌ Unit tests failed - integration tests were skipped"
-          else
-            echo "❌ Integration tests failed"
-          fi

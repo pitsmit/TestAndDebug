@@ -1,3 +1,4 @@
+# deploy-allure.yml
 name: Deploy Allure Report to Pages
 
 on:
@@ -18,7 +19,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}  # Запускаем при любом завершении тестов
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -34,20 +35,17 @@ jobs:
             const { owner, repo } = context.repo;
             const runId = context.payload.workflow_run.id;
             
-            // Получаем список артефактов
             const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
               owner,
               repo,
               run_id: runId,
             });
             
-            // Ищем наш артефакт с результатами тестов
             const testArtifact = artifacts.data.artifacts.find(
               artifact => artifact.name === "test-results"
             );
             
             if (testArtifact) {
-              // Скачиваем артефакт
               const download = await github.rest.actions.downloadArtifact({
                 owner,
                 repo,
@@ -55,13 +53,11 @@ jobs:
                 archive_format: 'zip',
               });
             
-              // Сохраняем файл
               const fs = require('fs');
               fs.writeFileSync('${{github.workspace}}/test-results.zip', Buffer.from(download.data));
               console.log('✅ Artifact downloaded successfully');
             } else {
               console.log('❌ No test-results artifact found');
-              // Завершаем шаг с ошибкой, если артефакта нет
               throw new Error('No test-results artifact found');
             }
 
@@ -69,8 +65,9 @@ jobs:
         run: |
           unzip -q test-results.zip -d extracted-results || echo "No zip file found"
           echo "=== Extracted contents ==="
-          find extracted-results -type f -name "*.html" | head -10
+          find extracted-results -type f -name "*.json" | head -5
           find extracted-results -name "allure-report" -type d
+          find extracted-results -name "allure-history" -type d
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -81,37 +78,37 @@ jobs:
         run: |
           npm install -g allure-commandline
 
-      - name: Generate Allure HTML Report
+      - name: Generate Allure HTML Report with history
         run: |
-          # Создаем папку для отчета
           mkdir -p allure-report
+          mkdir -p allure-history
           
-          # Ищем allure-report (уже сгенерированный HTML)
-          if [ -d "extracted-results/allure-report" ]; then
-            echo "Found allure-report in root"
-            cp -r extracted-results/allure-report/. allure-report/
-          elif [ -d "extracted-results/Server/allure-report" ]; then
-            echo "Found allure-report in Server folder"
-            cp -r extracted-results/Server/allure-report/. allure-report/
-          else
-            echo "❌ No allure-report found, generating from results..."
-            # Генерируем из сырых результатов
-            if [ -d "extracted-results/test-results" ]; then
-              allure generate extracted-results/test-results -o allure-report --clean
-            elif [ -d "extracted-results/Server/allure-results" ]; then
-              allure generate extracted-results/Server/allure-results -o allure-report --clean
-            elif [ -d "extracted-results/allure-results" ]; then
-              allure generate extracted-results/allure-results -o allure-report --clean
-            else
-              echo "❌ No test results found anywhere"
-              echo "Available directories:"
-              find extracted-results -type d | grep -v node_modules
-              exit 1
-            fi
+          # Копируем историю из предыдущих запусков если есть
+          if [ -d "extracted-results/allure-history" ]; then
+            echo "Found previous allure history"
+            cp -r extracted-results/allure-history/. allure-history/
           fi
+          
+          # Генерируем новый отчет
+          if [ -d "extracted-results/test-results" ]; then
+            echo "Generating report from test-results"
+            allure generate extracted-results/test-results -o allure-report --clean --history-dir allure-history
+          elif [ -d "extracted-results/allure-results" ]; then
+            echo "Generating report from allure-results"
+            allure generate extracted-results/allure-results -o allure-report --clean --history-dir allure-history
+          else
+            echo "❌ No test results found"
+            find extracted-results -type d
+            exit 1
+          fi
+          
+          # Сохраняем историю для следующего запуска
+          cp -r allure-history/. allure-report/history/ || echo "No history to copy"
           
           echo "=== Allure report contents ==="
           ls -la allure-report/
+          echo "=== History contents ==="
+          ls -la allure-report/history/ 2>/dev/null || echo "No history directory"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
