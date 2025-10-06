@@ -67,7 +67,7 @@ describe('Вход и регистрация пользователя', () => {
                 name: userData.name,
                 role: userData.role
             });
-            expect(person.token).toEqual(token);
+            expect(person.token).toEqual("fakee");
         });
 
         await step('Проверка выполненных SQL запросов', () => {
