@@ -1,4 +1,3 @@
-// Простые полифилы для тестов
 if (typeof global.File === 'undefined') {
     global.File = class File {
         constructor(bits, name, options = {}) {

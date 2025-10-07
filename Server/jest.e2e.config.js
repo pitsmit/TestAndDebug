@@ -3,6 +3,7 @@ module.exports = {
     testEnvironment: "allure-jest/node",
     testMatch: ['**/__tests__/e2e-tests/**/*.test.ts'],
     setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+    setupFiles: ['<rootDir>/jest.polyfills.js'],
     roots: ['<rootDir>/src'],
     testTimeout: 30000,
     verbose: true,
