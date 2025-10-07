@@ -11,10 +11,6 @@ import { IDBconnection } from "@IRepository/IDBconnection";
 import '@Facade/bindings'
 import { DBconnection } from "@Repository/DBconnection";
 
-// написать ещё 1 integration test
-// e2e тест
-// разобраться со скриптами
-
 describe('Действия админа с анекдотами', () => {
     const personbuilder = new PersonBuilder();
     let authmother: AuthDataMother = new AuthDataMother();
