@@ -225,46 +225,4 @@ describe('Вход и регистрация пользователя', () => {
             );
         });
     });
-
-    test('Регистрация с занятым логином', async () => {
-        let ErrorMessage: string;
-        let result: Promise<Person>;
-
-        /// ARRANGE
-        await step('Подготовка тестовых данных для занятого логина', async () => {
-            userData = authmother.CreateBusyLoginData();
-            const busyResult = sqlbuilder
-                .withRowCount(1)
-                .withType('SELECT')
-                .withRows([{ login: userData.login }])
-                .create();
-
-            mockClient.query.mockResolvedValueOnce(busyResult);
-
-            ErrorMessage = `Логин ${userData.login} занят`;
-
-            await parameter("login", userData.login);
-            await parameter("password", userData.password);
-            await parameter("name", userData.name);
-            await parameter("role", String(userData.role));
-        });
-
-        /// ACT
-        await step('Выполнение команды регистрации с занятым логином', async () => {
-            result = personrepository.create(userData.login, userData.password, userData.name, token, userData.role);
-        });
-
-        /// ASSERT
-        await step('Проверка ошибки занятого логина', async () => {
-            await expect(result).rejects.toThrow(ErrorMessage);
-        });
-
-        await step('Проверка выполненного SQL запроса', () => {
-            expect(mockClient.query).toHaveBeenCalledTimes(1);
-            expect(mockClient.query).toHaveBeenCalledWith(
-                `SELECT login FROM actor WHERE login = $1`,
-                [userData.login]
-            );
-        });
-    });
 });

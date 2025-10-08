@@ -51,12 +51,12 @@ export class AnekdotRepository implements IAnekdotRepository {
         }
     }
 
-    async edit(id: number, new_text: string): Promise<void> {
+    async edit(id: number, anekdot: Anekdot): Promise<void> {
         let client: PoolClient = await this.DB.connect();
 
         try {
-            const query = `UPDATE Anekdot SET content = $1, loaddate = $2 WHERE id = $3`;
-            await client.query(query, [new_text, new Date(), id]);
+            const query = `UPDATE Anekdot SET content = $1, loaddate = $2, hasbadwords = $3 WHERE id = $4`;
+            await client.query(query, [anekdot.text, anekdot.lastModifiedDate, anekdot.hasBadWords, id]);
         } finally {
             client.release();
         }

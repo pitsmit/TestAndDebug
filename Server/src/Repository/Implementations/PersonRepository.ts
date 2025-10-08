@@ -41,17 +41,6 @@ export class PersonRepository implements IPersonRepository {
         let client: PoolClient = await this.DB.connect();
 
         try {
-            const checkResult: QueryResult = await client.query(
-                `SELECT login FROM actor WHERE login = $1`,
-                [login]
-            );
-
-            if (checkResult.rowCount && checkResult.rowCount > 0) {
-                const msg: string = `Логин ${login} занят`;
-                logger.warn(msg);
-                throw new Error(msg);
-            }
-
             const insertQuery = `INSERT INTO actor (login, password, name, role) VALUES ($1, $2, $3, $4)`;
             await client.query(insertQuery, [login, password, name, role]);
 

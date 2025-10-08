@@ -41,6 +41,8 @@ export class AdminManager implements IAdminManager {
     }
 
     async EditAnekdot(admin: Person, id: number, new_text: string): Promise<void> {
-        await this._anekdotRepository.edit(id, new_text);
+        const director: IAnekdotDirector = this.getDirector(new_text);
+        let anekdot: Anekdot = await director.create(new_text);
+        await this._anekdotRepository.edit(id, anekdot);
     }
 }
