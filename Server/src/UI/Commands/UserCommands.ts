@@ -1,58 +1,41 @@
 import {Command} from "@UICommands/BaseCommand";
-import {Person} from "@Core/Essences/person";
 import {Anekdot} from "@Core/Essences/anekdot";
 import {logger} from "@Core/Services/logger";
 
 export class UserManagerCommand extends Command {
-    protected readonly _user: Person;
-
-    constructor(user: Person) {
+    constructor(protected readonly _token: string) {
         super();
-        this._user = user;
     }
 }
 
 export class AddToFavouritesCommand extends UserManagerCommand {
-    protected readonly _anekdot_id: number;
-
-    constructor(user: Person, id: number) {
-        super(user);
-        this._anekdot_id = id;
+    constructor(token: string, private readonly _anekdot_id: number) {
+        super(token);
     }
-
     async execute() : Promise<void> {
-        await this._UserManager.AddToFavourites(this._user, this._anekdot_id);
+        await this._UserManager.AddToFavourites(this._token, this._anekdot_id);
         logger.info('Добавление анекдота в избранное');
     }
 }
 
 export class DeleteFromFavouritesCommand extends UserManagerCommand {
-    protected readonly _anekdot_id: number;
-
-    constructor(user: Person, id: number) {
-        super(user);
-        this._anekdot_id = id;
+    constructor(token: string, private readonly _anekdot_id: number) {
+        super(token);
     }
-
     async execute() : Promise<void> {
-        await this._UserManager.DeleteFromFavourites(this._user, this._anekdot_id);
+        await this._UserManager.DeleteFromFavourites(this._token, this._anekdot_id);
         logger.info('Удаление анекдота из избранного');
     }
 }
 
 export class ShowFavouritesCommand extends UserManagerCommand {
-    public _anekdots!: Anekdot[];
-    public _page: number;
-    public _limit: number;
+    _anekdots: Anekdot[] = [];
 
-    constructor(user: Person, page: number, limit: number) {
-        super(user);
-        this._page = page;
-        this._limit = limit;
+    constructor(token: string, private readonly _page: number, private readonly _limit: number) {
+        super(token);
     }
-
     async execute() : Promise<void> {
-        this._anekdots = await this._UserManager.ShowFavourites(this._user, this._page, this._limit);
+        this._anekdots = await this._UserManager.ShowFavourites(this._token, this._page, this._limit);
         logger.info('Показ ленты избранного');
     }
 }

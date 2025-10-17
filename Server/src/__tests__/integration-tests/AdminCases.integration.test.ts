@@ -1,10 +1,7 @@
 import { container } from "@Facade/container";
 import { TestDBHelper } from "../helpers/DBTestHelper";
 import { IAdminManager } from "@Essences/AdminManager";
-import { PersonBuilder } from "@/__tests__/helpers/PersonBuilder";
-import { AuthDataMother } from "@/__tests__/helpers/AuthDataMother";
 import { parameter, step } from "allure-js-commons";
-import { Person } from "@Essences/person";
 import { TestDBConfigProvider } from "@/__tests__/helpers/TestDBConfigProvider";
 import { IDBConfigProvider } from "@IRepository/IDBConfigProvider";
 import { IDBconnection } from "@IRepository/IDBconnection";
@@ -12,12 +9,10 @@ import '@Facade/bindings'
 import { DBconnection } from "@Repository/DBconnection";
 
 describe('Действия админа с анекдотами', () => {
-    const personbuilder = new PersonBuilder();
-    let authmother: AuthDataMother = new AuthDataMother();
-    let userData: {login: string, password: string, name: string, role: number};
     let adminmanager: IAdminManager;
     let testDBHelper = new TestDBHelper();
     let dbConnection: IDBconnection;
+    const token: string = "token";
 
     beforeAll(async () => {
         await testDBHelper.ensureTestDatabase();
@@ -46,17 +41,9 @@ describe('Действия админа с анекдотами', () => {
 
     test('Удаление анекдота', async () => {
         let anekdot_id: number;
-        let adminUser: Person;
 
         // ARRANGE
         await step('Подготовка тестовых данных', async () => {
-            userData = authmother.CreateValidUserData();
-            adminUser = personbuilder
-                .withToken('token')
-                .withLogin(userData.login)
-                .withName(userData.name)
-                .withRole(userData.role)
-                .create();
             anekdot_id = 1;
 
             await parameter("ID анекдота", String(anekdot_id));
@@ -64,7 +51,7 @@ describe('Действия админа с анекдотами', () => {
 
         // ACT
         await step('Выполнение удаления', async () => {
-            await adminmanager.DeleteAnekdot(adminUser, anekdot_id);
+            await adminmanager.DeleteAnekdot(token, anekdot_id);
         })
 
         // ASSERT
@@ -81,18 +68,10 @@ describe('Действия админа с анекдотами', () => {
 
     test('Редактирование анекдота', async () => {
         let anekdot_id: number;
-        let adminUser: Person;
         let new_data: string;
 
         // ARRANGE
         await step('Подготовка тестовых данных', async () => {
-            userData = authmother.CreateValidUserData();
-            adminUser = personbuilder
-                .withToken('token')
-                .withLogin(userData.login)
-                .withName(userData.name)
-                .withRole(userData.role)
-                .create();
             anekdot_id = 1;
             new_data = "New Anekdot Data";
 
@@ -101,8 +80,8 @@ describe('Действия админа с анекдотами', () => {
         })
 
         // ACT
-        await step('Выполнение редактирвоания', async () => {
-            await adminmanager.EditAnekdot(adminUser, anekdot_id, new_data);
+        await step('Выполнение редактирования', async () => {
+            await adminmanager.EditAnekdot(token, anekdot_id, new_data);
         })
 
         // ASSERT

@@ -4,9 +4,11 @@ info:
   version: 1.0.0
 
 paths:
-  /api/v1/lenta:
+  /api/v1/feed:
     get:
       summary: Получение списка анекдотов
+      tags:
+        - Feed
       parameters:
         - name: page
           in: query
@@ -25,6 +27,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnekdotList"
+        '400':
+          description: Некоррекнтые параметры пагинации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         '503':
           description: Разорвано соединение с БД
           content:
@@ -36,6 +44,8 @@ paths:
       summary: Получение списка избранных анекдотов
       security:
         - bearerAuth: []
+      tags:
+        - Favourites
       parameters:
         - name: page
           in: query
@@ -54,6 +64,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnekdotList"
+        '400':
+          description: Некоррекнтые параметры пагинации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         '401':
           description: Не авторизован
           content:
@@ -72,18 +88,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /api/v1/favourites/{id}:
     post:
       summary: Добавление анекдота в избранное по id
       security:
         - bearerAuth: []
-      parameters:
-        - name: id
-          description: Идентификатор анекдота
-          in: path
-          required: true
-          schema: 
-            type: integer
+      tags:
+        - Favourites
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddToFavouritesRequest"
       responses:
         '201':
           description: Анекдот успешно добавлен
@@ -121,10 +137,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /api/v1/favourites/{id}:
     delete:
       summary: Удаление анекдота из избранного по id
       security:
         - bearerAuth: []
+      tags: 
+        - Favourites
       parameters:
         - name: id
           description: Идентификатор анекдота
@@ -162,6 +181,8 @@ paths:
   /api/v1/register:
     post:
       summary: Регистрация пользователя
+      tags:
+        - Auth
       requestBody:
         required: true
         content:
@@ -176,7 +197,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Person"
         '400':
-          description: Неверные данные или логин или имя заняты
+          description: Некорректный формат логина, пароля, имени или роли
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Логин или имя заняты
           content:
             application/json:
               schema:
@@ -190,6 +217,8 @@ paths:
   /api/v1/login:
     post:
       summary: Вход в аккаунт
+      tags:
+        - Auth
       requestBody:
         required: true
         content:
@@ -204,6 +233,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Person"
         '400':
+          description: Некорректный формат логина, пароля, имени или роли
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
           description: Неверный логин или пароль
           content:
             application/json:
@@ -220,6 +255,8 @@ paths:
       summary: Загрузка нового анекдота
       security:
         - bearerAuth: []
+      tags:
+        - Anekdot
       requestBody:
         required: true
         content:
@@ -256,6 +293,8 @@ paths:
       summary: Удаление анекдота по id
       security:
         - bearerAuth: []
+      tags:
+        - Anekdot
       parameters:
         - name: id
           description: Идентификатор анекдота
@@ -300,6 +339,8 @@ paths:
       summary: Редактирование анекдота по id
       security:
         - bearerAuth: []
+      tags:
+        - Anekdot
       parameters:
         - name: id
           description: Идентификатор анекдота
@@ -394,7 +435,8 @@ components:
         - message
       properties:
         code:
-          type: string
+          type: integer
+          example: 5
         message:
           type: string
           example: "Логин занят"
@@ -461,6 +503,15 @@ components:
           type: string
           maxLength: 10
           example: "secret123"
+    AddToFavouritesRequest:
+      type: object
+      required:
+        - anekdot_id
+      properties:
+        anekdot_id:
+          type: number
+          maxLength: 10
+          example: 123
     CreateAnekdotRequest:
       type: object
       required:

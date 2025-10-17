@@ -1,28 +1,32 @@
 import {inject, injectable} from "inversify";
-import {Person} from "@Core/Essences/person";
 import {IUserFavouritesRepository} from "@IRepository/IUserFavouritesRepository";
 import {Anekdot} from "@Core/Essences/anekdot";
+import {IAuthService} from "@Services/jwt";
 
 export interface IUserManager {
-    AddToFavourites(user: Person, id: number): Promise<void>;
-    DeleteFromFavourites(user: Person, id: number): Promise<void>;
-    ShowFavourites(user: Person, page: number, limit?: number): Promise<Anekdot[]>;
+    AddToFavourites(token: string, anekdot_id: number): Promise<void>;
+    DeleteFromFavourites(token: string, anekdot_id: number): Promise<void>;
+    ShowFavourites(token: string, page: number, limit?: number): Promise<Anekdot[]>;
 }
 
 @injectable()
 export class UserManager implements IUserManager {
-    constructor(@inject("IUserFavouritesRepository") private _favouritesRepository: IUserFavouritesRepository) {
+    constructor(@inject("IUserFavouritesRepository") private _favouritesRepository: IUserFavouritesRepository,
+                @inject("IAuthService") private _authService: IAuthService) {
     };
 
-    async AddToFavourites(user: Person, id: number): Promise<void> {
-        await this._favouritesRepository.add(user.login, id);
+    async AddToFavourites(token: string, anekdot_id: number): Promise<void> {
+        const user_id: number = this._authService.verifyToken(token);
+        await this._favouritesRepository.add(user_id, anekdot_id);
     }
 
-    async DeleteFromFavourites(user: Person, id: number): Promise<void> {
-        await this._favouritesRepository.remove(user.login, id);
+    async DeleteFromFavourites(token: string, anekdot_id: number): Promise<void> {
+        const user_id: number = this._authService.verifyToken(token);
+        await this._favouritesRepository.remove(user_id, anekdot_id);
     }
 
-    async ShowFavourites(user: Person, page: number, limit: number = 10): Promise<Anekdot[]> {
-        return await this._favouritesRepository.get_part(user.login, page, limit);
+    async ShowFavourites(token: string, page: number, limit: number = 10): Promise<Anekdot[]> {
+        const user_id: number = this._authService.verifyToken(token);
+        return await this._favouritesRepository.get_part(user_id, page, limit);
     }
 }

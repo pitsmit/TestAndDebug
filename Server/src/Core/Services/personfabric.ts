@@ -13,12 +13,14 @@ export class PersonFabric implements IPersonFabric {
                 @inject("IAuthService") private _authService: IAuthService) {}
 
     public async get(login: string, password: string): Promise<Person> {
-        const token: string = this._authService.generateToken(login);
-        return await this._personrepository.get(login, password, token);
+        const {role, id, name} = await this._personrepository.get(login, password);
+        const token: string = this._authService.generateToken(id);
+        return new Person(token, name, role);
     }
 
     public async create(login: string, password: string, name: string, role: number): Promise<Person> {
-        const token: string = this._authService.generateToken(login);
-        return await this._personrepository.create(login, password, name, token, role);
+        const id: number = await this._personrepository.create(login, password, name, role);
+        const token: string = this._authService.generateToken(id);
+        return new Person(token, name, role);
     }
 }

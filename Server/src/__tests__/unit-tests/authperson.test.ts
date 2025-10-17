@@ -4,15 +4,19 @@ import {step, parameter} from "allure-js-commons";
 import {AuthDataMother} from "@/__tests__/helpers/AuthDataMother";
 import { container } from "@Facade/container";
 import { mockDBConnection, mockClient } from "../mocks/DBmocks";
-import { Person } from "@Essences/person";
 import { PersonRepository } from "@Repository/PersonRepository";
 import {SQLBuilder} from "@/__tests__/helpers/SQLBuilder";
 import {IPersonRepository} from "@IRepository/IPersonRepository";
 
+type Person = {
+    role: number;
+    id: number;
+    name: string;
+};
+
 describe('Вход и регистрация пользователя', () => {
-    let userData: {login: string, password: string, name: string, role: number};
+    let userData: {login: string, password: string, name: string, role: number, id: number};
     let personrepository: IPersonRepository;
-    let token: string = "test_token";
     let authmother: AuthDataMother = new AuthDataMother();
     let sqlbuilder: SQLBuilder;
 
@@ -42,7 +46,7 @@ describe('Вход и регистрация пользователя', () => {
         await step('Подготовка тестовых данных', async () => {
             userData = authmother.CreateValidUserData();
             const selectResult = sqlbuilder
-                .withRows([{password: userData.password, name: userData.name, role: userData.role}])
+                .withRows([{password: userData.password, name: userData.name, role: userData.role, id: userData.id}])
                 .create();
 
             console.log(selectResult);
@@ -52,22 +56,21 @@ describe('Вход и регистрация пользователя', () => {
 
             await parameter("login", userData.login);
             await parameter("password", userData.password);
-            await parameter("token", token);
         });
 
         /// ACT
         await step('Выполнение команды входа', async () => {
-            person = await personrepository.get(userData.login, userData.password, token);
+            person = await personrepository.get(userData.login, userData.password);
+            console.log(person)
         });
 
         /// ASSERT
         await step('Проверка данных пользователя', () => {
             expect(person).toMatchObject({
-                login: userData.login,
+                id: userData.id,
                 name: userData.name,
                 role: userData.role
             });
-            expect(person.token).toEqual(token);
         });
 
         await step('Проверка выполненных SQL запросов', () => {
@@ -99,13 +102,12 @@ describe('Вход и регистрация пользователя', () => {
             await parameter("login", userData.login);
             await parameter("Введённый пароль", userData.password);
             await parameter("Пароль из БД", wrongpass);
-            await parameter("token", token);
             await parameter("Текст ошибки", ErrorMessage);
         });
 
         /// ACT
         await step('Выполнение команды входа', async () => {
-            resultPromise = personrepository.get(userData.login, userData.password, token);
+            resultPromise = personrepository.get(userData.login, userData.password);
         });
 
         /// ASSERT
@@ -144,12 +146,11 @@ describe('Вход и регистрация пользователя', () => {
             await parameter("login", userData.login);
             await parameter("password", userData.password);
             await parameter("Текст ошибки", ErrorMessage);
-            await parameter("token", token);
         });
 
         /// ACT
         await step('Выполнение команды входа', async () => {
-            resultPromise = personrepository.get(userData.login, userData.password, token);
+            resultPromise = personrepository.get(userData.login, userData.password);
         });
 
         /// ASSERT
@@ -168,25 +169,19 @@ describe('Вход и регистрация пользователя', () => {
     });
 
     test('Успешная регистрация', async () => {
-        let result: Person;
+        let recv_id: number;
+        const id: number = 5;
 
         /// ARRANGE
         await step('Подготовка тестовых данных', async () => {
-            const emptyResult = sqlbuilder
-                .withRowCount(0)
-                .withType('SELECT')
-                .withRows([])
-                .create();
-
             const insertResult = sqlbuilder
                 .withRowCount(1)
                 .withType('INSERT')
-                .withRows([])
+                .withRows([{id: id}])
                 .create();
 
 
             mockClient.query
-                .mockResolvedValueOnce(emptyResult)
                 .mockResolvedValueOnce(insertResult);
 
             userData = authmother.CreateValidUserData();
@@ -199,28 +194,19 @@ describe('Вход и регистрация пользователя', () => {
 
         /// ACT
         await step('Выполнение команды регистрации', async () => {
-            result = await personrepository.create(userData.login, userData.password, userData.name, token, userData.role);
+            recv_id = await personrepository.create(userData.login, userData.password, userData.name, userData.role);
         });
 
         /// ASSERT
         await step('Проверка данных пользователя', () => {
-            expect(result).toMatchObject({
-                login: userData.login,
-                name: userData.name,
-                role: userData.role
-            });
+            expect(recv_id).toEqual(id);
         });
 
         await step('Проверка выполненных SQL запросов', () => {
-            expect(mockClient.query).toHaveBeenCalledTimes(2);
+            expect(mockClient.query).toHaveBeenCalledTimes(1);
             expect(mockClient.query).toHaveBeenNthCalledWith(
                 1,
-                `SELECT login FROM actor WHERE login = $1`,
-                [userData.login]
-            );
-            expect(mockClient.query).toHaveBeenNthCalledWith(
-                2,
-                `INSERT INTO actor (login, password, name, role) VALUES ($1, $2, $3, $4)`,
+                `INSERT INTO actor (login, password, name, role) VALUES ($1, $2, $3, $4) RETURNING id`,
                 [userData.login, userData.password, userData.name, userData.role]
             );
         });

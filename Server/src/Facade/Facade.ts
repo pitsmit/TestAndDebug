@@ -8,26 +8,15 @@ import {container} from "@Facade/container";
 import '@Facade/bindings'
 
 export class Facade {
-    private readonly _UserManager!: IUserManager
-    private readonly _AdminManager!: IAdminManager
-    private readonly _LentaManager!: ILentaManager
-    private readonly _PersonFabric!: IPersonFabric
-
-    constructor() {
-        this._UserManager = container.get<IUserManager>("IUserManager");
-        this._AdminManager = container.get<IAdminManager>("IAdminManager");
-        this._LentaManager = container.get<ILentaManager>("ILentaManager");
-        this._PersonFabric = container.get<IPersonFabric>("IPersonFabric");
-    }
+    private readonly managers = [
+        container.get<IUserManager>("IUserManager"),
+        container.get<IAdminManager>("IAdminManager"),
+        container.get<ILentaManager>("ILentaManager"),
+        container.get<IPersonFabric>("IPersonFabric")
+    ] as const;
 
     async execute(command: Command): Promise<void> {
-        command.setManagers(
-            this._UserManager,
-            this._AdminManager,
-            this._LentaManager,
-            this._PersonFabric,
-        )
-
+        command.setManagers(...this.managers);
         await command.execute();
     }
 }

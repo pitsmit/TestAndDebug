@@ -4,7 +4,7 @@ import cors from 'cors';
 import { Person } from "@Core/Essences/person";
 import { Facade } from "@Facade/Facade";
 import { container } from "@Facade/container";
-import { RegistratePersonCommand, EntryPersonCommand } from "@UICommands/AuthCommands";
+import { RegistrateCommand, EntryCommand } from "@UICommands/AuthCommands";
 import { ShowLentaCommand } from "@UICommands/LentaCommands";
 import { DeleteAnekdotCommand, EditAnekdotCommand, LoadAnekdotCommand } from "@UICommands/AdminCommands";
 import { AddToFavouritesCommand, DeleteFromFavouritesCommand, ShowFavouritesCommand } from "@UICommands/UserCommands";
@@ -129,7 +129,7 @@ export class ApiServer {
                 });
             }
 
-            const command = new EntryPersonCommand(login, password);
+            const command = new EntryCommand(login, password);
             await this.facade.execute(command);
 
             const person = (command as any).person;
@@ -173,7 +173,7 @@ export class ApiServer {
                 });
             }
 
-            const command = new RegistratePersonCommand(login, password, name, role);
+            const command = new RegistrateCommand(login, password, name, role);
             await this.facade.execute(command);
 
             const person = (command as any).person;
@@ -401,12 +401,9 @@ export class ApiServer {
                 });
             }
 
-            const decoded = this.authService.verifyToken(token);
-
             // Создаем объект пользователя для использования в запросах
             (req as any).user = new Person(
                 token,
-                decoded.log,
                 '', // name будет заполнен при реальной аутентификации
                 ROLE.USER // role будет заполнен при реальной аутентификации
             );

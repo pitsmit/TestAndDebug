@@ -1,17 +1,7 @@
-import {injectable, multiInject} from 'inversify';
 import axios from 'axios';
-import {ISiteParser} from "@Core/Services/parsers";
 import {logger} from "@Core/Services/logger";
 
-@injectable()
-export class SiteAnekdotBuilder {
-    private parsers: ISiteParser[];
-
-    constructor(
-        @multiInject(Symbol.for('ISiteParser')) parsers: ISiteParser[]) {
-        this.parsers = parsers;
-    }
-
+export class HTMLLoader {
     async getHTML(url: string): Promise<string> {
         const source = axios.CancelToken.source();
         const timeout = setTimeout(() => source.cancel('Timeout'), 5000);
@@ -31,17 +21,5 @@ export class SiteAnekdotBuilder {
         } finally {
             clearTimeout(timeout);
         }
-    }
-
-    getParser(url: string): ISiteParser {
-        const parser: ISiteParser | undefined = this.parsers.find(p => url.includes(p.url));
-
-        if (!parser) {
-            const msg: string = `Парсер для URL ${url} не найден`;
-            logger.warn(msg);
-            throw new Error(msg);
-        }
-
-        return parser;
     }
 }

@@ -3,17 +3,11 @@ import {Person} from "@Essences/person";
 
 export class PersonBuilder {
     private _token: string = "token";
-    private _login: string = "login";
     private _name: string = "name";
     private _role: number = ROLE.ADMIN;
 
     withToken(token: string): this {
         this._token = token;
-        return this;
-    }
-
-    withLogin(login: string): this {
-        this._login = login;
         return this;
     }
 
@@ -30,7 +24,6 @@ export class PersonBuilder {
     create(): Person {
         return new Person(
             this._token,
-            this._login,
             this._name,
             this._role,
         );

@@ -1,9 +1,9 @@
-import {ShowAdminCasesCommand, ShowClientCasesCommand, ShowVisitorCasesCommand} from "@UICommands/ShowCasesCommands";
+import {ShowAdminCasesCommand, ShowClientCasesCommand, ShowVisitorCasesCommand} from "@TechUI/ShowCasesCommands";
 import {Facade} from "@Facade/Facade";
 import {Person} from "@Core/Essences/person";
 import {Command} from "@UICommands/BaseCommand";
 import {input} from "@TechUI/iostream";
-import {RegistratePersonCommand, EntryPersonCommand} from "@UICommands/AuthCommands";
+import {RegistrateCommand, EntryCommand} from "@UICommands/AuthCommands";
 import {ExitCommand} from "@UICommands/ExitCommand";
 import {ShowLentaCommand} from "@UICommands/LentaCommands";
 import {AddToFavouritesCommand, DeleteFromFavouritesCommand, ShowFavouritesCommand} from "@UICommands/UserCommands";
@@ -72,12 +72,12 @@ export class AdminExperience extends Experience {
                         break;
                     case 1:
                         const data: string = await input("Введите ссылку или вставьте текст: ");
-                        command = new LoadAnekdotCommand(this.person, data);
+                        command = new LoadAnekdotCommand(this.person.token, data);
                         await this.facade.execute(command);
                         break;
                     case 2:
                         const id: number = Number(await input("Введите ID анекдота: "));
-                        command = new DeleteAnekdotCommand(this.person, id);
+                        command = new DeleteAnekdotCommand(this.person.token, id);
                         await this.facade.execute(command);
                         break;
                     case 3:
@@ -86,7 +86,7 @@ export class AdminExperience extends Experience {
                     case 4:
                         const idd: number = Number(await input("Введите ID анекдота: "));
                         const new_text: string = await input("Введите текст анекдота: ");
-                        command = new EditAnekdotCommand(this.person, idd, new_text);
+                        command = new EditAnekdotCommand(this.person.token, idd, new_text);
                         await this.facade.execute(command);
                         break;
                 }
@@ -120,11 +120,11 @@ export class ClientExperience extends Experience {
                         await this.facade.execute(command);
                         break;
                     case 1:
-                        command = new AddToFavouritesCommand(this.person, await this.input_anekdot_id());
+                        command = new AddToFavouritesCommand(this.person.token, await this.input_anekdot_id());
                         await this.facade.execute(command);
                         break;
                     case 2:
-                        command = new DeleteFromFavouritesCommand(this.person, await this.input_anekdot_id());
+                        command = new DeleteFromFavouritesCommand(this.person.token, await this.input_anekdot_id());
                         await this.facade.execute(command);
                         break;
                     case 3:
@@ -134,7 +134,7 @@ export class ClientExperience extends Experience {
                         let page: number = 1;
                         let limit: number = 10;
 
-                        command = new ShowFavouritesCommand(this.person, page, limit);
+                        command = new ShowFavouritesCommand(this.person.token, page, limit);
                         while (true) {
                             await this.facade.execute(command);
                             ShowTable.show(
@@ -147,7 +147,7 @@ export class ClientExperience extends Experience {
                             let ans: number = Number( await input("Ещё?(ДА-1, НЕТ-0): "));
                             if (ans === 1) {
                                 page++;
-                                command = new ShowFavouritesCommand(this.person, page, limit);
+                                command = new ShowFavouritesCommand(this.person.token, page, limit);
                             }
                             else break;
                         }
@@ -208,9 +208,9 @@ export class VisitorExperience extends Experience {
                         break;
                     case 2:
                         entry_credentials = await this.input_entry_credentials();
-                        command = new EntryPersonCommand(entry_credentials.login, entry_credentials.pass);
+                        command = new EntryCommand(entry_credentials.login, entry_credentials.pass);
                         await this.facade.execute(command);
-                        person = (command as RegistratePersonCommand).person;
+                        person = (command as RegistrateCommand).person;
                         if (person.role == ROLE.USER)
                             await new ClientExperience(this.facade, person).main();
                         else
@@ -218,10 +218,10 @@ export class VisitorExperience extends Experience {
                         return;
                     case 3:
                         const { login, password, name, role } = await this.input_register_credentials();
-                        command = new RegistratePersonCommand(
+                        command = new RegistrateCommand(
                             login, password, name, role);
                         await this.facade.execute(command);
-                        person = (command as RegistratePersonCommand).person;
+                        person = (command as RegistrateCommand).person;
 
                         if (person.role == ROLE.USER)
                             await new ClientExperience(this.facade, person).main();

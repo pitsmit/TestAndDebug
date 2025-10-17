@@ -1,48 +1,31 @@
-import {inject, injectable, multiInject} from "inversify";
-import {IAnekdotDirector} from "@Core/Services/anekdotdirectors";
+import {inject, injectable} from "inversify";
 import {IAnekdotRepository} from "@IRepository/IAnekdotRepository";
 import {Anekdot} from "@Core/Essences/anekdot";
-import {Person} from "@Core/Essences/person";
-import {logger} from "@Core/Services/logger";
+import {AnekdotFactory} from "@Services/anekdotfactory";
 
 export interface IAdminManager {
-    LoadAnekdot(admin: Person, data: string): Promise<void>;
-    DeleteAnekdot(admin: Person, id: number): Promise<void>;
-    EditAnekdot(admin: Person, id: number, new_text: string): Promise<void>;
+    LoadAnekdot(token: string, data: string): Promise<void>;
+    DeleteAnekdot(token: string, id: number): Promise<void>;
+    EditAnekdot(token: string, id: number, new_text: string): Promise<void>;
 }
 
 @injectable()
 export class AdminManager implements IAdminManager {
-    private readonly directors: IAnekdotDirector[];
+    constructor(@inject("IAnekdotRepository") private _anekdotRepository: IAnekdotRepository,
+                @inject(AnekdotFactory) private _anekdotFactory: AnekdotFactory)
+    {}
 
-    constructor(@multiInject(Symbol.for('IAnekdotDirector')) directors: IAnekdotDirector[],
-                @inject("IAnekdotRepository") private _anekdotRepository: IAnekdotRepository) {
-        this.directors = directors;
-    }
-
-    private getDirector(data: string): IAnekdotDirector {
-        const director = this.directors.find(s => s.canHandle(data));
-        if (!director) {
-            const msg: string = `Не поддерживаемый тип данных анекдота`;
-            logger.warn(msg);
-            throw new Error(msg);
-        }
-        return director;
-    }
-
-    async LoadAnekdot(admin: Person, data: string): Promise<void> {
-        const director: IAnekdotDirector = this.getDirector(data);
-        let anekdot: Anekdot = await director.create(data);
+    async LoadAnekdot(token: string, data: string): Promise<void> {
+        let anekdot: Anekdot = await this._anekdotFactory.create(data);
         await this._anekdotRepository.load(anekdot);
     }
 
-    async DeleteAnekdot(admin: Person, id: number): Promise<void> {
+    async DeleteAnekdot(token: string, id: number): Promise<void> {
         await this._anekdotRepository.delete(id);
     }
 
-    async EditAnekdot(admin: Person, id: number, new_text: string): Promise<void> {
-        const director: IAnekdotDirector = this.getDirector(new_text);
-        let anekdot: Anekdot = await director.create(new_text);
+    async EditAnekdot(token: string, id: number, new_text: string): Promise<void> {
+        let anekdot: Anekdot = await this._anekdotFactory.create(new_text);
         await this._anekdotRepository.edit(id, anekdot);
     }
 }

@@ -9,13 +9,11 @@ import { PersonFabric } from '@Core/Services/personfabric';
 import { AdminManager } from '@Core/Essences/AdminManager';
 import { UserManager } from '@Core/Essences/UserManager';
 import { DBconnection } from '@Repository/DBconnection';
-import { SiteAnekdotBuilder } from '@Core/Services/siteanekdotbuilder';
-import { IAnekdotDirector, SiteAnekdotDirector, TextAnekdotDirector } from '@Core/Services/anekdotdirectors';
-import {AnekdotBuilder} from '@Core/Services/anekdotbuilder';
 import { AnekdotRuParser, AnekdotovStreetParser, ISiteParser } from '@Core/Services/parsers';
 import {LentaManager} from "@Core/Essences/LentaManager";
 import { DBConfigProvider } from '@Repository/DBConfigProvider';
 import { IDBConfigProvider } from '@IRepository/IDBConfigProvider';
+import { AnekdotFactory} from "@Services/anekdotfactory";
 
 container.bind<IDBConfigProvider>("IDBConfigProvider").to(DBConfigProvider).inSingletonScope();
 container.bind("IDBconnection").to(DBconnection).inSingletonScope();
@@ -31,15 +29,9 @@ container.bind("IAdminManager").to(AdminManager).inSingletonScope();
 container.bind("IUserManager").to(UserManager).inSingletonScope();
 container.bind("ILentaManager").to(LentaManager).inSingletonScope();
 
-container.bind(SiteAnekdotBuilder).toSelf();
-container.bind(AnekdotBuilder).toSelf();
+container.bind(AnekdotFactory).toSelf().inSingletonScope();
 
 const parsers = [AnekdotRuParser, AnekdotovStreetParser];
 for (const parser of parsers) {
     container.bind<ISiteParser>(Symbol.for('ISiteParser')).to(parser).inTransientScope();
-}
-
-const directors = [TextAnekdotDirector, SiteAnekdotDirector];
-for (const director of directors) {
-    container.bind<IAnekdotDirector>(Symbol.for('IAnekdotDirector')).to(director).inTransientScope();
 }

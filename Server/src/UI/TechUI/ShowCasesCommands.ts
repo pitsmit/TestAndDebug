@@ -1,5 +1,5 @@
 import {Command} from "@UICommands/BaseCommand";
-import {ShowTable} from "@/UI/TechUI/ShowTable";
+import {ShowTable} from "@TechUI/ShowTable";
 
 class CaseLine {
     public id: number;
