@@ -1,5 +1,6 @@
 import {Command} from "@UICommands/BaseCommand";
 import {logger} from "@Core/Services/logger";
+import {Anekdot} from "@Essences/anekdot";
 
 export class AdminCommand extends Command {
     constructor(protected readonly _token: string) {
@@ -8,11 +9,13 @@ export class AdminCommand extends Command {
 }
 
 export class LoadAnekdotCommand extends AdminCommand {
+    anekdot!: Anekdot;
+
     constructor(token: string, private readonly _data: string) {
         super(token);
     }
     async execute() : Promise<void> {
-        await this._AdminManager.LoadAnekdot(this._token, this._data);
+        this.anekdot = await this._AdminManager.LoadAnekdot(this._token, this._data);
         logger.info('Загрузка анекдота');
     }
 }

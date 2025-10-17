@@ -23,8 +23,9 @@
       "@UI/*": ["./UI/*"],
       "@UICommands/*": ["./UI/Commands/*"],
       "@TechUI/*": ["./UI/TechUI/*"],
-      "@shared/*": ["../../shared/*"]
+      "@shared/*": ["./shared/*"]
     }
   },
   "include": ["src/**/*.ts"],
+  "exclude": ["src/__tests__"]
 }

@@ -4,7 +4,7 @@ import {Anekdot} from "@Core/Essences/anekdot";
 import {AnekdotFactory} from "@Services/anekdotfactory";
 
 export interface IAdminManager {
-    LoadAnekdot(token: string, data: string): Promise<void>;
+    LoadAnekdot(token: string, data: string): Promise<Anekdot>;
     DeleteAnekdot(token: string, id: number): Promise<void>;
     EditAnekdot(token: string, id: number, new_text: string): Promise<void>;
 }
@@ -15,9 +15,10 @@ export class AdminManager implements IAdminManager {
                 @inject(AnekdotFactory) private _anekdotFactory: AnekdotFactory)
     {}
 
-    async LoadAnekdot(token: string, data: string): Promise<void> {
+    async LoadAnekdot(token: string, data: string): Promise<Anekdot> {
         let anekdot: Anekdot = await this._anekdotFactory.create(data);
-        await this._anekdotRepository.load(anekdot);
+        const id: number = await this._anekdotRepository.load(anekdot);
+        return new Anekdot(anekdot.text, anekdot.hasBadWords, anekdot.lastModifiedDate, id);
     }
 
     async DeleteAnekdot(token: string, id: number): Promise<void> {

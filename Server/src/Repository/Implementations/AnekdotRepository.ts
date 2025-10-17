@@ -4,6 +4,7 @@ import {inject, injectable} from "inversify";
 import {Anekdot} from "@Core/Essences/anekdot";
 import {IDBconnection} from "@IRepository/IDBconnection";
 import {logger} from "@Core/Services/logger";
+import {EmptyAnekdotError, PaginationError} from "@Essences/Errors";
 
 @injectable()
 export class AnekdotRepository implements IAnekdotRepository {
@@ -17,7 +18,12 @@ export class AnekdotRepository implements IAnekdotRepository {
             const query = `SELECT * FROM Anekdot ORDER BY loaddate DESC LIMIT $1 OFFSET $2`;
             const res: QueryResult = await client.query(query, [limit, offset]);
             return res.rows.map(row => new Anekdot(row.content, row.hasbadwords, row.loaddate, row.id));
-        } finally {
+        }
+        catch (e: any) {
+            logger.error(e.message);
+            throw new PaginationError();
+        }
+        finally {
             client.release();
         }
     }
@@ -33,19 +39,20 @@ export class AnekdotRepository implements IAnekdotRepository {
         }
     }
 
-    async load(anekdot: Anekdot): Promise<void> {
+    async load(anekdot: Anekdot): Promise<number> {
         if (!anekdot.text.trim().length) {
             const msg: string = `Попытка загрузки пустого анекдота`;
             logger.warn(msg);
-            throw new Error(msg);
+            throw new EmptyAnekdotError();
         }
 
         let client: PoolClient = await this.DB.connect();
 
         try {
             const query = `INSERT INTO Anekdot (content, hasbadwords, loaddate)
-                            VALUES ($1, $2, $3)`;
-            await client.query(query, [anekdot.text, anekdot.hasBadWords, anekdot.lastModifiedDate]);
+                            VALUES ($1, $2, $3) RETURNING id`;
+            const res = await client.query(query, [anekdot.text, anekdot.hasBadWords, anekdot.lastModifiedDate]);
+            return res.rows[0].id;
         } finally {
             client.release();
         }

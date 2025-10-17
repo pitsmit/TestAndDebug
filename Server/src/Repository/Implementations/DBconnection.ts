@@ -3,6 +3,7 @@ import {injectable, inject} from "inversify";
 import {logger} from "@Core/Services/logger";
 import {IDBconnection} from "@IRepository/IDBconnection";
 import {IDBConfigProvider} from "@IRepository/IDBConfigProvider";
+import {DatabaseConnectionError} from "@Essences/Errors";
 
 @injectable()
 export class DBconnection implements IDBconnection {
@@ -20,7 +21,7 @@ export class DBconnection implements IDBconnection {
             return await this._pool.connect();
         } catch (err: any) {
             logger.fatal(`База недоступна ${err.message}`);
-            throw err;
+            throw new DatabaseConnectionError();
         }
     }
 

@@ -1,536 +1,587 @@
 openapi: 3.1.1
-info: 
+info:
   title: Сайт с анекдотами Anekdotus
   version: 1.0.0
-
+servers:
+- url: /
 paths:
   /api/v1/feed:
     get:
+      operationId: apiV1FeedGET
+      parameters:
+      - explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnekdotList"
+          description: Успешный ответ с анекдотами
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Некоррекнтые параметры пагинации
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Разорвано соединение с БД
       summary: Получение списка анекдотов
       tags:
-        - Feed
-      parameters:
-        - name: page
-          in: query
-          schema: 
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 10    
-      responses:
-        '200':
-          description: Успешный ответ с анекдотами
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AnekdotList"
-        '400':
-          description: Некорректные параметры пагинации
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        '503':
-          description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      - Feed
+      x-eov-operation-handler: controllers/FeedController
   /api/v1/favourites:
     get:
-      summary: Получение списка избранных анекдотов
-      security:
-        - bearerAuth: []
-      tags:
-        - Favourites
+      operationId: apiV1FavouritesGET
       parameters:
-        - name: page
-          in: query
-          schema: 
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 10 
+      - explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          type: integer
+        style: form
       responses:
-        '200':
-          description: Успешный ответ со списком избранных анекдотов
+        "200":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AnekdotList"
-        '400':
-          description: Некорректные параметры пагинации
+          description: Успешный ответ со списком избранных анекдотов
+        "400":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '401':
+          description: Некоррекнтые параметры пагинации
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
           description: Не авторизован
+        "403":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '403':
           description: Нет прав
+        "503":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '503':
           description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    post:
-      summary: Добавление анекдота в избранное по id
       security:
-        - bearerAuth: []
+      - bearerAuth: []
+      summary: Получение списка избранных анекдотов
       tags:
-        - Favourites
+      - Favourites
+      x-eov-operation-handler: controllers/FavouritesController
+    post:
+      operationId: apiV1FavouritesPOST
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/AddToFavouritesRequest"
+        required: true
       responses:
-        '201':
-          description: Анекдот успешно добавлен
+        "201":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Anekdot"
-        '401':
+          description: Анекдот успешно добавлен
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
           description: Не авторизован
+        "403":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '403':
           description: Нет прав
+        "404":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '404':
           description: Анекдот не найден
+        "409":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '409':
           description: Анекдот уже находится в избранном
+        "503":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '503':
           description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      security:
+      - bearerAuth: []
+      summary: Добавление анекдота в избранное по id
+      tags:
+      - Favourites
+      x-eov-operation-handler: controllers/FavouritesController
   /api/v1/favourites/{id}:
     delete:
-      summary: Удаление анекдота из избранного по id
-      security:
-        - bearerAuth: []
-      tags: 
-        - Favourites
+      operationId: apiV1FavouritesIdDELETE
       parameters:
-        - name: id
-          description: Идентификатор анекдота
-          in: path
-          required: true
-          schema: 
-            type: integer
+      - description: Идентификатор анекдота
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
       responses:
-        '204':
+        "204":
           description: Анекдот успешно удалён из избранного
-        '401':
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
           description: Не авторизован
+        "403":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '403':
           description: Нет прав
+        "404":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '404':
           description: Анекдот не найден
+        "503":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '503':
           description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      security:
+      - bearerAuth: []
+      summary: Удаление анекдота из избранного по id
+      tags:
+      - Favourites
+      x-eov-operation-handler: controllers/FavouritesController
   /api/v1/register:
     post:
-      summary: Регистрация пользователя
-      tags:
-        - Auth
+      operationId: apiV1RegisterPOST
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/RegistrationRequest"
+        required: true
       responses:
-        '201':
-          description: Успешная регистрация
+        "201":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Person"
-        '400':
-          description: Некорректный формат логина, пароля, имени или роли
+          description: Успешная регистрация
+        "400":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '409':
+          description: "Некорректный формат логина, пароля, имени или роли"
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
           description: Логин или имя заняты
+        "503":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '503':
           description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      summary: Регистрация пользователя
+      tags:
+      - Auth
+      x-eov-operation-handler: controllers/AuthController
   /api/v1/login:
     post:
-      summary: Вход в аккаунт
-      tags:
-        - Auth
+      operationId: apiV1LoginPOST
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/LoginRequest"
+        required: true
       responses:
-        '200':
-          description: Успешный вход
+        "200":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Person"
-        '400':
-          description: Некорректный формат логина, пароля, имени или роли
+          description: Успешный вход
+        "400":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '401':
+          description: "Некорректный формат логина, пароля, имени или роли"
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
           description: Неверный логин или пароль
+        "503":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '503':
           description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      summary: Вход в аккаунт
+      tags:
+      - Auth
+      x-eov-operation-handler: controllers/AuthController
   /api/v1/anekdots:
     post:
-      summary: Загрузка нового анекдота
-      security:
-        - bearerAuth: []
-      tags:
-        - Anekdot
+      operationId: apiV1AnekdotsPOST
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateAnekdotRequest"
+        required: true
       responses:
-        '201':
-          description: Анекдот успешно создан
+        "201":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Anekdot"
-        '401':
+          description: Анекдот успешно создан
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
           description: Не авторизован
+        "403":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '403':
           description: Нет прав
+        "503":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '503':
           description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+      security:
+      - bearerAuth: []
+      summary: Загрузка нового анекдота
+      tags:
+      - Anekdot
+      x-eov-operation-handler: controllers/AnekdotController
   /api/v1/anekdots/{id}:
     delete:
-      summary: Удаление анекдота по id
-      security:
-        - bearerAuth: []
-      tags:
-        - Anekdot
+      operationId: apiV1AnekdotsIdDELETE
       parameters:
-        - name: id
-          description: Идентификатор анекдота
-          in: path
-          required: true
-          schema: 
-            type: integer
-      responses:
-        '204':
-          description: Анекдот успешно удален
-        '400':
-          description: Неверный идентификатор
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        '401':
-          description: Не авторизован
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        '403':
-          description: Нет прав
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        '404':
-          description: Анекдот не найден
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        '503':
-          description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    put:
-      summary: Редактирование анекдота по id
-      security:
-        - bearerAuth: []
-      tags:
-        - Anekdot
-      parameters:
-        - name: id
-          description: Идентификатор анекдота
-          in: path
-          required: true
-          schema: 
-            type: integer
-            minimum: 1
-            example: 123
-      requestBody:
+      - description: Идентификатор анекдота
+        explode: false
+        in: path
+        name: id
         required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: Анекдот успешно удален
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Неверный идентификатор
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Не авторизован
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Нет прав
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Анекдот не найден
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Разорвано соединение с БД
+      security:
+      - bearerAuth: []
+      summary: Удаление анекдота по id
+      tags:
+      - Anekdot
+      x-eov-operation-handler: controllers/AnekdotController
+    put:
+      operationId: apiV1AnekdotsIdPUT
+      parameters:
+      - description: Идентификатор анекдота
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: 123
+          minimum: 1
+          type: integer
+        style: simple
+      requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UpdateAnekdotRequest"
+        required: true
       responses:
-        '200':
-          description: Анекдот успешно обновлен
+        "200":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Anekdot"
-        '400':
+          description: Анекдот успешно обновлен
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
           description: Неверные данные
+        "401":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '401':
           description: Не авторизован
+        "403":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '403':
           description: Нет прав
+        "404":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '404':
           description: Анекдот не найден
+        "503":
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        '503':
           description: Разорвано соединение с БД
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      
-
+      security:
+      - bearerAuth: []
+      summary: Редактирование анекдота по id
+      tags:
+      - Anekdot
+      x-eov-operation-handler: controllers/AnekdotController
 components:
-  securitySchemes:
-      bearerAuth:
-        type: http
-        scheme: bearer
-        bearerFormat: JWT
-        description: JWT токен полученный при входе или регистрации
   schemas:
     Anekdot:
-      type: object
+      example:
+        lastModifiedDate: 2025-10-07 12:58:05.000000
+        hasBadWords: false
+        id: 1
+        text: Некая шутка
       properties:
         id:
-          type: integer
           example: 1
+          type: integer
         text:
+          example: Некая шутка
           type: string
-          example: "Некая шутка"
         hasBadWords:
-          type: boolean
-          description: Наличие в тексте анекдота ненормативной лексики
           default: false
+          description: Наличие в тексте анекдота ненормативной лексики
+          type: boolean
         lastModifiedDate:
+          example: 2025-10-07 12:58:05.000000
           type: string
-          example: "2025-10-07 12:58:05.000000"
       required:
-        - id
-        - text
-        - hasBadWords
-        - lastModifiedDate
+      - hasBadWords
+      - id
+      - lastModifiedDate
+      - text
     AnekdotList:
-      type: array
-      items: 
+      items:
         $ref: "#/components/schemas/Anekdot"
+      type: array
     Error:
-      type: object
-      required:
-        - code
-        - message
+      example:
+        code: 5
+        message: Логин занят
       properties:
         code:
-          type: integer
           example: 5
+          type: integer
         message:
+          example: Логин занят
           type: string
-          example: "Логин занят"
+      required:
+      - code
+      - message
     UserRole:
-      type: integer
-      enum:
-        - 0
-        - 1
-      example: 0
       description: |
         Роль пользователя:
         - 0 - USER
         - 1 - ADMIN
+      enum:
+      - 0
+      - 1
+      example: 0
+      type: integer
     Person:
-      required:
-        - token
-        - login
-        - name
-        - role
-      type: object
+      example:
+        role: 0
+        name: name
+        login: login
+        token: token
       properties:
         token:
-          type: string
           description: JWT токен для авторизации
+          type: string
         login:
           type: string
         name:
           type: string
         role:
           $ref: "#/components/schemas/UserRole"
+      required:
+      - login
+      - name
+      - role
+      - token
     RegistrationRequest:
-      type: object
-      required:
-        - login
-        - password
-        - name
-        - role
+      example:
+        password: secret123
+        role: 0
+        name: somename
+        login: user123
       properties:
         login:
-          type: string
+          example: user123
           maxLength: 10
-          example: "user123"
+          type: string
         password:
-          type: string
+          example: secret123
           maxLength: 10
-          example: "secret123"
+          type: string
         name:
-          type: string
+          example: somename
           maxLength: 10
-          example: "somename"
+          type: string
         role:
           $ref: "#/components/schemas/UserRole"
-    LoginRequest:
-      type: object
       required:
-        - login
-        - password
+      - login
+      - name
+      - password
+      - role
+    LoginRequest:
+      example:
+        password: secret123
+        login: user123
       properties:
         login:
-          type: string
+          example: user123
           maxLength: 10
-          example: "user123"
+          type: string
         password:
-          type: string
+          example: secret123
           maxLength: 10
-          example: "secret123"
-    AddToFavouritesRequest:
-      type: object
+          type: string
       required:
-        - anekdot_id
+      - login
+      - password
+    AddToFavouritesRequest:
+      example:
+        anekdot_id: 123
       properties:
         anekdot_id:
-          type: number
-          maxLength: 10
           example: 123
-    CreateAnekdotRequest:
-      type: object
+          maxLength: 10
+          type: number
       required:
-        - text
+      - anekdot_id
+    CreateAnekdotRequest:
+      example:
+        text: text
       properties:
         text:
-          type: string
           description: Текст анекдота или URL для парсинга
           minLength: 1
-          examples: 
-            - "Текст загружаемого анекдота"
-            - "https://www.anekdot.ru/id/1551260/"
-    UpdateAnekdotRequest:
-      type: object
+          type: string
       required:
-        - text
+      - text
+    UpdateAnekdotRequest:
+      example:
+        text: Некий обновлённый текст анекдота
       properties:
         text:
-          type: string
           description: Новый текст анекдота
+          example: Некий обновлённый текст анекдота
           minLength: 1
-          example: "Некий обновлённый текст анекдота"
+          type: string
+      required:
+      - text
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      description: JWT токен полученный при входе или регистрации
+      scheme: bearer
+      type: http
