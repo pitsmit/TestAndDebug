@@ -34,8 +34,32 @@ export class AuthenticationError extends AppError {
     }
 }
 
+export class BadTokenError extends AppError {
+    constructor() {
+        super('Не валидный токен', 401, 'UNAUTHORIZED');
+    }
+}
+
 export class PermissionError extends AppError {
     constructor() {
         super('Нет прав', 403, 'FORBIDDEN');
+    }
+}
+
+export class CredentialsError extends AppError {
+    constructor() {
+        super('Неверный логин или пароль', 401, 'FORBIDDEN');
+    }
+}
+
+export class CredentialsFormatError extends AppError {
+    constructor() {
+        super('Некорректный формат логина, пароля, имени или роли', 400, 'BAD_CREDENTIALS');
+    }
+}
+
+export class BusyCredentialsError extends AppError {
+    constructor() {
+        super('Логин или имя заняты', 409, 'BUSY_CREDENTIALS');
     }
 }

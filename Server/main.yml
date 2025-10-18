@@ -453,7 +453,6 @@ components:
     Person:
       required:
         - token
-        - login
         - name
         - role
       type: object
@@ -461,8 +460,6 @@ components:
         token:
           type: string
           description: JWT токен для авторизации
-        login:
-          type: string
         name:
           type: string
         role:

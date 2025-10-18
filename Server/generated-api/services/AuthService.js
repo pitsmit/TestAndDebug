@@ -1,44 +1,51 @@
-/* eslint-disable no-unused-vars */
 const Service = require('./Service');
 
 /**
 * Вход в аккаунт
-*
-* loginRequest LoginRequest 
-* returns Person
 * */
-const apiV1LoginPOST = ({ loginRequest }) => new Promise(
-  async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        loginRequest,
-      }));
-    } catch (e) {
-      reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
-      ));
+const apiV1LoginPOST = (request) => new Promise(
+    async (resolve, reject) => {
+        try {
+            const { login, password } = request.body;
+
+            const { Facade } = require('../../dist/Facade/Facade');
+            const { EntryCommand } = require('../../dist/UI/Commands/AuthCommands');
+            const facade = new Facade();
+            const command = new EntryCommand(login, password);
+            await facade.execute(command);
+            const user = command.person;
+
+            resolve(Service.successResponse({
+                user
+            }, 200));
+
+        } catch (error) {
+            reject(error);
+        }
     }
-  },
 );
 /**
 * Регистрация пользователя
-*
-* registrationRequest RegistrationRequest 
-* returns Person
 * */
-const apiV1RegisterPOST = ({ registrationRequest }) => new Promise(
+const apiV1RegisterPOST = (request) => new Promise(
   async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        registrationRequest,
-      }));
-    } catch (e) {
-      reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
-      ));
-    }
+      try {
+          const { login, password, name, role } = request.body;
+
+          const { Facade } = require('../../dist/Facade/Facade');
+          const { RegistrateCommand } = require('../../dist/UI/Commands/AuthCommands');
+          const facade = new Facade();
+          const command = new RegistrateCommand(login, password, name, role);
+          await facade.execute(command);
+          const user = command.person;
+
+          resolve(Service.successResponse({
+              user
+          }, 201));
+
+      } catch (error) {
+          reject(error);
+      }
   },
 );
 

@@ -12,7 +12,7 @@ const config = {
         '^@Essences/(.*)$': '<rootDir>/src/Core/Essences/$1',
         '^@Repository/(.*)$': '<rootDir>/src/Repository/Implementations/$1',
         '^@IRepository/(.*)$': '<rootDir>/src/Repository/Interfaces/$1',
-        '^@shared/(.*)$': '<rootDir>/../shared/$1',
+        '^@shared/(.*)$': '<rootDir>/src/shared/$1',
         '^@/(.*)$': '<rootDir>/src/$1',
     },
     roots: ['<rootDir>/src'],

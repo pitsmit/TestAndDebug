@@ -7,14 +7,18 @@ import { IDBConfigProvider } from "@IRepository/IDBConfigProvider";
 import { IDBconnection } from "@IRepository/IDBconnection";
 import '@Facade/bindings'
 import { DBconnection } from "@Repository/DBconnection";
+import {IAuthService} from "../../Core/Services/jwt";
+import {ROLE} from "../../shared/types/roles";
 
 describe('Действия админа с анекдотами', () => {
     let adminmanager: IAdminManager;
     let testDBHelper = new TestDBHelper();
     let dbConnection: IDBconnection;
-    const token: string = "token";
+    let jwtservice: IAuthService;
+    let token: string;
 
     beforeAll(async () => {
+        process.env.JWT_SECRET = 'test_jwt_secret_for_testing';
         await testDBHelper.ensureTestDatabase();
 
         await container.unbind("IDBConfigProvider");
@@ -24,6 +28,8 @@ describe('Действия админа с анекдотами', () => {
 
         adminmanager = container.get<IAdminManager>("IAdminManager");
         dbConnection = container.get<IDBconnection>("IDBconnection");
+        jwtservice = container.get<IAuthService>("IAuthService");
+        token = jwtservice.generateToken(1, ROLE.ADMIN);
     });
 
     beforeEach(async () => {
@@ -37,6 +43,7 @@ describe('Действия админа с анекдотами', () => {
         if (dbConnection && dbConnection.pool) {
             await dbConnection.pool.end();
         }
+        delete process.env.JWT_SECRET;
     });
 
     test('Удаление анекдота', async () => {

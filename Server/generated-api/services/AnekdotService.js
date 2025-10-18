@@ -66,27 +66,14 @@ const apiV1AnekdotsPOST = (request) => new Promise(
             }
 
             const facade = new Facade();
-            const command = new LoadAnekdotCommand(token, createAnekdotRequest.text.trim());
+            const command = new LoadAnekdotCommand(token, createAnekdotRequest.text);
             await facade.execute(command);
 
             const createdAnekdot = command.anekdot;
 
-            if (!createdAnekdot) {
-                return reject(Service.rejectResponse(
-                    'Не удалось создать анекдот',
-                    500
-                ));
-            }
-
             resolve(Service.successResponse(createdAnekdot, 201));
-
         } catch (error) {
-            let status = error.statusCode || 500;
-            let message = error.message || 'Внутренняя ошибка сервера';
-
-            if (error.statusCode) {
-                reject(Service.rejectResponse(message, status));
-            }
+            reject(error);
         }
     },
 );

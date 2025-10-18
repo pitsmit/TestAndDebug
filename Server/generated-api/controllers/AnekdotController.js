@@ -17,13 +17,12 @@ const apiV1AnekdotsIdPUT = async (request, response) => {
 };
 
 const apiV1AnekdotsPOST = async (request, response) => {
-  // 💡 Передаем весь request object в сервис
   try {
     const result = await service.apiV1AnekdotsPOST(request);
     response.status(201).json(result);
   } catch (error) {
-    response.status(error.status || 500).json({
-      code: error.status || 500,
+    response.status(error.statusCode || 500).json({
+      code: error.statusCode || 500,
       message: error.message
     });
   }

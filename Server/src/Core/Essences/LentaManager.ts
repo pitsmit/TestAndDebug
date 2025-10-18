@@ -9,7 +9,7 @@ export interface ILentaManager {
 @injectable()
 export class LentaManager implements ILentaManager {
     constructor(
-        @inject("IAnekdotRepository") protected _anekdotRepository: IAnekdotRepository
+        @inject("IAnekdotRepository") private _anekdotRepository: IAnekdotRepository
     ) {}
 
     async ShowLenta(page: number, limit: number = 10): Promise<Anekdot[]> {

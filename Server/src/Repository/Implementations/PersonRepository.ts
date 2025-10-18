@@ -3,6 +3,7 @@ import {PoolClient, QueryResult} from "pg";
 import {inject} from "inversify";
 import {logger} from "@Core/Services/logger";
 import {IPersonRepository} from "@IRepository/IPersonRepository";
+import {BusyCredentialsError, CredentialsError, CredentialsFormatError} from "@Essences/Errors";
 
 export class PersonRepository implements IPersonRepository {
     constructor(
@@ -17,7 +18,10 @@ export class PersonRepository implements IPersonRepository {
         try {
             const query = `SELECT * FROM actor WHERE login = $1`
             result = await client.query(query, [login]);
-        } finally {
+        } catch (error) {
+            throw new CredentialsFormatError();
+        }
+        finally {
             client.release();
         }
 
@@ -28,12 +32,12 @@ export class PersonRepository implements IPersonRepository {
             }
             const msg = `Неверный пароль`;
             logger.error(msg);
-            throw new Error(msg);
+            throw new CredentialsError();
         }
 
         const msg = `Пользователь с логином ${login} не найден`;
         logger.error(msg);
-        throw new Error(msg);
+        throw new CredentialsError();
     }
 
     async create(login: string, password: string, name: string, role: number): Promise<number> {
@@ -44,6 +48,8 @@ export class PersonRepository implements IPersonRepository {
             const result = await client.query(insertQuery, [login, password, name, role]);
 
             return result.rows[0].id;
+        } catch (error) {
+            throw new BusyCredentialsError();
         } finally {
             client.release();
         }

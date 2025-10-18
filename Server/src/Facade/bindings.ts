@@ -13,7 +13,7 @@ import { AnekdotRuParser, AnekdotovStreetParser, ISiteParser } from '@Core/Servi
 import {LentaManager} from "@Core/Essences/LentaManager";
 import { DBConfigProvider } from '@Repository/DBConfigProvider';
 import { IDBConfigProvider } from '@IRepository/IDBConfigProvider';
-import { AnekdotFactory} from "@Services/anekdotfactory";
+import { AnekdotPropertiesExtractor} from "@Services/anekdotPropertiesExtractor";
 
 container.bind<IDBConfigProvider>("IDBConfigProvider").to(DBConfigProvider).inSingletonScope();
 container.bind("IDBconnection").to(DBconnection).inSingletonScope();
@@ -29,7 +29,7 @@ container.bind("IAdminManager").to(AdminManager).inSingletonScope();
 container.bind("IUserManager").to(UserManager).inSingletonScope();
 container.bind("ILentaManager").to(LentaManager).inSingletonScope();
 
-container.bind(AnekdotFactory).toSelf().inSingletonScope();
+container.bind(AnekdotPropertiesExtractor).toSelf().inSingletonScope();
 
 const parsers = [AnekdotRuParser, AnekdotovStreetParser];
 for (const parser of parsers) {

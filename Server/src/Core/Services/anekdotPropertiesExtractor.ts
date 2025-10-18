@@ -1,12 +1,11 @@
 import {HTMLLoader} from "@Services/HTMLLoader";
-import {Anekdot} from "@Core/Essences/anekdot";
 import {inject, injectable, multiInject} from "inversify";
 import {ISiteParser} from "@Services/parsers";
 import {logger} from "@Services/logger";
 import {INonStandartLexicRepository} from "@IRepository/INonStandartLexicRepository";
 
 @injectable()
-export class AnekdotFactory {
+export class AnekdotPropertiesExtractor {
     constructor(
         @inject("INonStandartLexicRepository")
         private _lexicRepo: INonStandartLexicRepository,
@@ -14,11 +13,13 @@ export class AnekdotFactory {
         private parsers: ISiteParser[] = []
     ) {}
 
-    private async createFromText(text: string): Promise<Anekdot> {
-        return new Anekdot(text, await this._lexicRepo.containsBadWords(text));
+    private async createFromText(text: string): Promise<{ text: string, hasBadWords: boolean, lastModifiedDate: Date }> {
+        const hasBadWords: boolean = await this._lexicRepo.containsBadWords(text);
+        const lastModifiedDate: Date = new Date();
+        return {text, hasBadWords, lastModifiedDate};
     }
 
-    private async createFromUrl(url: string): Promise<Anekdot> {
+    private async createFromUrl(url: string): Promise<{ text: string, hasBadWords: boolean, lastModifiedDate: Date }> {
         const html = await new HTMLLoader().getHTML(url);
         const parser = this.parsers.find(p => url.includes(p.url));
 
@@ -31,7 +32,7 @@ export class AnekdotFactory {
         return this.createFromText(parser.parse(html));
     }
 
-    async create(data: string): Promise<Anekdot> {
+    async extract(data: string): Promise<{ text: string, hasBadWords: boolean, lastModifiedDate: Date }> {
         try {
             new URL(data);
             return await this.createFromUrl(data);
