@@ -1,20 +1,12 @@
 import 'dotenv/config';
-import { ConsoleApp } from './console-app';
-
-const isApiMode = process.env.APP_MODE === 'api' || process.argv.includes('--api');
+import { ConsoleApp } from '@TechUI/console-app';
 
 async function bootstrap(): Promise<void> {
     try {
-        console.log('🚀 Starting application...');
-        console.log(`📋 Mode: ${isApiMode ? 'API' : 'Console'}`);
-
-        if (isApiMode) {
-        } else {
-            console.log('🔧 Initializing Console App...');
-            const consoleApp = new ConsoleApp();
-            await consoleApp.start();
-            console.log('✅ Console App started successfully');
-        }
+        console.log('🔧 Initializing Console App...');
+        const consoleApp = new ConsoleApp();
+        await consoleApp.start();
+        console.log('✅ Console App started successfully');
     } catch (error) {
         console.error('❌ Failed to start application:', error);
         process.exit(1);

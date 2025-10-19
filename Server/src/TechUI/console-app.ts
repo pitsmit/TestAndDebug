@@ -1,5 +1,5 @@
 import { Person } from "@Core/Essences/person";
-import { VisitorExperience } from "@/UI/TechUI/Experience";
+import { VisitorExperience } from "@/TechUI/Experience";
 import { Facade } from "@Facade/Facade";
 import {ROLE} from "@shared/types/roles";
 

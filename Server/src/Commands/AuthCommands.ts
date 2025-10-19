@@ -1,4 +1,4 @@
-import {Command} from "@UICommands/BaseCommand";
+import {Command} from "@Commands/BaseCommand";
 import {Person} from "@Core/Essences/person";
 import {logger} from "@Core/Services/logger";
 

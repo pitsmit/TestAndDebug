@@ -7,7 +7,7 @@ const apiV1FavouritesGET = (request) => new Promise(
   async (resolve, reject) => {
       try {
           const { Facade } = require('../../dist/Facade/Facade');
-          const { ShowFavouritesCommand } = require('../../dist/UI/Commands/UserCommands');
+          const { ShowFavouritesCommand } = require('../../dist/Commands/UserCommands');
 
           const token = request.headers?.authorization?.replace('Bearer ', '') || null;
           const page = request.query?.page;
@@ -30,7 +30,7 @@ const apiV1FavouritesIdDELETE = (request) => new Promise(
   async (resolve, reject) => {
       try {
           const { Facade } = require('../../dist/Facade/Facade');
-          const { DeleteFromFavouritesCommand } = require('../../dist/UI/Commands/UserCommands');
+          const { DeleteFromFavouritesCommand } = require('../../dist/Commands/UserCommands');
 
           const token = request.headers?.authorization?.replace('Bearer ', '') || null;
           const anekdot_id = request.params.id;
@@ -52,7 +52,7 @@ const apiV1FavouritesPOST = (request) => new Promise(
   async (resolve, reject) => {
       try {
           const { Facade } = require('../../dist/Facade/Facade');
-          const { AddToFavouritesCommand } = require('../../dist/UI/Commands/UserCommands');
+          const { AddToFavouritesCommand } = require('../../dist/Commands/UserCommands');
 
           const token = request.headers?.authorization?.replace('Bearer ', '') || null;
           const id = request.body?.anekdot_id;

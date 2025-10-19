@@ -7,7 +7,7 @@ const apiV1AnekdotsIdDELETE = (request) => new Promise(
     async (resolve, reject) => {
         try {
             const { Facade } = require('../../dist/Facade/Facade');
-            const { DeleteAnekdotCommand } = require('../../dist/UI/Commands/AdminCommands');
+            const { DeleteAnekdotCommand } = require('../../dist/Commands/AdminCommands');
 
             const token = request.headers?.authorization?.replace('Bearer ', '') || null;
             const id = request.params.id;
@@ -33,7 +33,7 @@ const apiV1AnekdotsIdPUT = (request) => new Promise(
   async (resolve, reject) => {
       try {
           const { Facade } = require('../../dist/Facade/Facade');
-          const { EditAnekdotCommand } = require('../../dist/UI/Commands/AdminCommands');
+          const { EditAnekdotCommand } = require('../../dist/Commands/AdminCommands');
 
           const token = request.headers?.authorization?.replace('Bearer ', '') || null;
           const id = request.params.id;
@@ -56,7 +56,7 @@ const apiV1AnekdotsPOST = (request) => new Promise(
     async (resolve, reject) => {
         try {
             const { Facade } = require('../../dist/Facade/Facade');
-            const { LoadAnekdotCommand } = require('../../dist/UI/Commands/AdminCommands');
+            const { LoadAnekdotCommand } = require('../../dist/Commands/AdminCommands');
 
             const anekdot_text = request.body.text;
             const token = request.headers?.authorization?.replace('Bearer ', '') || null;

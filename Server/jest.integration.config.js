@@ -6,7 +6,7 @@ const config = {
     testEnvironment: "allure-jest/node",
     moduleNameMapper: {
         '^@Facade/(.*)$': '<rootDir>/src/Facade/$1',
-        '^@UICommands/(.*)$': '<rootDir>/src/UI/Commands/$1',
+        '^@Commands/(.*)$': '<rootDir>/src/Commands/$1',
         '^@Core/(.*)$': '<rootDir>/src/Core/$1',
         '^@Services/(.*)$': '<rootDir>/src/Core/Services/$1',
         '^@Essences/(.*)$': '<rootDir>/src/Core/Essences/$1',

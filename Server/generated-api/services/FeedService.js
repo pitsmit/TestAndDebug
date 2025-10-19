@@ -4,7 +4,7 @@ const apiV1FeedGET = ({ page, limit }) => new Promise(
     async (resolve, reject) => {
         try {
             const { Facade } = require('../../dist/Facade/Facade');
-            const { ShowLentaCommand } = require('../../dist/UI/Commands/LentaCommands');
+            const { ShowLentaCommand } = require('../../dist/Commands/LentaCommands');
 
             const facade = new Facade();
             const command = new ShowLentaCommand(page, limit);

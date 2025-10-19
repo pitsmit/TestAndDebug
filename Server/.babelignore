@@ -3,3 +3,5 @@ dist/
 **/*.test.ts
 **/*.spec.ts
 src/__tests__/
+src/TechUI
+src/index.ts

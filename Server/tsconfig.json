@@ -20,9 +20,8 @@
       "@Services/*": ["./Core/Services/*"],
       "@Essences/*": ["./Core/Essences/*"],
       "@Core/*": ["./Core/*"],
-      "@UI/*": ["./UI/*"],
-      "@UICommands/*": ["./UI/Commands/*"],
-      "@TechUI/*": ["./UI/TechUI/*"],
+      "@Commands/*": ["./Commands/*"],
+      "@TechUI/*": ["./TechUI/*"],
       "@shared/*": ["./shared/*"]
     }
   },

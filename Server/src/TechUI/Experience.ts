@@ -1,16 +1,16 @@
 import {ShowAdminCasesCommand, ShowClientCasesCommand, ShowVisitorCasesCommand} from "@TechUI/ShowCasesCommands";
 import {Facade} from "@Facade/Facade";
 import {Person} from "@Core/Essences/person";
-import {Command} from "@UICommands/BaseCommand";
+import {Command} from "@Commands/BaseCommand";
 import {input} from "@TechUI/iostream";
-import {RegistrateCommand, EntryCommand} from "@UICommands/AuthCommands";
-import {ExitCommand} from "@UICommands/ExitCommand";
-import {ShowLentaCommand} from "@UICommands/LentaCommands";
-import {AddToFavouritesCommand, DeleteFromFavouritesCommand, ShowFavouritesCommand} from "@UICommands/UserCommands";
-import {DeleteAnekdotCommand, EditAnekdotCommand, LoadAnekdotCommand} from "@UICommands/AdminCommands";
+import {RegistrateCommand, EntryCommand} from "@Commands/AuthCommands";
+import {ShowLentaCommand} from "@Commands/LentaCommands";
+import {AddToFavouritesCommand, DeleteFromFavouritesCommand, ShowFavouritesCommand} from "@Commands/UserCommands";
+import {DeleteAnekdotCommand, EditAnekdotCommand, LoadAnekdotCommand} from "@Commands/AdminCommands";
 import {ShowTable} from "@TechUI/ShowTable";
-import {logger} from "@Core/Services/logger";
 import {ROLE} from "@shared/types/roles";
+import {logger} from "@Services/logger";
+import process from "node:process";
 
 export abstract class Experience {
     protected get person(): Person {
@@ -67,8 +67,8 @@ export class AdminExperience extends Experience {
             try {
                 switch (caseNum) {
                     case 0:
-                        command = new ExitCommand();
-                        await this.facade.execute(command);
+                        logger.info("Завершение работы");
+                        process.exit(0);
                         break;
                     case 1:
                         const data: string = await input("Введите ссылку или вставьте текст: ");
@@ -116,8 +116,8 @@ export class ClientExperience extends Experience {
             try {
                 switch (caseNum) {
                     case 0:
-                        command = new ExitCommand();
-                        await this.facade.execute(command);
+                        logger.info("Завершение работы");
+                        process.exit(0);
                         break;
                     case 1:
                         command = new AddToFavouritesCommand(this.person.token, await this.input_anekdot_id());
@@ -162,7 +162,6 @@ export class ClientExperience extends Experience {
 
 export class VisitorExperience extends Experience {
     constructor(facade: Facade, person: Person) {
-        logger.info('Режим посетителя');
         super(facade, person);
     }
 
@@ -200,8 +199,8 @@ export class VisitorExperience extends Experience {
             try {
                 switch (caseNum) {
                     case 0:
-                        command = new ExitCommand();
-                        await this.facade.execute(command);
+                        logger.info("Завершение работы");
+                        process.exit(0);
                         break;
                     case 1:
                         await this.ShowLenta();

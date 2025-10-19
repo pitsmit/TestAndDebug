@@ -1,6 +1,4 @@
-import {IAnekdot} from "@shared/types/anekdot";
-
-export class Anekdot implements IAnekdot {
+export class Anekdot {
     constructor(
         readonly text: string,
         readonly hasBadWords: boolean,

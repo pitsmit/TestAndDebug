@@ -8,7 +8,7 @@ module.exports = {
     moduleNameMapping: {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^@Facade/(.*)$': '<rootDir>/src/Facade/$1',
-        '^@UICommands/(.*)$': '<rootDir>/src/UI/Commands/$1',
+        '^@Commands/(.*)$': '<rootDir>/src/Commands/$1',
         '^@Essences/(.*)$': '<rootDir>/src/Core/Essences/$1',
         '^@Repository/(.*)$': '<rootDir>/src/Repository/Implementations/$1',
         '^@IRepository/(.*)$': '<rootDir>/src/Repository/Interfaces/$1',

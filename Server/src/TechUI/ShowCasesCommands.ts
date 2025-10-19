@@ -1,4 +1,4 @@
-import {Command} from "@UICommands/BaseCommand";
+import {Command} from "@Commands/BaseCommand";
 import {ShowTable} from "@TechUI/ShowTable";
 
 class CaseLine {

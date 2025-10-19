@@ -2,7 +2,7 @@ import "reflect-metadata";
 import {IAdminManager} from "@Core/Essences/AdminManager";
 import {ILentaManager} from "@Core/Essences/LentaManager";
 import {IUserManager} from "@Core/Essences/UserManager";
-import {Command} from "@UICommands/BaseCommand";
+import {Command} from "@Commands/BaseCommand";
 import {IPersonFabric} from "@Core/Services/personfabric";
 import {container} from "@Facade/container";
 import '@Facade/bindings'

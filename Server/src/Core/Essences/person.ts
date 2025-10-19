@@ -1,6 +1,4 @@
-import {IPerson} from "@shared/types/person";
-
-export class Person implements IPerson {
+export class Person {
     constructor(
         readonly token: string,
         readonly name: string,

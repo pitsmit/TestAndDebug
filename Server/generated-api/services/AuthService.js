@@ -9,7 +9,7 @@ const apiV1LoginPOST = (request) => new Promise(
             const { login, password } = request.body;
 
             const { Facade } = require('../../dist/Facade/Facade');
-            const { EntryCommand } = require('../../dist/UI/Commands/AuthCommands');
+            const { EntryCommand } = require('../../dist/Commands/AuthCommands');
             const facade = new Facade();
             const command = new EntryCommand(login, password);
             await facade.execute(command);
@@ -33,7 +33,7 @@ const apiV1RegisterPOST = (request) => new Promise(
           const { login, password, name, role } = request.body;
 
           const { Facade } = require('../../dist/Facade/Facade');
-          const { RegistrateCommand } = require('../../dist/UI/Commands/AuthCommands');
+          const { RegistrateCommand } = require('../../dist/Commands/AuthCommands');
           const facade = new Facade();
           const command = new RegistrateCommand(login, password, name, role);
           await facade.execute(command);
