@@ -9,11 +9,13 @@ export class UserManagerCommand extends Command {
 }
 
 export class AddToFavouritesCommand extends UserManagerCommand {
+    anekdot!: Anekdot;
+
     constructor(token: string, private readonly _anekdot_id: number) {
         super(token);
     }
     async execute() : Promise<void> {
-        await this._UserManager.AddToFavourites(this._token, this._anekdot_id);
+        this.anekdot = await this._UserManager.AddToFavourites(this._token, this._anekdot_id);
         logger.info('Добавление анекдота в избранное');
     }
 }

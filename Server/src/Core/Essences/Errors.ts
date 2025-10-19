@@ -63,3 +63,21 @@ export class BusyCredentialsError extends AppError {
         super('Логин или имя заняты', 409, 'BUSY_CREDENTIALS');
     }
 }
+
+export class WrongIDError extends AppError {
+    constructor() {
+        super('Неверный идентификатор', 400, 'BAD_ID');
+    }
+}
+
+export class NOAnekdotError extends AppError {
+    constructor() {
+        super('Анекдот не найден', 404, 'NO_ANEKDOT');
+    }
+}
+
+export class AnekdotInFavouritesError extends AppError {
+    constructor() {
+        super('Анекдот уже в избранном', 409, 'ANEKDOT_IN_FAVORITES');
+    }
+}

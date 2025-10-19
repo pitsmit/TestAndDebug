@@ -3,6 +3,7 @@ import {IUserFavouritesRepository} from "@IRepository/IUserFavouritesRepository"
 import {IDBconnection} from "@IRepository/IDBconnection";
 import {Anekdot} from "@Core/Essences/anekdot";
 import {PoolClient, QueryResult} from "pg";
+import {AnekdotInFavouritesError, NOAnekdotError, PaginationError} from "@Essences/Errors";
 
 @injectable()
 export class UserFavouritesRepository implements IUserFavouritesRepository {
@@ -10,14 +11,20 @@ export class UserFavouritesRepository implements IUserFavouritesRepository {
         @inject("IDBconnection") private DB: IDBconnection,
     ) {}
 
-    async add(user_id: number, anekdot_id: number) : Promise<void> {
+    async add(user_id: number, anekdot_id: number) : Promise<{content: string, hasBadWords: boolean, lastModifiedDate: Date}> {
         let client: PoolClient = await this.DB.connect();
 
         try {
-            const query = `INSERT INTO favourites (userid, anekdotid)
-                       VALUES ($1, $2)`;
+            const res = await client.query(`SELECT content, hasbadwords, loaddate from anekdot WHERE  id = $1`, [anekdot_id]);
+            if (!res.rowCount) throw new NOAnekdotError();
 
-            await client.query(query, [user_id, anekdot_id]);
+            try {
+                await client.query(`INSERT INTO favourites (userid, anekdotid) VALUES ($1, $2)`, [user_id, anekdot_id]);
+            } catch (e) {
+                throw new AnekdotInFavouritesError()
+            }
+
+            return {content: res.rows[0].content, hasBadWords: res.rows[0].hasbadwords, lastModifiedDate: res.rows[0].loaddate};
         } finally {
             client.release();
         }
@@ -27,6 +34,9 @@ export class UserFavouritesRepository implements IUserFavouritesRepository {
         let client: PoolClient = await this.DB.connect();
 
         try {
+            const countResult = await client.query(`SELECT * from anekdot WHERE id = $1`, [anekdot_id]);
+            if (!countResult.rowCount) throw new NOAnekdotError();
+
             const query = `
             DELETE FROM favourites
             WHERE userid = $1 AND anekdotid = $2`;
@@ -39,10 +49,19 @@ export class UserFavouritesRepository implements IUserFavouritesRepository {
     }
 
     async get_part(user_id: number, page: number = 1, limit: number = 10): Promise<Anekdot[]> {
+        if (page < 1 || limit < 1) throw new PaginationError();
         let client: PoolClient = await this.DB.connect();
 
         try {
             const offset: number = (page - 1) * limit;
+
+            const countResult = await client.query(`SELECT COUNT(*) FROM favourites WHERE userid = $1`, [user_id]);
+            const totalCount = parseInt(countResult.rows[0].count);
+            const totalPages = Math.ceil(totalCount / limit);
+
+            if (page > totalPages && totalPages > 0) {
+                throw new PaginationError();
+            }
 
             const query = `
                 SELECT a.id, a.content, a.hasbadwords, a.loaddate

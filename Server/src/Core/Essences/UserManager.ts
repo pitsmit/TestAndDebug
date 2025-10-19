@@ -5,7 +5,7 @@ import {IAuthService} from "@Services/jwt";
 import {ROLE} from "@shared/types/roles";
 
 export interface IUserManager {
-    AddToFavourites(token: string, anekdot_id: number): Promise<void>;
+    AddToFavourites(token: string, anekdot_id: number): Promise<Anekdot>;
     DeleteFromFavourites(token: string, anekdot_id: number): Promise<void>;
     ShowFavourites(token: string, page: number, limit?: number): Promise<Anekdot[]>;
 }
@@ -16,11 +16,12 @@ export class UserManager implements IUserManager {
                 @inject("IAuthService") private _authService: IAuthService) {
     };
 
-    async AddToFavourites(token: string, anekdot_id: number): Promise<void> {
+    async AddToFavourites(token: string, anekdot_id: number): Promise<Anekdot> {
         this._authService.checkRole(token, ROLE.USER);
 
         const {id} = this._authService.verifyToken(token);
-        await this._favouritesRepository.add(id, anekdot_id);
+        const {content, hasBadWords, lastModifiedDate} = await this._favouritesRepository.add(id, anekdot_id);
+        return new Anekdot(content, hasBadWords, lastModifiedDate, anekdot_id);
     }
 
     async DeleteFromFavourites(token: string, anekdot_id: number): Promise<void> {

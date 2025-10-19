@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const camelCase = require('camelcase');
 const config = require('../config');
-const logger = require('../logger');
 
 class Controller {
   static sendResponse(response, payload) {

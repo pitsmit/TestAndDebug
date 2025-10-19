@@ -1,23 +1,38 @@
-/**
- * The FavouritesController file is a very simple one, which does not need to be changed manually,
- * unless there's a case where business logic routes the request to an entity which is not
- * the service.
- * The heavy lifting of the Controller item is done in Request.js - that is where request
- * parameters are extracted and sent to the service, and where response is handled.
- */
-
-const Controller = require('./Controller');
 const service = require('../services/FavouritesService');
 const apiV1FavouritesGET = async (request, response) => {
-  await Controller.handleRequest(request, response, service.apiV1FavouritesGET);
+  try {
+    const result = await service.apiV1FavouritesGET(request);
+    response.status(200).json(result);
+  } catch (error) {
+    response.status(error.statusCode || 500).json({
+      code: error.statusCode || 500,
+      message: error.message
+    });
+  }
 };
 
 const apiV1FavouritesIdDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.apiV1FavouritesIdDELETE);
+  try {
+    const result = await service.apiV1FavouritesIdDELETE(request);
+    response.status(204).json(result);
+  } catch (error) {
+    response.status(error.statusCode || 500).json({
+      code: error.statusCode || 500,
+      message: error.message
+    });
+  }
 };
 
 const apiV1FavouritesPOST = async (request, response) => {
-  await Controller.handleRequest(request, response, service.apiV1FavouritesPOST);
+  try {
+    const result = await service.apiV1FavouritesPOST(request);
+    response.status(201).json(result);
+  } catch (error) {
+    response.status(error.statusCode || 500).json({
+      code: error.statusCode || 500,
+      message: error.message
+    });
+  }
 };
 
 

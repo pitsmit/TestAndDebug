@@ -6,14 +6,29 @@
  * parameters are extracted and sent to the service, and where response is handled.
  */
 
-const Controller = require('./Controller');
 const service = require('../services/AnekdotService');
 const apiV1AnekdotsIdDELETE = async (request, response) => {
-  await Controller.handleRequest(request, response, service.apiV1AnekdotsIdDELETE);
+  try {
+    const result = await service.apiV1AnekdotsIdDELETE(request);
+    response.status(204).json(result);
+  } catch (error) {
+    response.status(error.statusCode || 500).json({
+      code: error.statusCode || 500,
+      message: error.message
+    });
+  }
 };
 
 const apiV1AnekdotsIdPUT = async (request, response) => {
-  await Controller.handleRequest(request, response, service.apiV1AnekdotsIdPUT);
+  try {
+    const result = await service.apiV1AnekdotsIdPUT(request);
+    response.status(200).json(result);
+  } catch (error) {
+    response.status(error.statusCode || 500).json({
+      code: error.statusCode || 500,
+      message: error.message
+    });
+  }
 };
 
 const apiV1AnekdotsPOST = async (request, response) => {

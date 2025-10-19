@@ -24,13 +24,12 @@ create table nonstandartlexic
 alter table nonstandartlexic
     owner to postgres;
 
-create table favourites
+CREATE TABLE favourites
 (
-    id        serial
-        primary key,
-    userid    integer,
-    anekdotid integer
-        references anekdot
+    id        serial PRIMARY KEY,
+    userid    integer NOT NULL,
+    anekdotid integer NOT NULL REFERENCES anekdot(id),
+    UNIQUE (userid, anekdotid)
 );
 
 alter table favourites

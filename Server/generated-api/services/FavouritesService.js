@@ -1,66 +1,70 @@
-/* eslint-disable no-unused-vars */
 const Service = require('./Service');
 
 /**
 * Получение списка избранных анекдотов
-*
-* page Integer  (optional)
-* limit Integer  (optional)
-* returns List
 * */
-const apiV1FavouritesGET = ({ page, limit }) => new Promise(
+const apiV1FavouritesGET = (request) => new Promise(
   async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        page,
-        limit,
-      }));
-    } catch (e) {
-      reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
-      ));
-    }
+      try {
+          const { Facade } = require('../../dist/Facade/Facade');
+          const { ShowFavouritesCommand } = require('../../dist/UI/Commands/UserCommands');
+
+          const token = request.headers?.authorization?.replace('Bearer ', '') || null;
+          const page = request.query?.page;
+          const limit = request.query?.limit;
+
+          const facade = new Facade();
+          const command = new ShowFavouritesCommand(token, page, limit);
+          await facade.execute(command);
+
+          resolve(Service.successResponse(command._anekdots, 200));
+      } catch (error) {
+          reject(error);
+      }
   },
 );
 /**
 * Удаление анекдота из избранного по id
-*
-* id Integer Идентификатор анекдота
-* no response value expected for this operation
 * */
-const apiV1FavouritesIdDELETE = ({ id }) => new Promise(
+const apiV1FavouritesIdDELETE = (request) => new Promise(
   async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        id,
-      }));
-    } catch (e) {
-      reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
-      ));
-    }
+      try {
+          const { Facade } = require('../../dist/Facade/Facade');
+          const { DeleteFromFavouritesCommand } = require('../../dist/UI/Commands/UserCommands');
+
+          const token = request.headers?.authorization?.replace('Bearer ', '') || null;
+          const anekdot_id = request.params.id;
+
+          const facade = new Facade();
+          const command = new DeleteFromFavouritesCommand(token, anekdot_id);
+          await facade.execute(command);
+
+          resolve(Service.successResponse(command._anekdots, 204));
+      } catch (error) {
+          reject(error);
+      }
   },
 );
 /**
 * Добавление анекдота в избранное по id
-*
-* addToFavouritesRequest AddToFavouritesRequest 
-* returns Anekdot
 * */
-const apiV1FavouritesPOST = ({ addToFavouritesRequest }) => new Promise(
+const apiV1FavouritesPOST = (request) => new Promise(
   async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        addToFavouritesRequest,
-      }));
-    } catch (e) {
-      reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
-      ));
-    }
+      try {
+          const { Facade } = require('../../dist/Facade/Facade');
+          const { AddToFavouritesCommand } = require('../../dist/UI/Commands/UserCommands');
+
+          const token = request.headers?.authorization?.replace('Bearer ', '') || null;
+          const id = request.body?.anekdot_id;
+
+          const facade = new Facade();
+          const command = new AddToFavouritesCommand(token, id);
+          await facade.execute(command);
+
+          resolve(Service.successResponse(command.anekdot, 201));
+      } catch (error) {
+          reject(error);
+      }
   },
 );
 

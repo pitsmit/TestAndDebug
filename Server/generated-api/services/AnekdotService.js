@@ -1,25 +1,26 @@
-/* eslint-disable no-unused-vars */
 const Service = require('./Service');
 
 /**
 * Удаление анекдота по id
-*
-* id Integer Идентификатор анекдота
-* no response value expected for this operation
 * */
-const apiV1AnekdotsIdDELETE = ({ id }) => new Promise(
-  async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        id,
-      }));
-    } catch (e) {
-      reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
-      ));
-    }
-  },
+const apiV1AnekdotsIdDELETE = (request) => new Promise(
+    async (resolve, reject) => {
+        try {
+            const { Facade } = require('../../dist/Facade/Facade');
+            const { DeleteAnekdotCommand } = require('../../dist/UI/Commands/AdminCommands');
+
+            const token = request.headers?.authorization?.replace('Bearer ', '') || null;
+            const id = request.params.id;
+
+            const facade = new Facade();
+            const command = new DeleteAnekdotCommand(token, id);
+            await facade.execute(command);
+
+            resolve(Service.successResponse(null, 204));
+        } catch (error) {
+            reject(error);
+        }
+    },
 );
 /**
 * Редактирование анекдота по id
@@ -28,26 +29,28 @@ const apiV1AnekdotsIdDELETE = ({ id }) => new Promise(
 * updateAnekdotRequest UpdateAnekdotRequest 
 * returns Anekdot
 * */
-const apiV1AnekdotsIdPUT = ({ id, updateAnekdotRequest }) => new Promise(
+const apiV1AnekdotsIdPUT = (request) => new Promise(
   async (resolve, reject) => {
-    try {
-      resolve(Service.successResponse({
-        id,
-        updateAnekdotRequest,
-      }));
-    } catch (e) {
-      reject(Service.rejectResponse(
-        e.message || 'Invalid input',
-        e.status || 405,
-      ));
-    }
+      try {
+          const { Facade } = require('../../dist/Facade/Facade');
+          const { EditAnekdotCommand } = require('../../dist/UI/Commands/AdminCommands');
+
+          const token = request.headers?.authorization?.replace('Bearer ', '') || null;
+          const id = request.params.id;
+          const new_text = request.body.text;
+
+          const facade = new Facade();
+          const command = new EditAnekdotCommand(token, id, new_text);
+          await facade.execute(command);
+
+          resolve(Service.successResponse(command.anekdot, 200));
+      } catch (error) {
+          reject(error);
+      }
   },
 );
 /**
  * Загрузка нового анекдота
- *
- * createAnekdotRequest CreateAnekdotRequest
- * returns Anekdot
  * */
 const apiV1AnekdotsPOST = (request) => new Promise(
     async (resolve, reject) => {
@@ -55,23 +58,14 @@ const apiV1AnekdotsPOST = (request) => new Promise(
             const { Facade } = require('../../dist/Facade/Facade');
             const { LoadAnekdotCommand } = require('../../dist/UI/Commands/AdminCommands');
 
-            const createAnekdotRequest = request.body;
+            const anekdot_text = request.body.text;
             const token = request.headers?.authorization?.replace('Bearer ', '') || null;
 
-            if (!token) {
-                return reject(Service.rejectResponse(
-                    'Токен не предоставлен',
-                    401
-                ));
-            }
-
             const facade = new Facade();
-            const command = new LoadAnekdotCommand(token, createAnekdotRequest.text);
+            const command = new LoadAnekdotCommand(token, anekdot_text);
             await facade.execute(command);
 
-            const createdAnekdot = command.anekdot;
-
-            resolve(Service.successResponse(createdAnekdot, 201));
+            resolve(Service.successResponse(command.anekdot, 201));
         } catch (error) {
             reject(error);
         }

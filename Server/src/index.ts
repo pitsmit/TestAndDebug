@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { ApiServer } from './api-server';
 import { ConsoleApp } from './console-app';
 
 const isApiMode = process.env.APP_MODE === 'api' || process.argv.includes('--api');
@@ -10,10 +9,6 @@ async function bootstrap(): Promise<void> {
         console.log(`📋 Mode: ${isApiMode ? 'API' : 'Console'}`);
 
         if (isApiMode) {
-            console.log('🔧 Initializing API Server...');
-            const apiServer = new ApiServer(3000);
-            await apiServer.start();
-            console.log('✅ API Server started successfully');
         } else {
             console.log('🔧 Initializing Console App...');
             const consoleApp = new ConsoleApp();

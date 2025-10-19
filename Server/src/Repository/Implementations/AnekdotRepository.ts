@@ -4,7 +4,7 @@ import {inject, injectable} from "inversify";
 import {Anekdot} from "@Core/Essences/anekdot";
 import {IDBconnection} from "@IRepository/IDBconnection";
 import {logger} from "@Core/Services/logger";
-import {EmptyAnekdotError, PaginationError} from "@Essences/Errors";
+import {EmptyAnekdotError, NOAnekdotError, PaginationError, WrongIDError} from "@Essences/Errors";
 
 @injectable()
 export class AnekdotRepository implements IAnekdotRepository {
@@ -29,11 +29,13 @@ export class AnekdotRepository implements IAnekdotRepository {
     }
 
     async delete(id: number): Promise<void> {
+        if (id <= 0) throw new WrongIDError();
         let client: PoolClient = await this.DB.connect();
 
         try {
             await client.query('DELETE FROM Favourites WHERE AnekdotID = $1', [id]);
-            await client.query('DELETE FROM Anekdot WHERE ID = $1', [id]);
+            const result = await client.query('DELETE FROM Anekdot WHERE ID = $1', [id]);
+            if (result.rowCount == 0) throw new NOAnekdotError();
         } finally {
             client.release();
         }
@@ -59,11 +61,20 @@ export class AnekdotRepository implements IAnekdotRepository {
     }
 
     async edit(id: number, text: string, hasBadWords: boolean, lastModifiedDate: Date): Promise<void> {
+        if (!text.trim().length) {
+            const msg: string = `Попытка загрузки пустого анекдота`;
+            logger.warn(msg);
+            throw new EmptyAnekdotError();
+        }
+        if (id <= 0) throw new WrongIDError();
         let client: PoolClient = await this.DB.connect();
 
         try {
-            const query = `UPDATE Anekdot SET content = $1, loaddate = $2, hasbadwords = $3 WHERE id = $4`;
-            await client.query(query, [text, lastModifiedDate, hasBadWords, id]);
+            const result = await client.query(
+                `UPDATE Anekdot SET content = $1, loaddate = $2, hasbadwords = $3 WHERE id = $4`,
+                [text, lastModifiedDate, hasBadWords, id]
+            );
+            if (result.rowCount == 0) throw new NOAnekdotError();
         } finally {
             client.release();
         }

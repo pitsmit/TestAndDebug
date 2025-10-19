@@ -31,11 +31,13 @@ export class DeleteAnekdotCommand extends AdminCommand {
 }
 
 export class EditAnekdotCommand extends AdminCommand {
+    anekdot!: Anekdot;
+
     constructor(token: string, private readonly _id: number, private readonly _new_text: string) {
         super(token);
     }
     async execute() : Promise<void> {
-        await this._AdminManager.EditAnekdot(this._token, this._id, this._new_text);
+        this.anekdot = await this._AdminManager.EditAnekdot(this._token, this._id, this._new_text);
         logger.info('Редактирование анекдота');
     }
 }
