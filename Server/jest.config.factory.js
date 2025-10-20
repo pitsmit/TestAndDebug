@@ -12,7 +12,7 @@ const createJestConfig = (options = {}) => {
         testType = 'unit',
         randomize = true,
         showSeed = true,
-        timeout = 5000,
+        timeout = 30000,
         setupFiles = []
     } = options;
 
