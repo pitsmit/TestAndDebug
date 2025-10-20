@@ -2,18 +2,29 @@ FROM node:20-bullseye
 
 WORKDIR /app
 
-# Копируем только нужные файлы для сервера
-COPY Server/babel.config.js ./
+# Копируем package.json основного проекта
 COPY Server/package*.json ./
-COPY Server/src ./src
-COPY Server/generated-api ./generated-api
+COPY Server/babel.config.js ./
 
+# Устанавливаем зависимости основного проекта
 RUN npm ci
 
-# Собираем TypeScript если нужно
+# Копируем generated-api с его package.json
+COPY Server/generated-api ./generated-api
+
+# Устанавливаем зависимости generated-api
+WORKDIR /app/generated-api
+RUN npm ci
+
+# Возвращаемся и копируем исходный код
+WORKDIR /app
+COPY Server/src ./src
+
+# Компилируем TypeScript
 # RUN npm run build
 
-# Экспонируем порт
 EXPOSE 3000
 
+# Запускаем из generated-api
+WORKDIR /app/generated-api
 CMD ["npm", "start"]
