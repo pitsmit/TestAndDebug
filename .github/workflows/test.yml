@@ -27,7 +27,7 @@ jobs:
 
       - name: Build test container
         run: |
-          docker build -f Dockerfile.client -t my-tests .  # ← ИЗМЕНИЛ НА Dockerfile.client
+          docker build -f Dockerfile.client -t my-tests . 
 
       - name: Wait for PostgreSQL
         run: |
@@ -104,7 +104,7 @@ jobs:
 
       - name: Build test client container
         run: |
-          docker build -f Dockerfile.client -t anekdot-tests .  # ← ИЗМЕНИЛ НА Dockerfile.client
+          docker build -f Dockerfile.client -t anekdot-tests .
 
       - name: Wait for PostgreSQL
         run: |
