@@ -26,4 +26,4 @@ COPY Server/src ./src
 EXPOSE 3000
 
 WORKDIR /app/generated-api
-CMD ["npm", "start"]
+CMD ["npm", "start:test"]
