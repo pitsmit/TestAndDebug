@@ -2,11 +2,7 @@ import { container } from "@Facade/container";
 import { TestDBHelper } from "@Helpers/DBTestHelper";
 import { IAdminManager } from "@Essences/AdminManager";
 import { parameter, step } from "allure-js-commons";
-import { TestDBConfigProvider } from "@Helpers/TestDBConfigProvider";
-import { IDBConfigProvider } from "@IRepository/IDBConfigProvider";
-import { IDBconnection } from "@IRepository/IDBconnection";
 import '@Facade/bindings'
-import { DBconnection } from "@Repository/DBconnection";
 import {IAuthService} from "@Services/jwt";
 import {ROLE} from "@shared/types/roles";
 import {expect} from "@jest/globals";
@@ -16,36 +12,28 @@ import {Anekdot} from "@Essences/anekdot";
 describe('Действия админа с анекдотами', () => {
     let adminmanager: IAdminManager;
     let testDBHelper = new TestDBHelper();
-    let dbConnection: IDBconnection;
     let jwt_service: IAuthService;
     let token: string;
 
     beforeAll(async () => {
         process.env.JWT_SECRET = 'test_jwt_secret_for_testing';
+        process.env.DATABASE_NAME = 'anekdot_test';
+
         await testDBHelper.ensureTestDatabase();
 
-        await container.unbind("IDBConfigProvider");
-        await container.unbind("IDBconnection");
-        container.bind<IDBConfigProvider>("IDBConfigProvider").to(TestDBConfigProvider).inSingletonScope();
-        container.bind<IDBconnection>("IDBconnection").to(DBconnection).inSingletonScope();
-
         adminmanager = container.get<IAdminManager>("IAdminManager");
-        dbConnection = container.get<IDBconnection>("IDBconnection");
         jwt_service = container.get<IAuthService>("IAuthService");
         token = jwt_service.generateToken(1, ROLE.ADMIN);
     });
 
+
     beforeEach(async () => {
-        await testDBHelper.cleanTestDB(dbConnection);
-        await testDBHelper.fillTestDB(dbConnection);
+        await testDBHelper.cleanTestDB();
+        await testDBHelper.fillTestDB();
     })
 
     afterAll(async () => {
-        await testDBHelper.cleanTestDB(dbConnection);
-
-        if (dbConnection && dbConnection.pool) {
-            await dbConnection.pool.end();
-        }
+        await testDBHelper.cleanTestDB();
         delete process.env.JWT_SECRET;
     });
 
@@ -66,7 +54,7 @@ describe('Действия админа с анекдотами', () => {
 
         // ASSERT
         await step('Проверка', async () => {
-            const client = await dbConnection.connect();
+            const client = await testDBHelper.get_client();
             try {
                 const result = await client.query('SELECT * FROM anekdot WHERE id = $1', [anekdot_id]);
                 expect(result.rowCount).toBe(0);
@@ -140,7 +128,7 @@ describe('Действия админа с анекдотами', () => {
 
         // ASSERT
         await step('Проверка', async () => {
-            const client = await dbConnection.connect();
+            const client = await testDBHelper.get_client();
             try {
                 const result = await client.query('SELECT * FROM anekdot WHERE id = $1', [anekdot_id]);
                 expect(result.rowCount).toBe(1);

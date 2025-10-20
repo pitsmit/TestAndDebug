@@ -1,11 +1,13 @@
 require('module-alias/register');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const config = require('./config');
 const ExpressServer = require('./expressServer');
+const {setupTestDatabase} = require("./database-setup");
 
 const launchServer = async () => {
   try {
+    if (process.env.DATABASE_NAME === "anekdot_test") {
+      await setupTestDatabase();
+    }
     this.expressServer = new ExpressServer(config.URL_PORT, config.OPENAPI_YAML);
     this.expressServer.launch();
   } catch (error) {

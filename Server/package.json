@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "ts-node -r tsconfig-paths/register src/index.ts",
     "api:generate": "openapi-generator-cli generate -i main.yml -g nodejs-express-server -o ./src/generated-api --additional-properties=supportsES6=true",
-    "start": "node dist/index.js",
     "build": "babel src --out-dir dist --extensions \".ts,.tsx\" --ignore \"**/__tests__/**,**/*.test.ts,**/*.spec.ts,src/generated-api/**\"",
     "build:tsc": "tsc",
     "clean": "rimraf dist",

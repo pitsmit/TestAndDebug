@@ -1,13 +1,17 @@
-import { IDBconnection } from "@IRepository/IDBconnection";
-import { TEST_DB_CONFIG } from "./test-config";
-import { Pool } from "pg";
+import {Pool, PoolClient} from "pg";
+import {DatabaseConfig} from "@Core/Config/database-config";
 
 export class TestDBHelper {
-    private testDBName = TEST_DB_CONFIG.database;
+    private testDBConfig = DatabaseConfig.getConfig();
+
+    async get_client(): Promise<PoolClient> {
+        const appPool = new Pool(this.testDBConfig);
+        return await appPool.connect();
+    }
 
     async ensureTestDatabase(): Promise<void> {
         const systemPool = new Pool({
-            ...TEST_DB_CONFIG,
+            ...this.testDBConfig,
             database: 'postgres'
         });
 
@@ -15,24 +19,23 @@ export class TestDBHelper {
         try {
             const result = await client.query(
                 "SELECT 1 FROM pg_database WHERE datname = $1",
-                [this.testDBName]
+                [this.testDBConfig.database]
             );
 
             if (result.rowCount === 0) {
-                console.log(`Creating test database: ${this.testDBName}`);
-                await client.query(`CREATE DATABASE ${this.testDBName}`);
-                await this.initializeSchema();
+                console.log(`Creating test database: ${this.testDBConfig.database}`);
+                await client.query(`CREATE DATABASE ${this.testDBConfig.database}`);
             }
+
+            await this.initializeSchema();
         } finally {
             client.release();
             await systemPool.end();
         }
-
-        await this.initializeSchema();
     }
 
     private async initializeSchema(): Promise<void> {
-        const appPool = new Pool(TEST_DB_CONFIG);
+        const appPool = new Pool(this.testDBConfig);
         const client = await appPool.connect();
 
         try {
@@ -71,8 +74,9 @@ export class TestDBHelper {
         }
     }
 
-    async fillTestDB(dbConnection: IDBconnection): Promise<void> {
-        const client = await dbConnection.connect();
+    async fillTestDB(): Promise<void> {
+        const appPool = new Pool(this.testDBConfig);
+        const client = await appPool.connect();
         try {
             await client.query(`
                 INSERT INTO actor (login, password, name, role) VALUES
@@ -94,8 +98,9 @@ export class TestDBHelper {
         }
     }
 
-    async cleanTestDB(dbConnection: IDBconnection): Promise<void> {
-        const client = await dbConnection.connect();
+    async cleanTestDB(): Promise<void> {
+        const appPool = new Pool(this.testDBConfig);
+        const client = await appPool.connect();
         try {
             await client.query('TRUNCATE TABLE favourites, anekdot, actor, nonstandartlexic RESTART IDENTITY CASCADE');
         } finally {

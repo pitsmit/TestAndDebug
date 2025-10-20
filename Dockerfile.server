@@ -25,6 +25,5 @@ COPY Server/src ./src
 
 EXPOSE 3000
 
-# Запускаем из generated-api
 WORKDIR /app/generated-api
 CMD ["npm", "start"]

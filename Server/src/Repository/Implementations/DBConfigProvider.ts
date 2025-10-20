@@ -1,15 +1,10 @@
 import { injectable } from "inversify";
 import { IDBConfigProvider, IDBConfig } from "@IRepository/IDBConfigProvider";
+import { DatabaseConfig } from "@Core/Config/database-config";
 
 @injectable()
 export class DBConfigProvider implements IDBConfigProvider {
     getConfig(): IDBConfig {
-        return {
-            user: process.env.USER!,
-            host: process.env.HOST!,
-            database: process.env.DATABASE_NAME!,
-            password: process.env.PASSWORD!,
-            port: Number(process.env.PORT!),
-        };
+        return DatabaseConfig.getConfig();
     }
 }

@@ -14,5 +14,4 @@ COPY Server/ ./
 
 RUN npm ci
 
-# Запускаем только E2E тесты
 CMD ["sh", "-c", "npm run test:e2e"]
