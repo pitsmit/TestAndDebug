@@ -22,9 +22,10 @@
       "@Core/*": ["./Core/*"],
       "@Commands/*": ["./Commands/*"],
       "@TechUI/*": ["./TechUI/*"],
-      "@shared/*": ["./shared/*"]
+      "@shared/*": ["./shared/*"],
+      "@Helpers/*": ["./__tests__/helpers/*"],
+      "@Mocks/*": ["./__tests__/mocks/*"]
     }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/__tests__"]
 }

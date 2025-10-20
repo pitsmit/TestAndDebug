@@ -1,4 +1,3 @@
-// src/Core/Errors/ApiErrors.ts
 export class AppError extends Error {
     constructor(
         message: string,
@@ -23,14 +22,8 @@ export class PaginationError extends AppError {
 }
 
 export class EmptyAnekdotError extends AppError {
-    constructor() {
-        super('Попытка загрузки пустого анекдота', 400, 'EMPTY_ANEKDOT');
-    }
-}
-
-export class AuthenticationError extends AppError {
-    constructor() {
-        super('Не авторизован', 401, 'UNAUTHORIZED');
+    constructor(msg: string) {
+        super(msg, 400, 'EMPTY_ANEKDOT');
     }
 }
 
@@ -47,8 +40,8 @@ export class PermissionError extends AppError {
 }
 
 export class CredentialsError extends AppError {
-    constructor() {
-        super('Неверный логин или пароль', 401, 'FORBIDDEN');
+    constructor(message: string) {
+        super(message, 401, 'FORBIDDEN');
     }
 }
 
@@ -59,8 +52,20 @@ export class CredentialsFormatError extends AppError {
 }
 
 export class BusyCredentialsError extends AppError {
-    constructor() {
-        super('Логин или имя заняты', 409, 'BUSY_CREDENTIALS');
+    constructor(message: string) {
+        super(message, 409, 'BUSY_CREDENTIALS');
+    }
+}
+
+export class BusyLoginError extends AppError {
+    constructor(message: string) {
+        super(message, 409, 'BUSY_CREDENTIALS');
+    }
+}
+
+export class BusyNameError extends AppError {
+    constructor(message: string) {
+        super(message, 409, 'BUSY_CREDENTIALS');
     }
 }
 

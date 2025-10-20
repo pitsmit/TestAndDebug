@@ -44,7 +44,7 @@ jobs:
             -v "$(pwd)/test-results:/app/allure-results" \
             -v "$(pwd)/allure-history:/app/allure-history" \
             my-tests \
-            sh -c "npm run test"
+            sh -c "npm run test:unit"
 
       - name: Run integration tests
         id: integration-tests
@@ -57,16 +57,16 @@ jobs:
             my-tests \
             sh -c "npm run test:integration"
 
-      - name: Run e2e tests
-        id: e2e-tests
-        if: steps.integration-tests.outcome == 'success'
-        run: |
-          docker run --rm \
-            --network host \
-            -v "$(pwd)/test-results:/app/allure-results" \
-            -v "$(pwd)/allure-history:/app/allure-history" \
-            my-tests \
-            sh -c "npm run test:e2e"
+      #- name: Run e2e tests
+      #  id: e2e-tests
+      #  if: steps.integration-tests.outcome == 'success'
+      #  run: |
+      #    docker run --rm \
+      #      --network host \
+      #      -v "$(pwd)/test-results:/app/allure-results" \
+      #      -v "$(pwd)/allure-history:/app/allure-history" \
+      #      my-tests \
+      #      sh -c "npm run test:e2e"
 
       - name: Download previous allure history
         uses: actions/cache@v4

@@ -54,8 +54,9 @@ export class TestDBHelper {
                 
                 CREATE TABLE IF NOT EXISTS favourites (
                     id SERIAL PRIMARY KEY,
-                    userid INTEGER,
-                    anekdotid INTEGER REFERENCES anekdot
+                    userid INTEGER NOT NULL REFERENCES actor(id),
+                    anekdotid INTEGER NOT NULL REFERENCES anekdot(id),
+                    UNIQUE (userid, anekdotid)
                 );
                 
                 CREATE TABLE IF NOT EXISTS nonstandartlexic (

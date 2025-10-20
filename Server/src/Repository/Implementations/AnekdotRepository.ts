@@ -43,9 +43,9 @@ export class AnekdotRepository implements IAnekdotRepository {
 
     async load(text: string, hasBadWords: boolean, lastModifiedDate: Date): Promise<number> {
         if (!text.trim().length) {
-            const msg: string = `Попытка загрузки пустого анекдота`;
+            const msg: string = `Пустой текст анекдота`;
             logger.warn(msg);
-            throw new EmptyAnekdotError();
+            throw new EmptyAnekdotError(msg);
         }
 
         let client: PoolClient = await this.DB.connect();
@@ -62,9 +62,9 @@ export class AnekdotRepository implements IAnekdotRepository {
 
     async edit(id: number, text: string, hasBadWords: boolean, lastModifiedDate: Date): Promise<void> {
         if (!text.trim().length) {
-            const msg: string = `Попытка загрузки пустого анекдота`;
+            const msg: string = `Пустой текст анекдота`;
             logger.warn(msg);
-            throw new EmptyAnekdotError();
+            throw new EmptyAnekdotError(msg);
         }
         if (id <= 0) throw new WrongIDError();
         let client: PoolClient = await this.DB.connect();

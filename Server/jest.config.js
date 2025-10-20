@@ -1,23 +1,27 @@
-/** @type {import('jest').Config} */
+const { createJestConfig } = require('./jest.config.factory');
+
 const config = {
-    preset: "ts-jest",
-    randomize: true,
-    showSeed: true,
-    testEnvironment: "allure-jest/node",
-    moduleNameMapper: {
-        '^@Facade/(.*)$': '<rootDir>/src/Facade/$1',
-        '^@Commands/(.*)$': '<rootDir>/src/Commands/$1',
-        '^@Core/(.*)$': '<rootDir>/src/Core/$1',
-        '^@Services/(.*)$': '<rootDir>/src/Core/Services/$1',
-        '^@Essences/(.*)$': '<rootDir>/src/Core/Essences/$1',
-        '^@Repository/(.*)$': '<rootDir>/src/Repository/Implementations/$1',
-        '^@IRepository/(.*)$': '<rootDir>/src/Repository/Interfaces/$1',
-        '^@shared/(.*)$': '<rootDir>/src/shared/$1',
-        '^@/(.*)$': '<rootDir>/src/$1',
-    },
-    roots: ['<rootDir>/src'],
-    testMatch: ['**/__tests__/unit-tests/*.test.ts'],
-    setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']
+    projects: [
+        {
+            ...createJestConfig({ testType: 'unit' }),
+            displayName: 'unit',
+        },
+        {
+            ...createJestConfig({
+                testType: 'integration',
+                randomize: false,
+                showSeed: false
+            }),
+            displayName: 'integration',
+        },
+        {
+            ...createJestConfig({
+                testType: 'e2e',
+                timeout: 30000
+            }),
+            displayName: 'e2e',
+        }
+    ]
 };
 
 module.exports = config;
