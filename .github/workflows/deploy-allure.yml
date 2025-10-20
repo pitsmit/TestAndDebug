@@ -1,4 +1,3 @@
-# deploy-allure.yml
 name: Deploy Allure Report to Pages
 
 on:
@@ -28,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download test artifacts
+      - name: Download unit/integration test artifacts
         uses: actions/github-script@v7
         with:
           script: |
@@ -41,33 +40,46 @@ jobs:
               run_id: runId,
             });
             
-            const testArtifact = artifacts.data.artifacts.find(
-              artifact => artifact.name === "test-results"
-            );
+            // Скачиваем оба артефакта
+            const downloadArtifact = async (artifactName) => {
+              const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
+              if (artifact) {
+                const download = await github.rest.actions.downloadArtifact({
+                  owner,
+                  repo,
+                  artifact_id: artifact.id,
+                  archive_format: 'zip',
+                });
+                const fs = require('fs');
+                fs.writeFileSync(`${{github.workspace}}/${artifactName}.zip`, Buffer.from(download.data));
+                console.log(`✅ ${artifactName} artifact downloaded successfully`);
+                return true;
+              } else {
+                console.log(`❌ No ${artifactName} artifact found`);
+                return false;
+              }
+            };
             
-            if (testArtifact) {
-              const download = await github.rest.actions.downloadArtifact({
-                owner,
-                repo,
-                artifact_id: testArtifact.id,
-                archive_format: 'zip',
-              });
-            
-              const fs = require('fs');
-              fs.writeFileSync('${{github.workspace}}/test-results.zip', Buffer.from(download.data));
-              console.log('✅ Artifact downloaded successfully');
-            } else {
-              console.log('❌ No test-results artifact found');
-              throw new Error('No test-results artifact found');
-            }
+            await downloadArtifact('unit-integration-test-results');
+            await downloadArtifact('e2e-test-results');
 
       - name: Unzip artifacts
         run: |
-          unzip -q test-results.zip -d extracted-results || echo "No zip file found"
-          echo "=== Extracted contents ==="
-          find extracted-results -type f -name "*.json" | head -5
-          find extracted-results -name "allure-report" -type d
-          find extracted-results -name "allure-history" -type d
+          mkdir -p extracted-unit-integration
+          mkdir -p extracted-e2e
+          
+          if [ -f "unit-integration-test-results.zip" ]; then
+            unzip -q unit-integration-test-results.zip -d extracted-unit-integration
+          fi
+          
+          if [ -f "e2e-test-results.zip" ]; then
+            unzip -q e2e-test-results.zip -d extracted-e2e
+          fi
+          
+          echo "=== Unit/Integration contents ==="
+          find extracted-unit-integration -type f -name "*.json" | head -5 || echo "No unit/integration results"
+          echo "=== E2E contents ==="
+          find extracted-e2e -type f -name "*.json" | head -5 || echo "No E2E results"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -78,27 +90,36 @@ jobs:
         run: |
           npm install -g allure-commandline
 
-      - name: Generate Allure HTML Report with history
+      - name: Merge and generate Allure HTML Report
         run: |
           mkdir -p allure-report
           mkdir -p allure-history
+          mkdir -p merged-results
           
           # Копируем историю из предыдущих запусков если есть
-          if [ -d "extracted-results/allure-history" ]; then
-            echo "Found previous allure history"
-            cp -r extracted-results/allure-history/. allure-history/
+          if [ -d "extracted-unit-integration/allure-history" ]; then
+            echo "Found unit/integration allure history"
+            cp -r extracted-unit-integration/allure-history/. allure-history/
           fi
           
-          # Генерируем новый отчет
-          if [ -d "extracted-results/test-results" ]; then
-            echo "Generating report from test-results"
-            allure generate extracted-results/test-results -o allure-report --clean --history-dir allure-history
-          elif [ -d "extracted-results/allure-results" ]; then
-            echo "Generating report from allure-results"
-            allure generate extracted-results/allure-results -o allure-report --clean --history-dir allure-history
+          # Копируем результаты тестов
+          if [ -d "extracted-unit-integration/test-results" ]; then
+            echo "Copying unit/integration test results"
+            cp -r extracted-unit-integration/test-results/* merged-results/ 2>/dev/null || true
+          fi
+          
+          if [ -d "extracted-e2e/test-results-e2e" ]; then
+            echo "Copying E2E test results"
+            cp -r extracted-e2e/test-results-e2e/* merged-results/ 2>/dev/null || true
+          fi
+          
+          # Генерируем объединенный отчет
+          if [ "$(ls -A merged-results 2>/dev/null)" ]; then
+            echo "Generating combined report from all test results"
+            allure generate merged-results -o allure-report --clean --history-dir allure-history
           else
             echo "❌ No test results found"
-            find extracted-results -type d
+            find . -name "*.json" -type f | head -10
             exit 1
           fi
           
@@ -107,8 +128,8 @@ jobs:
           
           echo "=== Allure report contents ==="
           ls -la allure-report/
-          echo "=== History contents ==="
-          ls -la allure-report/history/ 2>/dev/null || echo "No history directory"
+          echo "=== Test types in report ==="
+          find allure-report -name "*.html" -type f | head -10
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

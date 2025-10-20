@@ -1,0 +1,18 @@
+FROM node:18-bullseye
+
+WORKDIR /app
+
+# Копируем только нужные файлы для сервера
+COPY Server/package*.json ./
+COPY Server/src ./src
+COPY Server/generated-api ./generated-api
+
+RUN npm ci
+
+# Собираем TypeScript если нужно
+RUN npm run build
+
+# Экспонируем порт
+EXPOSE 3000
+
+CMD ["npm", "start"]

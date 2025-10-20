@@ -9,8 +9,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# Копируем всё из Server (включая api-client для тестов)
 COPY Server/ ./
 
 RUN npm ci
 
-CMD ["sh", "-c", "npm run test:ci"]
+# Запускаем только E2E тесты
+CMD ["sh", "-c", "npm run test:e2e"]

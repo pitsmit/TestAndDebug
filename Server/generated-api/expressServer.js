@@ -24,6 +24,14 @@ class ExpressServer {
   }
 
   setupMiddleware() {
+    this.app.get('/api/health', (req, res) => {
+      res.status(200).json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        service: 'anekdot-server'
+      });
+    });
+
     this.app.use(cors());
     this.app.use(bodyParser.json({ limit: '14MB' }));
     this.app.use(express.json());

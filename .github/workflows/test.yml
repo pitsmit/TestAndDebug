@@ -3,7 +3,7 @@ name: Node.js Tests in Docker Container
 on: [push, pull_request]
 
 jobs:
-  test:
+  unit-integration-tests:
     runs-on: ubuntu-latest
 
     services:
@@ -57,52 +57,131 @@ jobs:
             my-tests \
             sh -c "npm run test:integration"
 
-      #- name: Run e2e tests
-      #  id: e2e-tests
-      #  if: steps.integration-tests.outcome == 'success'
-      #  run: |
-      #    docker run --rm \
-      #      --network host \
-      #      -v "$(pwd)/test-results:/app/allure-results" \
-      #      -v "$(pwd)/allure-history:/app/allure-history" \
-      #      my-tests \
-      #      sh -c "npm run test:e2e"
-
-      - name: Download previous allure history
-        uses: actions/cache@v4
-        with:
-          path: allure-history
-          key: allure-history-${{ github.ref }}
-          restore-keys: |
-            allure-history-
-
-      - name: Generate Allure HTML Report with history
+      - name: Generate Allure HTML Report for Unit/Integration
         if: always()
         run: |
           npm install -g allure-commandline
-          
-          # Создаем директорию для истории если её нет
           mkdir -p allure-history
-          
-          # Генерируем отчет с историей
-          allure generate test-results -o allure-report --clean --history-dir allure-history
-          
-          # Копируем историю в отчет для следующего запуска
-          cp -r allure-history/. allure-report/history/ || echo "No history to copy"
+          allure generate test-results -o allure-report-unit-integration --clean --history-dir allure-history
+          cp -r allure-history/. allure-report-unit-integration/history/ || echo "No history to copy"
 
-      - name: Save allure history
-        uses: actions/cache@v4
-        with:
-          path: allure-history
-          key: allure-history-${{ github.ref }}
-
-      - name: Upload test results
+      - name: Upload Unit/Integration test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: unit-integration-test-results
           path: |
-            allure-report/
+            allure-report-unit-integration/
             test-results/
-            allure-history/
+          retention-days: 30
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: unit-integration-tests
+
+    services:
+      postgres:
+        image: postgres:13-alpine
+        env:
+          POSTGRES_DB: anekdot_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build server container
+        run: |
+          docker build -f Dockerfile.server -t anekdot-server .
+
+      - name: Build test client container
+        run: |
+          docker build -f Dockerfile.test -t anekdot-tests .
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for database..."
+            sleep 2
+          done
+
+      - name: Start server in background
+        run: |
+          docker run -d --name anekdot-server \
+            --network host \
+            -e NODE_ENV=test \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e DB_NAME=anekdot_test \
+            -e DB_USER=postgres \
+            -e DB_PASSWORD=password \
+            -e PORT=3000 \
+            anekdot-server
+
+      - name: Wait for server to start
+        run: |
+          timeout 120s bash -c 'until curl -f http://localhost:3000/api/health >/dev/null 2>&1; do
+            echo "Waiting for server to start..."
+            sleep 5
+          done' || (echo "Server failed to start within 120 seconds" && docker logs anekdot-server && exit 1)
+
+      - name: Check server logs
+        run: |
+          echo "=== Server logs ==="
+          docker logs anekdot-server --tail 20
+
+      - name: Run E2E tests
+        run: |
+          docker run --rm \
+            --network host \
+            -v "$(pwd)/test-results-e2e:/app/allure-results" \
+            -v "$(pwd)/allure-history-e2e:/app/allure-history" \
+            -e API_BASE_URL=http://localhost:3000/api \
+            anekdot-tests \
+            sh -c "npm run test:e2e"
+
+      - name: Stop server
+        if: always()
+        run: |
+          docker stop anekdot-server || true
+          docker rm anekdot-server || true
+
+      - name: Download previous E2E allure history
+        uses: actions/cache@v4
+        with:
+          path: allure-history-e2e
+          key: allure-history-e2e-${{ github.ref }}
+          restore-keys: |
+            allure-history-e2e-
+
+      - name: Generate Allure HTML Report for E2E
+        if: always()
+        run: |
+          npm install -g allure-commandline
+          mkdir -p allure-history-e2e
+          allure generate test-results-e2e -o allure-report-e2e --clean --history-dir allure-history-e2e
+          cp -r allure-history-e2e/. allure-report-e2e/history/ || echo "No E2E history to copy"
+
+      - name: Save E2E allure history
+        uses: actions/cache@v4
+        with:
+          path: allure-history-e2e
+          key: allure-history-e2e-${{ github.ref }}
+
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            allure-report-e2e/
+            test-results-e2e/
           retention-days: 30
