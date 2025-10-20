@@ -144,7 +144,6 @@ jobs:
             --network host \
             -v "$(pwd)/test-results-e2e:/app/allure-results" \
             -v "$(pwd)/allure-history-e2e:/app/allure-history" \
-            -e API_BASE_URL=http://localhost:3000/api \
             anekdot-tests \
             sh -c "npm run test:e2e"
 
