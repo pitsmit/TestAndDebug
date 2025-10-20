@@ -2,17 +2,15 @@ FROM node:20-bullseye
 
 WORKDIR /app
 
-# Копируем package.json основного проекта
 COPY Server/package*.json ./
 COPY Server/babel.config.js ./
 
-# Устанавливаем зависимости основного проекта
 RUN npm ci
 
 # Копируем generated-api с его package.json
 COPY Server/generated-api ./generated-api
 
-# Устанавливаем зависимости generated-api
+# Устанавливаем зависимости generated-api (включая cross-env)
 WORKDIR /app/generated-api
 RUN npm ci
 
@@ -25,5 +23,12 @@ COPY Server/src ./src
 
 EXPOSE 3000
 
+# Используем переменные окружения напрямую
+ENV HOST=localhost
+ENV PORT=5432
+ENV DATABASE_NAME=anekdot_test
+ENV USER=postgres
+ENV PASSWORD=password
+
 WORKDIR /app/generated-api
-CMD ["npm", "start:test"]
+CMD ["node", "index.js"]
