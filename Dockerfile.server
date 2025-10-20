@@ -11,7 +11,7 @@ COPY Server/generated-api ./generated-api
 RUN npm ci
 
 # Собираем TypeScript если нужно
-RUN npm run build
+# RUN npm run build
 
 # Экспонируем порт
 EXPOSE 3000
