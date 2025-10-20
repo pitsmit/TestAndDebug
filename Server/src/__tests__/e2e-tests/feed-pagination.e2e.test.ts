@@ -25,11 +25,21 @@ describe('Лента анекдотов с пагинацией', () => {
 
         // ACT
         await step('Выполнение GET запроса к ленте анекдотов', async () => {
-            response = await httpClient.get('/feed', {
-                params: { page: 1, limit: 5 }
-            });
-
-            console.log(response.data);
+            console.log("SOSAL");
+            try {
+                response = await httpClient.get('/feed', {
+                    params: { page: 1, limit: 5 }
+                });
+                console.log('📊 Response status:', response.status);
+                console.log('📊 Response data:', JSON.stringify(response.data, null, 2));
+            } catch (error: any) {
+                console.error('❌ Request failed:', error.message);
+                if (error.response) {
+                    console.error('Response data:', error.response.data);
+                    console.error('Response status:', error.response.status);
+                }
+                throw error;
+            }
         });
 
         // ASSERT
