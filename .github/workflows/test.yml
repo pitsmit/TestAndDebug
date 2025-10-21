@@ -2,90 +2,82 @@ name: Node.js Tests in Docker Container
 
 on: [push, pull_request]
 
-env:
-  RUN_UNIT_TESTS: ${{ vars.RUN_UNIT_TESTS || 'false' }}
-  RUN_INTEGRATION_TESTS: ${{ vars.RUN_INTEGRATION_TESTS || 'false' }}
-  RUN_E2E_TESTS: ${{ vars.RUN_E2E_TESTS || 'true' }}
-
 jobs:
-  unit-integration-tests:
-    if: env.RUN_UNIT_TESTS == 'true' || env.RUN_INTEGRATION_TESTS == 'true'
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:13-alpine
-        env:
-          POSTGRES_DB: anekdot_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build test container
-        run: |
-          docker build -f Dockerfile.client -t my-tests . 
-
-      - name: Wait for PostgreSQL
-        run: |
-          until pg_isready -h localhost -p 5432; do
-            echo "Waiting for database..."
-            sleep 2
-          done
-
-      - name: Run unit tests
-        if: env.RUN_UNIT_TESTS == 'true'
-        id: unit-tests
-        run: |
-          docker run --rm \
-            --network host \
-            -v "$(pwd)/test-results:/app/allure-results" \
-            -v "$(pwd)/allure-history:/app/allure-history" \
-            my-tests \
-            sh -c "npm run test:unit"
-
-      - name: Run integration tests
-        id: integration-tests
-        if: steps.unit-tests.outcome == 'success' && env.RUN_INTEGRATION_TESTS == 'true'
-        run: |
-          docker run --rm \
-            --network host \
-            -v "$(pwd)/test-results:/app/allure-results" \
-            -v "$(pwd)/allure-history:/app/allure-history" \
-            my-tests \
-            sh -c "npm run test:integration"
-
-      - name: Generate Allure HTML Report for Unit/Integration
-        if: always()
-        run: |
-          npm install -g allure-commandline
-          mkdir -p allure-history
-          allure generate test-results -o allure-report-unit-integration --clean --history-dir allure-history
-          cp -r allure-history/. allure-report-unit-integration/history/ || echo "No history to copy"
-
-      - name: Upload Unit/Integration test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-integration-test-results
-          path: |
-            allure-report-unit-integration/
-            test-results/
-          retention-days: 30
+  #unit-integration-tests:
+  #  runs-on: ubuntu-latest
+#
+  #  services:
+  #    postgres:
+  #      image: postgres:13-alpine
+  #      env:
+  #        POSTGRES_DB: anekdot_test
+  #        POSTGRES_USER: postgres
+  #        POSTGRES_PASSWORD: password
+  #      options: >-
+  #        --health-cmd pg_isready
+  #        --health-interval 10s
+  #        --health-timeout 5s
+  #        --health-retries 5
+  #      ports:
+  #        - 5432:5432
+#
+  #  steps:
+  #    - name: Checkout code
+  #      uses: actions/checkout@v4
+#
+  #    - name: Build test container
+  #      run: |
+  #        docker build -f Dockerfile.client -t my-tests .
+#
+  #    - name: Wait for PostgreSQL
+  #      run: |
+  #        until pg_isready -h localhost -p 5432; do
+  #          echo "Waiting for database..."
+  #          sleep 2
+  #        done
+#
+  #    - name: Run unit tests
+  #      id: unit-tests
+  #      run: |
+  #        docker run --rm \
+  #          --network host \
+  #          -v "$(pwd)/test-results:/app/allure-results" \
+  #          -v "$(pwd)/allure-history:/app/allure-history" \
+  #          my-tests \
+  #          sh -c "npm run test:unit"
+#
+  #    - name: Run integration tests
+  #      id: integration-tests
+  #      if: steps.unit-tests.outcome == 'success'
+  #      run: |
+  #        docker run --rm \
+  #          --network host \
+  #          -v "$(pwd)/test-results:/app/allure-results" \
+  #          -v "$(pwd)/allure-history:/app/allure-history" \
+  #          my-tests \
+  #          sh -c "npm run test:integration"
+#
+  #    - name: Generate Allure HTML Report for Unit/Integration
+  #      if: always()
+  #      run: |
+  #        npm install -g allure-commandline
+  #        mkdir -p allure-history
+  #        allure generate test-results -o allure-report-unit-integration --clean --history-dir allure-history
+  #        cp -r allure-history/. allure-report-unit-integration/history/ || echo "No history to copy"
+#
+  #    - name: Upload Unit/Integration test results
+  #      if: always()
+  #      uses: actions/upload-artifact@v4
+  #      with:
+  #        name: unit-integration-test-results
+  #        path: |
+  #          allure-report-unit-integration/
+  #          test-results/
+  #        retention-days: 30
 
   e2e-tests:
-    if: env.RUN_E2E_TESTS == 'true'
     runs-on: ubuntu-latest
-    needs: unit-integration-tests
+    #needs: unit-integration-tests
 
     services:
       postgres:
