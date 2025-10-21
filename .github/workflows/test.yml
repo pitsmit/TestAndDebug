@@ -118,12 +118,11 @@ jobs:
           docker run -d --name anekdot-server \
             --network host \
             -e NODE_ENV=test \
-            -e DB_HOST=localhost \
-            -e DB_PORT=5432 \
+            -e HOST=localhost \
+            -e PORT=5432 \
             -e DB_NAME=anekdot_test \
-            -e DB_USER=postgres \
-            -e DB_PASSWORD=password \
-            -e PORT=3000 \
+            -e USER=postgres \
+            -e PASSWORD=password \
             anekdot-server
 
       - name: Wait for server to start
@@ -152,6 +151,30 @@ jobs:
           
           # Последние логи
           docker logs anekdot-server --tail 50
+
+      - name: Check database connection from server container
+        run: |
+          echo "=== Testing DB connection from server container ==="
+          docker exec anekdot-server node -e "
+            const { Pool } = require('pg');
+            const pool = new Pool({
+              host: 'localhost',
+              port: 5432,
+              database: 'anekdot_test',
+              user: 'postgres',
+              password: 'password'
+            });
+          
+            pool.query('SELECT 1 as test')
+              .then(result => console.log('✅ DB connection successful:', result.rows[0]))
+              .catch(error => console.error('❌ DB connection failed:', error.message))
+              .finally(() => pool.end());
+          "
+
+      - name: Check server environment variables
+        run: |
+          echo "=== Server environment ==="
+          docker exec anekdot-server printenv | grep -E "(HOST|PORT|DATABASE|USER|PASSWORD)"
 
       - name: Run E2E tests
         run: |
