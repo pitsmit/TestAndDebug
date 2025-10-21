@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Копируем всё из Server (включая api-client для тестов)
 COPY Server/ ./
 
 RUN npm ci
