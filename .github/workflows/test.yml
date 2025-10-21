@@ -2,8 +2,14 @@ name: Node.js Tests in Docker Container
 
 on: [push, pull_request]
 
+env:
+  RUN_UNIT_TESTS: ${{ vars.RUN_UNIT_TESTS || 'false' }}
+  RUN_INTEGRATION_TESTS: ${{ vars.RUN_INTEGRATION_TESTS || 'false' }}
+  RUN_E2E_TESTS: ${{ vars.RUN_E2E_TESTS || 'true' }}
+
 jobs:
   unit-integration-tests:
+    if: env.RUN_UNIT_TESTS == 'true' || env.RUN_INTEGRATION_TESTS == 'true'
     runs-on: ubuntu-latest
 
     services:
@@ -37,6 +43,7 @@ jobs:
           done
 
       - name: Run unit tests
+        if: env.RUN_UNIT_TESTS == 'true'
         id: unit-tests
         run: |
           docker run --rm \
@@ -48,7 +55,7 @@ jobs:
 
       - name: Run integration tests
         id: integration-tests
-        if: steps.unit-tests.outcome == 'success'
+        if: steps.unit-tests.outcome == 'success' && env.RUN_INTEGRATION_TESTS == 'true'
         run: |
           docker run --rm \
             --network host \
@@ -76,6 +83,7 @@ jobs:
           retention-days: 30
 
   e2e-tests:
+    if: env.RUN_E2E_TESTS == 'true'
     runs-on: ubuntu-latest
     needs: unit-integration-tests
 
