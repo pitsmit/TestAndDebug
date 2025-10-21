@@ -7,19 +7,14 @@ COPY Server/babel.config.js ./
 
 RUN npm ci
 
-# Копируем generated-api с его package.json
 COPY Server/generated-api ./generated-api
-
-# Устанавливаем зависимости generated-api (включая cross-env)
 WORKDIR /app/generated-api
 RUN npm ci
 
-# Возвращаемся и копируем исходный код
 WORKDIR /app
 COPY Server/src ./src
 COPY Server/dist ./dist
 
-# Компилируем TypeScript
 # RUN npm run build
 RUN ls -la dist/ || echo "No dist folder"
 RUN find dist -name "*Facade*" -type f | head -5
@@ -27,7 +22,6 @@ RUN find dist -name "*Commands*" -type f | head -5
 
 EXPOSE 3000
 
-# Используем переменные окружения напрямую
 ENV HOST=localhost
 ENV PORT=5432
 ENV DATABASE_NAME=anekdot_test

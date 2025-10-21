@@ -169,8 +169,7 @@ jobs:
             --network host \
             -v "$(pwd)/test-results-e2e:/app/allure-results" \
             -v "$(pwd)/allure-history-e2e:/app/allure-history" \
-            anekdot-tests \
-            sh -c "npm run test:e2e"
+            anekdot-tests
 
       - name: Stop server
         if: always()
