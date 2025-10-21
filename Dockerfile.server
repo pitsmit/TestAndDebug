@@ -20,6 +20,9 @@ COPY Server/src ./src
 
 # Компилируем TypeScript
 # RUN npm run build
+RUN ls -la dist/ || echo "No dist folder"
+RUN find dist -name "*Facade*" -type f | head -5
+RUN find dist -name "*Commands*" -type f | head -5
 
 EXPOSE 3000
 

@@ -3,8 +3,12 @@ const Service = require('./Service');
 const apiV1FeedGET = ({ page, limit }) => new Promise(
     async (resolve, reject) => {
         try {
+            console.log('🔄 FeedService: Starting request...');
+
             const { Facade } = require('../../dist/Facade/Facade');
             const { ShowLentaCommand } = require('../../dist/Commands/LentaCommands');
+
+            console.log('🔄 FeedService: Creating facade and command...');
 
             const facade = new Facade();
             const command = new ShowLentaCommand(page, limit);
