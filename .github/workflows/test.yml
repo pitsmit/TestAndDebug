@@ -102,7 +102,7 @@ jobs:
         run: |
           docker build -f Dockerfile.server -t anekdot-server .
 
-      - name: Build test client container
+      - name: Build client container
         run: |
           docker build -f Dockerfile.client -t anekdot-tests .
 
@@ -132,24 +132,11 @@ jobs:
             sleep 5
           done' || (echo "Server failed to start within 120 seconds" && docker logs anekdot-server && exit 1)
 
-      - name: Check server logs
-        run: |
-          echo "=== Server logs ==="
-          docker logs anekdot-server --tail 20
-
       - name: Debug server state
         run: |
           echo "=== Checking server state ==="
-          # Проверяем health
           curl -v http://localhost:3000/api/health
-          
-          # Проверяем доступные endpoints
           curl http://localhost:3000/api/debug/openapi-routes || echo "Debug endpoint not available"
-          
-          # Проверяем контроллеры
-          docker exec anekdot-server find /app -name "*Controller*" -type f
-          
-          # Последние логи
           docker logs anekdot-server --tail 50
 
       - name: Check database connection from server container
