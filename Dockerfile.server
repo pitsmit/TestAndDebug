@@ -2,6 +2,7 @@ FROM node:20-bullseye
 
 WORKDIR /app
 
+COPY Server/src ./src
 COPY Server/package*.json ./
 COPY Server/babel.config.js ./
 COPY Server/.babelignore ./
@@ -14,14 +15,7 @@ WORKDIR /app/generated-api
 RUN npm ci
 
 WORKDIR /app
-COPY Server/src ./src
-COPY Server/dist ./dist
-
 RUN npm run build
-RUN ls -la dist/ || echo "No dist folder"
-RUN find dist -name "*Facade*" -type f | head -5
-RUN find dist -name "*Commands*" -type f | head -5
-
 EXPOSE 3000
 
 ENV HOST=localhost
