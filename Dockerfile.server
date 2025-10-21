@@ -17,6 +17,7 @@ RUN npm ci
 # Возвращаемся и копируем исходный код
 WORKDIR /app
 COPY Server/src ./src
+COPY Server/dist ./dist
 
 # Компилируем TypeScript
 # RUN npm run build
