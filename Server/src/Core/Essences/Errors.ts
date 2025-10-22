@@ -1,3 +1,5 @@
+import {logger} from "@Services/logger";
+
 export class AppError extends Error {
     constructor(
         message: string,
@@ -57,18 +59,6 @@ export class BusyCredentialsError extends AppError {
     }
 }
 
-export class BusyLoginError extends AppError {
-    constructor(message: string) {
-        super(message, 409, 'BUSY_CREDENTIALS');
-    }
-}
-
-export class BusyNameError extends AppError {
-    constructor(message: string) {
-        super(message, 409, 'BUSY_CREDENTIALS');
-    }
-}
-
 export class WrongIDError extends AppError {
     constructor() {
         super('Неверный идентификатор', 400, 'BAD_ID');
@@ -84,5 +74,20 @@ export class NOAnekdotError extends AppError {
 export class AnekdotInFavouritesError extends AppError {
     constructor() {
         super('Анекдот уже в избранном', 409, 'ANEKDOT_IN_FAVORITES');
+    }
+}
+
+export class ErrorFactory {
+    static create<T extends AppError>(
+        ErrorClass: new (...args: any[]) => T,
+        ...args: ConstructorParameters<typeof ErrorClass>
+    ): T {
+        const error = new ErrorClass(...args);
+        logger.error(`${error.name}:`, {
+            message: error.message,
+            code: error.code,
+            statusCode: error.statusCode
+        });
+        return error;
     }
 }

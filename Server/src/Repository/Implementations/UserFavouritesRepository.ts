@@ -3,7 +3,7 @@ import {IUserFavouritesRepository} from "@IRepository/IUserFavouritesRepository"
 import {IDBconnection} from "@IRepository/IDBconnection";
 import {Anekdot} from "@Core/Essences/anekdot";
 import {PoolClient, QueryResult} from "pg";
-import {AnekdotInFavouritesError, NOAnekdotError, PaginationError} from "@Essences/Errors";
+import {AnekdotInFavouritesError, ErrorFactory, NOAnekdotError, PaginationError} from "@Essences/Errors";
 
 @injectable()
 export class UserFavouritesRepository implements IUserFavouritesRepository {
@@ -16,12 +16,12 @@ export class UserFavouritesRepository implements IUserFavouritesRepository {
 
         try {
             const res = await client.query(`SELECT content, hasbadwords, loaddate from anekdot WHERE  id = $1`, [anekdot_id]);
-            if (!res.rowCount) throw new NOAnekdotError();
+            if (!res.rowCount) throw ErrorFactory.create(NOAnekdotError);
 
             try {
                 await client.query(`INSERT INTO favourites (userid, anekdotid) VALUES ($1, $2)`, [user_id, anekdot_id]);
             } catch (e) {
-                throw new AnekdotInFavouritesError()
+                throw ErrorFactory.create(AnekdotInFavouritesError);
             }
 
             return {content: res.rows[0].content, hasBadWords: res.rows[0].hasbadwords, lastModifiedDate: res.rows[0].loaddate};
@@ -34,8 +34,8 @@ export class UserFavouritesRepository implements IUserFavouritesRepository {
         let client: PoolClient = await this.DB.connect();
 
         try {
-            const countResult = await client.query(`SELECT * from anekdot WHERE id = $1`, [anekdot_id]);
-            if (!countResult.rowCount) throw new NOAnekdotError();
+            const countResult = await client.query(`SELECT * from favourites WHERE anekdotid = $1 AND userid = $2`, [anekdot_id, user_id]);
+            if (!countResult.rowCount) throw ErrorFactory.create(NOAnekdotError);
 
             const query = `
             DELETE FROM favourites
@@ -49,7 +49,7 @@ export class UserFavouritesRepository implements IUserFavouritesRepository {
     }
 
     async get_part(user_id: number, page: number = 1, limit: number = 10): Promise<Anekdot[]> {
-        if (page < 1 || limit < 1) throw new PaginationError();
+        if (page < 1 || limit < 1) throw ErrorFactory.create(PaginationError);
         let client: PoolClient = await this.DB.connect();
 
         try {
@@ -60,7 +60,7 @@ export class UserFavouritesRepository implements IUserFavouritesRepository {
             const totalPages = Math.ceil(totalCount / limit);
 
             if (page > totalPages && totalPages > 0) {
-                throw new PaginationError();
+                throw ErrorFactory.create(PaginationError);
             }
 
             const query = `

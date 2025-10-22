@@ -1,9 +1,8 @@
 import {Pool, PoolClient} from "pg";
 import {injectable, inject} from "inversify";
-import {logger} from "@Core/Services/logger";
 import {IDBconnection} from "@IRepository/IDBconnection";
 import {IDBConfigProvider} from "@IRepository/IDBConfigProvider";
-import {DatabaseConnectionError} from "@Essences/Errors";
+import {DatabaseConnectionError, ErrorFactory} from "@Essences/Errors";
 
 @injectable()
 export class DBconnection implements IDBconnection {
@@ -20,8 +19,7 @@ export class DBconnection implements IDBconnection {
         try {
             return await this._pool.connect();
         } catch (err: any) {
-            logger.fatal(`База недоступна ${err.message}`);
-            throw new DatabaseConnectionError();
+            throw ErrorFactory.create(DatabaseConnectionError);
         }
     }
 

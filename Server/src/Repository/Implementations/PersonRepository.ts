@@ -1,14 +1,11 @@
 import {IDBconnection} from "@IRepository/IDBconnection";
 import {PoolClient, QueryResult} from "pg";
 import {inject} from "inversify";
-import {logger} from "@Core/Services/logger";
 import {IPersonRepository} from "@IRepository/IPersonRepository";
 import {
     BusyCredentialsError,
-    BusyLoginError,
-    BusyNameError,
     CredentialsError,
-    CredentialsFormatError
+    CredentialsFormatError, ErrorFactory
 } from "@Essences/Errors";
 
 export class PersonRepository implements IPersonRepository {
@@ -16,18 +13,24 @@ export class PersonRepository implements IPersonRepository {
         @inject("IDBconnection") private DB: IDBconnection,
     ) {}
 
-    async get(login: string, password: string): Promise<{role: number, id: number, name: string}> {
-        let client: PoolClient = await this.DB.connect();
 
+    private isValidTextField(data: string): boolean {
+        return data.length >= 1 &&
+            data.length <= 10 &&
+            /^[A-Za-z0-9]+$/.test(data);
+    }
+
+    async get(login: string, password: string): Promise<{role: number, id: number, name: string}> {
+        if (!(this.isValidTextField(login) && this.isValidTextField(password))) {
+            throw ErrorFactory.create(CredentialsFormatError);
+        }
+
+        let client: PoolClient = await this.DB.connect();
         let result: QueryResult;
 
         try {
-            const query = `SELECT * FROM actor WHERE login = $1`
-            result = await client.query(query, [login]);
-        } catch (error) {
-            throw new CredentialsFormatError();
-        }
-        finally {
+            result = await client.query(`SELECT * FROM actor WHERE login = $1`, [login]);
+        } finally {
             client.release();
         }
 
@@ -36,17 +39,20 @@ export class PersonRepository implements IPersonRepository {
             if (person.password === password) {
                 return {role: person.role, id: person.id, name: person.name};
             }
-            const msg = `Неверный пароль`;
-            logger.error(msg);
-            throw new CredentialsError(msg);
+            throw ErrorFactory.create(CredentialsError, `Неверный пароль`);
         }
 
-        const msg = `Пользователь с логином ${login} не найден`;
-        logger.error(msg);
-        throw new CredentialsError(msg);
+        throw ErrorFactory.create(CredentialsError, `Пользователь с логином ${login} не найден`);
     }
 
     async create(login: string, password: string, name: string, role: number): Promise<number> {
+        if (!(this.isValidTextField(login) &&
+              this.isValidTextField(password) &&
+              this.isValidTextField(name)) || role > 1 || role < 0
+        ) {
+            throw ErrorFactory.create(CredentialsFormatError);
+        }
+
         let client: PoolClient = await this.DB.connect();
 
         try {
@@ -61,13 +67,13 @@ export class PersonRepository implements IPersonRepository {
 
             if (login_exists && name_exists) {
                 await client.query('ROLLBACK');
-                throw new BusyCredentialsError(`Логин "${login}" и имя "${name}" уже заняты`);
+                throw ErrorFactory.create(BusyCredentialsError, `Логин "${login}" и имя "${name}" уже заняты`);
             } else if (login_exists) {
                 await client.query('ROLLBACK');
-                throw new BusyLoginError(`Логин "${login}" уже занят`);
+                throw ErrorFactory.create(BusyCredentialsError, `Логин "${login}" уже занят`);
             } else if (name_exists) {
                 await client.query('ROLLBACK');
-                throw new BusyNameError(`Имя "${name}" уже занято`);
+                throw ErrorFactory.create(BusyCredentialsError, `Имя "${name}" уже занято`);
             }
 
             const insertQuery = `INSERT INTO actor (login, password, name, role) VALUES ($1, $2, $3, $4) RETURNING id`;

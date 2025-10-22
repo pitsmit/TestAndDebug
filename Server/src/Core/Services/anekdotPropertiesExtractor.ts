@@ -1,8 +1,8 @@
 import {HTMLLoader} from "@Services/HTMLLoader";
 import {inject, injectable, multiInject} from "inversify";
 import {ISiteParser} from "@Services/parsers";
-import {logger} from "@Services/logger";
 import {INonStandartLexicRepository} from "@IRepository/INonStandartLexicRepository";
+import {AppError, ErrorFactory} from "@Essences/Errors";
 
 @injectable()
 export class AnekdotPropertiesExtractor {
@@ -10,7 +10,7 @@ export class AnekdotPropertiesExtractor {
         @inject("INonStandartLexicRepository")
         private _lexicRepo: INonStandartLexicRepository,
         @multiInject(Symbol.for('ISiteParser'))
-        private parsers: ISiteParser[] = []
+        private parsers: ISiteParser[]
     ) {}
 
     extract = async (data: string) => {
@@ -26,9 +26,7 @@ export class AnekdotPropertiesExtractor {
         const parser = this.parsers.find(p => data.includes(p.url));
 
         if (!parser) {
-            const msg: string = `Парсер для URL ${data} не найден`;
-            logger.warn(msg);
-            throw new Error(msg);
+            throw ErrorFactory.create(AppError, `Парсер для URL ${data} не найден`);
         }
 
         return createFromText(parser.parse(html));

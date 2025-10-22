@@ -233,7 +233,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Person"
         '400':
-          description: Некорректный формат логина, пароля, имени или роли
+          description: Некорректный формат логина или пароля
           content:
             application/json:
               schema:

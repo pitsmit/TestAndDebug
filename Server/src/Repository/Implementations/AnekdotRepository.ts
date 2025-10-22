@@ -3,8 +3,7 @@ import {IAnekdotRepository} from "@IRepository/IAnekdotRepository";
 import {inject, injectable} from "inversify";
 import {Anekdot} from "@Core/Essences/anekdot";
 import {IDBconnection} from "@IRepository/IDBconnection";
-import {logger} from "@Core/Services/logger";
-import {EmptyAnekdotError, NOAnekdotError, PaginationError, WrongIDError} from "@Essences/Errors";
+import {EmptyAnekdotError, ErrorFactory, NOAnekdotError, PaginationError, WrongIDError} from "@Essences/Errors";
 
 @injectable()
 export class AnekdotRepository implements IAnekdotRepository {
@@ -15,13 +14,11 @@ export class AnekdotRepository implements IAnekdotRepository {
 
         try {
             const offset: number = (page - 1) * limit;
-            const query = `SELECT * FROM Anekdot ORDER BY loaddate DESC LIMIT $1 OFFSET $2`;
-            const res: QueryResult = await client.query(query, [limit, offset]);
+            const res: QueryResult = await client.query(`SELECT * FROM Anekdot ORDER BY loaddate DESC LIMIT $1 OFFSET $2`, [limit, offset]);
             return res.rows.map(row => new Anekdot(row.content, row.hasbadwords, row.loaddate, row.id));
         }
         catch (e: any) {
-            logger.error(e.message);
-            throw new PaginationError();
+            throw ErrorFactory.create(PaginationError, e.message);
         }
         finally {
             client.release();
@@ -29,7 +26,7 @@ export class AnekdotRepository implements IAnekdotRepository {
     }
 
     async delete(id: number): Promise<void> {
-        if (id <= 0) throw new WrongIDError();
+        if (id <= 0) throw ErrorFactory.create(WrongIDError);
         let client: PoolClient = await this.DB.connect();
 
         try {
@@ -42,11 +39,8 @@ export class AnekdotRepository implements IAnekdotRepository {
     }
 
     async load(text: string, hasBadWords: boolean, lastModifiedDate: Date): Promise<number> {
-        if (!text.trim().length) {
-            const msg: string = `Пустой текст анекдота`;
-            logger.warn(msg);
-            throw new EmptyAnekdotError(msg);
-        }
+        if (!text.trim().length)
+            throw ErrorFactory.create(EmptyAnekdotError, `Пустой текст анекдота`);
 
         let client: PoolClient = await this.DB.connect();
 
@@ -61,12 +55,9 @@ export class AnekdotRepository implements IAnekdotRepository {
     }
 
     async edit(id: number, text: string, hasBadWords: boolean, lastModifiedDate: Date): Promise<void> {
-        if (!text.trim().length) {
-            const msg: string = `Пустой текст анекдота`;
-            logger.warn(msg);
-            throw new EmptyAnekdotError(msg);
-        }
-        if (id <= 0) throw new WrongIDError();
+        if (!text.trim().length)
+            throw ErrorFactory.create(EmptyAnekdotError, `Пустой текст анекдота`);
+        if (id <= 0) throw ErrorFactory.create(WrongIDError);
         let client: PoolClient = await this.DB.connect();
 
         try {
@@ -74,7 +65,7 @@ export class AnekdotRepository implements IAnekdotRepository {
                 `UPDATE Anekdot SET content = $1, loaddate = $2, hasbadwords = $3 WHERE id = $4`,
                 [text, lastModifiedDate, hasBadWords, id]
             );
-            if (result.rowCount == 0) throw new NOAnekdotError();
+            if (result.rowCount == 0) throw ErrorFactory.create(NOAnekdotError);
         } finally {
             client.release();
         }

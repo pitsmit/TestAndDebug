@@ -5,6 +5,7 @@ const {setupTestDatabase} = require("./database-setup");
 
 const launchServer = async () => {
   try {
+    require('dotenv').config();
     if (process.env.DATABASE_NAME === "anekdot_test") {
       await setupTestDatabase();
       process.env.JWT_SECRET="your_super_secret_key_here_min_32_chars"

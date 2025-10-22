@@ -9,7 +9,6 @@ import {AddToFavouritesCommand, DeleteFromFavouritesCommand, ShowFavouritesComma
 import {DeleteAnekdotCommand, EditAnekdotCommand, LoadAnekdotCommand} from "@Commands/AdminCommands";
 import {ShowTable} from "@TechUI/ShowTable";
 import {ROLE} from "@shared/types/roles";
-import {logger} from "@Services/logger";
 import process from "node:process";
 
 export abstract class Experience {
@@ -67,7 +66,6 @@ export class AdminExperience extends Experience {
             try {
                 switch (caseNum) {
                     case 0:
-                        logger.info("Завершение работы");
                         process.exit(0);
                         break;
                     case 1:
@@ -116,7 +114,6 @@ export class ClientExperience extends Experience {
             try {
                 switch (caseNum) {
                     case 0:
-                        logger.info("Завершение работы");
                         process.exit(0);
                         break;
                     case 1:
@@ -199,7 +196,6 @@ export class VisitorExperience extends Experience {
             try {
                 switch (caseNum) {
                     case 0:
-                        logger.info("Завершение работы");
                         process.exit(0);
                         break;
                     case 1:

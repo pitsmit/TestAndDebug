@@ -1,6 +1,6 @@
 import {injectable} from "inversify";
 import * as cheerio from 'cheerio';
-import {logger} from "@Core/Services/logger";
+import {AppError, ErrorFactory} from "@Essences/Errors";
 
 export abstract class ISiteParser {
     protected constructor(protected readonly selector: string,
@@ -10,11 +10,8 @@ export abstract class ISiteParser {
         const $ = cheerio.load(data);
         const anekdot = $(this.selector);
 
-        if (!anekdot.length) {
-            const msg: string = `Не найдена структура анекдота на странице`;
-            logger.warn(msg);
-            throw new Error(msg);
-        }
+        if (!anekdot.length)
+            throw ErrorFactory.create(AppError, `Не найдена структура анекдота на странице`);
 
         return anekdot.text().replace(/\n/g, ' ').trim();
     }

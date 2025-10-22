@@ -1,7 +1,6 @@
 import {injectable} from "inversify";
 import jwt from 'jsonwebtoken';
-import {logger} from "@Core/Services/logger";
-import {BadTokenError, PermissionError} from "@Essences/Errors";
+import {BadTokenError, ErrorFactory, PermissionError} from "@Essences/Errors";
 
 export interface IAuthService {
     generateToken(id: number, role: number): string;
@@ -24,11 +23,8 @@ export class AuthService implements IAuthService {
         try {
             decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
         } catch (e) {
-            const msg: string = `Некорректный токен`;
-
             if (typeof decoded !== 'object' || decoded === null || !('id' in decoded) || !('role' in decoded)) {
-                logger.error(msg);
-                throw new BadTokenError();
+                throw ErrorFactory.create(BadTokenError);
             }
         }
 
@@ -40,9 +36,6 @@ export class AuthService implements IAuthService {
 
     checkRole(token: string, expected_role: number): void {
         const { role } = this.verifyToken(token);
-        if (role !== expected_role) {
-            logger.error("Недостаточно прав");
-            throw new PermissionError();
-        }
+        if (role !== expected_role) throw ErrorFactory.create(PermissionError);
     }
 }

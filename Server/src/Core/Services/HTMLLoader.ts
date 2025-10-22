@@ -1,5 +1,5 @@
 import axios from 'axios';
-import {logger} from "@Core/Services/logger";
+import {AppError, ErrorFactory} from "@Essences/Errors";
 
 export class HTMLLoader {
     async getHTML(url: string): Promise<string> {
@@ -16,8 +16,7 @@ export class HTMLLoader {
             })).data;
         } catch (error: any) {
             source.cancel('Request failed');
-            logger.error(error.message);
-            throw error;
+            throw ErrorFactory.create(AppError, error.message);
         } finally {
             clearTimeout(timeout);
         }
