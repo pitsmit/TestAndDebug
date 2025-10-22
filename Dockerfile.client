@@ -1,16 +1,6 @@
 FROM node:20-bullseye
 
-#RUN apt-get update && apt-get install -y \
-#    git \
-#    openssh-client \
-#    default-jre \
-#    postgresql-client \
-#    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
-
 COPY Server/ ./
-
 RUN npm ci
-
 CMD ["sh", "-c", "npm run test:e2e"]
