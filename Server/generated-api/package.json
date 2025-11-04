@@ -6,7 +6,8 @@
   "scripts": {
     "prestart": "npm install",
     "start:test": "cross-env DATABASE_NAME=anekdot_test node index.js",
-    "start:prod": "cross-env DATABASE_NAME=Anekdotus    node index.js"
+    "start:prod": "cross-env DATABASE_NAME=Anekdotus    node index.js",
+    "start:wsl": "node --experimental-modules index.js"
   },
   "keywords": [
     "openapi-generator",

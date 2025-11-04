@@ -4,7 +4,7 @@ export class AuthDataMother {
     CreateValidUserData() {
         return {
             id: 1,
-            login: 'new_login',
+            login: 'newlogin',
             password: 'password',
             name: 'name',
             role: ROLE.ADMIN

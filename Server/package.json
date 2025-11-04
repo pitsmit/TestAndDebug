@@ -9,10 +9,10 @@
     "build": "babel src --out-dir dist --extensions \".ts,.tsx\" --ignore \"**/__tests__/**,**/*.test.ts,**/*.spec.ts,src/generated-api/**\"",
     "build:tsc": "tsc",
     "clean": "rimraf dist",
-    "test": "jest",
-    "test:unit": "jest --selectProjects unit",
-    "test:integration": "jest --selectProjects integration",
-    "test:e2e": "jest --selectProjects e2e  --forceExit --detectOpenHandles",
+    "test": "jest --config jest/config/jest.config.js",
+    "test:unit": "jest --config jest/config/jest.config.js --selectProjects unit",
+    "test:integration": "jest --config jest/config/jest.config.js --selectProjects integration",
+    "test:e2e": "jest --config jest/config/jest.config.js --selectProjects e2e --forceExit --detectOpenHandles",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:history": "node -e \"const fs = require('fs'); if(fs.existsSync('allure-report/history')) { const fsExtra = require('fs-extra'); fsExtra.copySync('allure-report/history', 'allure-results/history'); console.log('History copied'); } else { console.log('No history found'); }\"",
     "allure:serve": "allure serve allure-results",
@@ -71,6 +71,9 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"
+  },
+  "jest": {
+    "preset": "jest/config/jest.config.js"
   },
   "_moduleAliases": {
     "@": "dist"

@@ -7,7 +7,7 @@ import { mockDBConnection, mockClient } from "@Mocks/DBmocks";
 import { PersonRepository } from "@Repository/PersonRepository";
 import {SQLBuilder} from "@Helpers/SQLBuilder";
 import {IPersonRepository} from "@IRepository/IPersonRepository";
-import {BusyLoginError} from "@Essences/Errors";
+import {BusyCredentialsError} from "@Essences/Errors";
 
 type Person = {
     role: number;
@@ -280,7 +280,7 @@ describe('Вход и регистрация пользователя', () => {
 
         /// ASSERT
         await step('Проверка ошибки', async () => {
-            await expect(act).rejects.toThrow(BusyLoginError);
+            await expect(act).rejects.toThrow(BusyCredentialsError);
         });
     });
 });
