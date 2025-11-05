@@ -1,33 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Legacy Interface</title>
-  <script>
-    function downloadFile() {
-      window.location.href = '/downloads/anekdot-app.zip';
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      text-align: center;
     }
-  </script>
+    h1 {
+      margin-bottom: 30px;
+    }
+    .download-btn {
+      background: #28a745;
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .download-btn:hover {
+      background: #218838;
+    }
+  </style>
 </head>
 <body>
 <h1>Legacy Interface</h1>
+<button class="download-btn" onclick="downloadFile()">
+  Download ZIP
+</button>
 
-<div style="border: 1px solid #ccc; padding: 15px; margin: 10px 0;">
-  <h2>Download Full Application</h2>
-
-  <button onclick="downloadFile()" style="
-        background: #28a745;
-        color: white;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 5px;
-        font-weight: bold;
-        font-size: 16px;
-        cursor: pointer;
-     ">
-    Download Full Package (.zip) - 26MB
-  </button>
-</div>
-
-<a href="/">Back to main</a>
+<script>
+  function downloadFile() {
+    window.location.href = '/downloads/anekdot-app.zip';
+  }
+</script>
 </body>
 </html>

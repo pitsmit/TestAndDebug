@@ -2,67 +2,40 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
     <title>Анекдотус - Documentation</title>
     <style>
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            line-height: 1.6;
-            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 25px;
         }
         h1 {
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
+            color: #333;
+            border-bottom: 2px solid #007bff;
             padding-bottom: 10px;
         }
         h2 {
-            color: #34495e;
-            margin-top: 30px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #ecf0f1;
+            color: #444;
+            margin-top: 25px;
         }
         img {
             max-width: 100%;
-            border: 1px solid #ddd;
-            margin: 15px 0;
-            border-radius: 4px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #ccc;
+            border-radius: 25px;
         }
-        .nav {
-            margin: 20px 0;
-            padding: 15px;
-            background: #ecf0f1;
-            border-radius: 5px;
-        }
-        .nav a {
-            color: #3498db;
-            text-decoration: none;
-            margin-right: 15px;
-        }
-        .nav a:hover { text-decoration: underline; }
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .image-grid img { margin: 0; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="nav">
-        <a href="/">На главную</a>
-    </div>
+    <!--<zero-md src="../readmesrc/README.md"></zero-md>-->
 
     <h1 id="анекдотус">Анекдотус</h1>
     <h2 id="краткое-описание-идеи-проекта">Краткое описание идеи проекта</h2>
@@ -109,14 +82,12 @@
     <img src="/readme/business.png" alt="UML Class Diagram">
 
     <h1 id="экраны-web-приложения">Экраны WEB-приложения</h1>
-    <div class="image-grid">
-        <img src="/readme/startpage.png" alt="Start Page">
-        <img src="/readme/entrypage.png" alt="Entry Page">
-        <img src="/readme/registerpage.png" alt="Register Page">
-        <img src="/readme/userpage.png" alt="User Page">
-        <img src="/readme/loadpage.png" alt="Load Page">
-        <img src="/readme/adminpage.png" alt="Admin Page">
-    </div>
+    <img src="/readme/startpage.png" alt="Start Page">
+    <img src="/readme/entrypage.png" alt="Entry Page">
+    <img src="/readme/registerpage.png" alt="Register Page">
+    <img src="/readme/userpage.png" alt="User Page">
+    <img src="/readme/loadpage.png" alt="Load Page">
+    <img src="/readme/adminpage.png" alt="Admin Page">
 </div>
 </body>
 </html>

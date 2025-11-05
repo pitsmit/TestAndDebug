@@ -3,10 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <title>Management Panel</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    h1 {
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+
+    a {
+      color: #007bff;
+      text-decoration: none;
+      padding: 8px 12px;
+      display: block;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    a:hover {
+      background: #f8f9fa;
+    }
+  </style>
 </head>
 <body>
 <h1>Management Panel</h1>
-<p>This is management page</p>
 
 <ul>
   <li><a href="/api/v1">📚 API v1 Documentation</a></li>
@@ -18,7 +41,5 @@
   <li><a href="/">Static Screenshots</a></li>
   <li><a href="/reserved/">Reserved path</a></li>
 </ul>
-
-<a href="/">← Back to main</a>
 </body>
 </html>
