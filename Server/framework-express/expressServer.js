@@ -8,7 +8,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const OpenApiValidator = require('express-openapi-validator');
-const config = require('./config');
+const config = require('../common/config');
 
 class ExpressServer {
   constructor(port, openApiYaml) {
@@ -49,11 +49,11 @@ class ExpressServer {
       res.json(req.query);
     });
     this.app.use(
-      OpenApiValidator.middleware({
-        apiSpec: this.openApiPath,
-        operationHandlers: path.join(__dirname),
-        fileUploader: { dest: config.FILE_UPLOAD_PATH },
-      }),
+        OpenApiValidator.middleware({
+          apiSpec: this.openApiPath,
+          operationHandlers: path.join(__dirname, '..', 'common'),
+          fileUploader: { dest: config.FILE_UPLOAD_PATH },
+        }),
     );
   }
 

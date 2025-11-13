@@ -5,43 +5,48 @@ const config = require('../config');
 
 class Controller {
   static sendResponse(response, payload) {
-    /**
-    * The default response-code is 200. We want to allow to change that. in That case,
-    * payload will be an object consisting of a code and a payload. If not customized
-    * send 200 and the payload as received in this method.
-    */
-    response.status(payload.code || 200);
-    const responsePayload = payload.payload !== undefined ? payload.payload : payload;
-    if (responsePayload instanceof Object) {
-      response.json(responsePayload);
+    // Определяем тип фреймворка
+    if (response.code) {
+      // Fastify - используем reply
+      const statusCode = payload.code || 200;
+      const responsePayload = payload.payload !== undefined ? payload.payload : payload;
+      return response.code(statusCode).send(responsePayload);
     } else {
-      response.end(responsePayload);
+      // Express - оригинальная логика
+      response.status(payload.code || 200);
+      const responsePayload = payload.payload !== undefined ? payload.payload : payload;
+      if (responsePayload instanceof Object) {
+        response.json(responsePayload);
+      } else {
+        response.end(responsePayload);
+      }
     }
   }
 
   static sendError(response, error) {
-    response.status(error.code || 500);
-    if (error.error instanceof Object) {
-      response.json(error.error);
+    // Определяем тип фреймворка
+    if (response.code) {
+      // Fastify
+      const statusCode = error.code || 500;
+      const errorPayload = error.error instanceof Object ? error.error : { message: error.error || error.message };
+      return response.code(statusCode).send(errorPayload);
     } else {
-      response.end(error.error || error.message);
+      // Express
+      response.status(error.code || 500);
+      if (error.error instanceof Object) {
+        response.json(error.error);
+      } else {
+        response.end(error.error || error.message);
+      }
     }
   }
 
-  /**
-  * Files have been uploaded to the directory defined by config.js as upload directory
-  * Files have a temporary name, that was saved as 'filename' of the file object that is
-  * referenced in request.files array.
-  * This method finds the file and changes it to the file name that was originally called
-  * when it was uploaded. To prevent files from being overwritten, a timestamp is added between
-  * the filename and its extension
-  * @param request
-  * @param fieldName
-  * @returns {string}
-  */
   static collectFile(request, fieldName) {
     let uploadedFileName = '';
+
+    // Fastify использует request.body для multipart, Express - request.files
     if (request.files && request.files.length > 0) {
+      // Express style
       const fileObject = request.files.find((file) => file.fieldname === fieldName);
       if (fileObject) {
         const fileArray = fileObject.originalname.split('.');
@@ -49,9 +54,10 @@ class Controller {
         fileArray.push(`_${Date.now()}`);
         uploadedFileName = `${fileArray.join('')}.${extension}`;
         fs.renameSync(path.join(config.FILE_UPLOAD_PATH, fileObject.filename),
-          path.join(config.FILE_UPLOAD_PATH, uploadedFileName));
+            path.join(config.FILE_UPLOAD_PATH, uploadedFileName));
       }
     }
+    // TODO: Добавить обработку для Fastify multipart
     return uploadedFileName;
   }
 
@@ -69,6 +75,7 @@ class Controller {
 
   static collectRequestParams(request) {
     const requestParams = {};
+
     if (request.openapi.schema.requestBody !== null) {
       const { content } = request.openapi.schema.requestBody;
       if (content['application/json'] !== undefined) {
@@ -76,14 +83,14 @@ class Controller {
         requestParams[requestBodyName] = request.body;
       } else if (content['multipart/form-data'] !== undefined) {
         Object.keys(content['multipart/form-data'].schema.properties).forEach(
-          (property) => {
-            const propertyObject = content['multipart/form-data'].schema.properties[property];
-            if (propertyObject.format !== undefined && propertyObject.format === 'binary') {
-              requestParams[property] = this.collectFile(request, property);
-            } else {
-              requestParams[property] = request.body[property];
-            }
-          },
+            (property) => {
+              const propertyObject = content['multipart/form-data'].schema.properties[property];
+              if (propertyObject.format !== undefined && propertyObject.format === 'binary') {
+                requestParams[property] = this.collectFile(request, property);
+              } else {
+                requestParams[property] = request.body[property];
+              }
+            },
         );
       }
     }
@@ -104,9 +111,12 @@ class Controller {
 
   static async handleRequest(request, response, serviceOperation) {
     try {
+      console.log('Controller: handling request...');
       const serviceResponse = await serviceOperation(this.collectRequestParams(request));
+      console.log('Controller: service response:', serviceResponse);
       Controller.sendResponse(response, serviceResponse);
     } catch (error) {
+      console.log('Controller: service error:', error);
       Controller.sendError(response, error);
     }
   }

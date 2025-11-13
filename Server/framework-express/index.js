@@ -1,7 +1,7 @@
 require('module-alias/register');
-const config = require('./config');
+const config = require('../common/config');
 const ExpressServer = require('./expressServer');
-const {setupTestDatabase} = require("./database-setup");
+const {setupTestDatabase} = require("../common/database-setup");
 
 const launchServer = async () => {
   try {

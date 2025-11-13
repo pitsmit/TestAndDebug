@@ -11,14 +11,16 @@ const apiV1FeedGET = ({ page, limit }) => new Promise(
             await facade.execute(command);
             const anekdots = command._anekdots;
 
-            resolve(Service.successResponse(anekdots));
+            // Просто возвращаем данные, Controller сам добавит код
+            resolve(anekdots);
         } catch (error) {
             let status = error.statusCode || 500;
             let message = error.message || 'Внутренняя ошибка сервера';
 
-            if (error.statusCode) {
-                reject(Service.rejectResponse(message, status));
-            }
+            reject({
+                code: status,
+                error: message
+            });
         }
     },
 );

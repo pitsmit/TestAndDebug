@@ -60,13 +60,7 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/downloads"
 });
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "admin")),
-    RequestPath = "/adminer",
-    ServeUnknownFileTypes = true
-});
+
 
 app.UseStaticFiles(new StaticFileOptions
 {
