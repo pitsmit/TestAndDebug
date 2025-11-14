@@ -1,6 +1,8 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 
+/// надо как в методичке, образ на каждый тест поднимать
+
 class BenchmarkRunner {
     constructor(framework, totalRuns = 5) {
         this.framework = framework;
