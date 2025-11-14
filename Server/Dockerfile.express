@@ -4,6 +4,14 @@ WORKDIR /app
 # Копируем common папку
 COPY common ./common
 
+# ПРОВЕРЯЕМ что скопировалось
+RUN echo "=== Checking common folder ===" && \
+    ls -la && \
+    echo "=== Common contents ===" && \
+    ls -la common/ && \
+    echo "=== Database setup file ===" && \
+    ls -la common/database-setup.js || echo "database-setup.js not found!"
+
 # Копируем исходный код Express
 COPY framework-express/package*.json ./
 RUN npm install
