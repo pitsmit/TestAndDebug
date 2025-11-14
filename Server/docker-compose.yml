@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
 
-  framework-express:  # ← изменил имя
+  framework-express:
     build:
       context: .
       dockerfile: Dockerfile.express
@@ -23,10 +23,17 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_NAME=anekdot_test
+      - DATABASE_HOST=postgres  # ← ИЗМЕНИ localhost на postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=password
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - test-network
 
-  framework-fastify:  # ← изменил имя
+  framework-fastify:
     build:
       context: .
       dockerfile: Dockerfile.fastify
@@ -34,6 +41,13 @@ services:
       - "3001:3000"
     environment:
       - DATABASE_NAME=anekdot_test
+      - DATABASE_HOST=postgres  # ← ИЗМЕНИ localhost на postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=password
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - test-network
 

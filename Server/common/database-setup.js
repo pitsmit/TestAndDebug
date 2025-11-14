@@ -2,11 +2,11 @@ import { Pool } from 'pg';
 
 export async function setupTestDatabase() {
     const pool = new Pool({
-        host: 'localhost',
-        port: 5432,
-        database: 'anekdot_test',
-        user: 'postgres',
-        password: 'password',
+        host: process.env.DATABASE_HOST || 'localhost',
+        port: process.env.DATABASE_PORT || 5432,
+        database: process.env.DATABASE_NAME || 'anekdot_test',
+        user: process.env.DATABASE_USER || 'postgres',
+        password: process.env.DATABASE_PASSWORD || 'password',
     });
 
     try {
