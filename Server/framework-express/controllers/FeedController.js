@@ -1,4 +1,4 @@
-const service = require('../../common/services/FeedService');
+const service = require('../services/FeedService');
 
 const apiV1FeedGET = async (request, response) => {
   try {

@@ -1,4 +1,4 @@
-const service = require('../../common/services/AuthService');
+const service = require('../services/AuthService');
 
 const apiV1LoginPOST = async (request, response) => {
   try {

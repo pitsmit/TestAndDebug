@@ -75,16 +75,13 @@ class FastifyServer {
         const files = fs.readdirSync(controllersPath);
 
         for (const file of files) {
-            if (file.endsWith('.js')) {
-                const controller = require(path.join(controllersPath, file));
+            const controller = require(path.join(controllersPath, file));
 
-                for (const [key, handler] of Object.entries(controller)) {
-                    serviceHandlers[key] = handler;
-                }
+            for (const [key, handler] of Object.entries(controller)) {
+                serviceHandlers[key] = handler;
             }
         }
 
-        console.log('Loaded handlers:', Object.keys(serviceHandlers));
         return serviceHandlers;
     }
 

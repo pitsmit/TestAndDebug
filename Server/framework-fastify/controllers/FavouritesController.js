@@ -1,4 +1,4 @@
-const service = require('../../common/services/FavouritesService');
+const service = require('../services/FavouritesService');
 
 const apiV1FavouritesGET = async (request, reply) => {
   try {

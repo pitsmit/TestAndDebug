@@ -1,7 +1,6 @@
 FROM node:20-bullseye
 WORKDIR /app
 
-# Копируем исходный код Benchmark
 COPY benchmark/package*.json ./
 RUN npm install
 COPY benchmark/ ./

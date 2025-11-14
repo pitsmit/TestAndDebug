@@ -1,4 +1,4 @@
-const service = require('../../common/services/AnekdotService');
+const service = require('../services/AnekdotService');
 
 const apiV1AnekdotsIdDELETE = async (request, response) => {
   try {
