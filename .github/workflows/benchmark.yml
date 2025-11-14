@@ -22,11 +22,37 @@ jobs:
           docker compose up -d --build
           sleep 10
 
-      - name: Wait for services to be ready
+      - name: Check container status and logs
         run: |
           cd Server
-          timeout 30s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 1; done'
-          timeout 30s bash -c 'until curl -f http://localhost:3001/api/health; do sleep 1; done'
+          echo "=== Container Status ==="
+          docker compose ps
+          
+          echo "=== Express Logs ==="
+          docker compose logs framework-express || echo "No logs for express"
+          
+          echo "=== Fastify Logs ==="
+          docker compose logs framework-fastify || echo "No logs for fastify"
+          
+          echo "=== Benchmark Logs ==="
+          docker compose logs benchmark || echo "No logs for benchmark"
+
+      - name: Wait for services to be ready (with retry)
+        run: |
+          cd Server
+          # Ждем немного больше и пробуем несколько раз
+          sleep 20
+          
+          echo "=== Testing Express ==="
+          curl -f http://localhost:3000/api/health || echo "Express not ready yet"
+          
+          echo "=== Testing Fastify ==="
+          curl -f http://localhost:3001/api/health || echo "Fastify not ready yet"
+          
+          # Еще одна попытка через 10 секунд
+          sleep 10
+          curl -f http://localhost:3000/api/health && echo "✅ Express is ready!"
+          curl -f http://localhost:3001/api/health && echo "✅ Fastify is ready!"
 
       - name: Run benchmark
         run: |
