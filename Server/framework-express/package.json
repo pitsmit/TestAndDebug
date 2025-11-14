@@ -21,6 +21,7 @@
     "js-yaml": "^3.3.0",
     "module-alias": "^2.2.3",
     "swagger-ui-express": "^4.0.2",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "cross-env": "^10.1.0"
   }
 }
