@@ -1,4 +1,6 @@
-const service = require('../../common/services/FavouritesService');
+const path = require('path');
+const service = require(path.join(__dirname, 'common', 'services', 'FavouritesService'));
+//const service = require('../../common/services/FavouritesService');
 
 const apiV1FavouritesGET = async (request, reply) => {
   try {

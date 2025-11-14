@@ -1,4 +1,6 @@
-const service = require('../../common/services/AuthService');
+const path = require('path');
+const service = require(path.join(__dirname, 'common', 'services', 'AuthService'));
+//const service = require('../../common/services/AuthService');
 
 const apiV1LoginPOST = async (request, reply) => {
   try {
