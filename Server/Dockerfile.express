@@ -18,4 +18,9 @@ RUN npm install
 COPY framework-express/ ./
 
 EXPOSE 3000
+ENV HOST=localhost
+ENV PORT=5432
+ENV DATABASE_NAME=anekdot_test
+ENV USER=postgres
+ENV PASSWORD=password
 CMD ["node", "index.js"]
