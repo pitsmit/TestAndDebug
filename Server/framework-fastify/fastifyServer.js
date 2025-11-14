@@ -88,7 +88,10 @@ class FastifyServer {
     async launch() {
         try {
             await this.setupMiddleware();
-            await this.app.listen({ port: this.port });
+            await this.app.listen({
+                port: this.port,
+                host: '0.0.0.0'
+            });
             console.log(`Listening on port ${this.port}`);
         } catch (err) {
             console.error('Server error:', err);
