@@ -10,7 +10,7 @@ execSync('cd ../Server && docker-compose -f docker-compose.express.yml up -d', {
 execSync('sleep 20');
 
 // Запускаем 100 прогонов
-execSync('cd ../Server && docker-compose -f docker-compose.express.yml run --rm benchmark node test-runner.js express 100', {
+execSync('cd ../Server && docker-compose -f docker-compose.express.yml run --rm benchmark node test-runner.js express 5', {
     stdio: 'inherit'
 });
 

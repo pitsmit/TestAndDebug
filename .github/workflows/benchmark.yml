@@ -6,8 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  benchmark:
+  benchmark-express:
     runs-on: ubuntu-latest
+    name: Benchmark Express (100 runs)
 
     steps:
       - name: Checkout code
@@ -16,63 +17,138 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and start services
+      - name: Build and start Express only
         run: |
           cd Server
-          docker compose up -d --build
-          sleep 10
+          docker compose -f docker-compose.express.yml up -d --build
+          sleep 15
 
-      - name: Check container status and logs
+      - name: Check Express status
         run: |
           cd Server
           echo "=== Container Status ==="
-          docker compose ps
+          docker compose -f docker-compose.express.yml ps
           
           echo "=== Express Logs ==="
-          docker compose logs framework-express || echo "No logs for express"
-          
-          echo "=== Fastify Logs ==="
-          docker compose logs framework-fastify || echo "No logs for fastify"
-          
-          echo "=== Benchmark Logs ==="
-          docker compose logs benchmark || echo "No logs for benchmark"
+          docker compose -f docker-compose.express.yml logs app || echo "No logs for express"
 
-      - name: Wait for services to be ready (with retry)
+      - name: Wait for Express to be ready
         run: |
           cd Server
-          # Ждем немного больше и пробуем несколько раз
-          sleep 20
-          
           echo "=== Testing Express ==="
-          curl -f http://localhost:3000/api/health || echo "Express not ready yet"
-          
-          echo "=== Testing Fastify ==="
-          curl -f http://localhost:3001/api/health || echo "Fastify not ready yet"
-          
-          # Еще одна попытка через 10 секунд
-          sleep 10
-          curl -f http://localhost:3000/api/health && echo "✅ Express is ready!"
-          curl -f http://localhost:3001/api/health && echo "✅ Fastify is ready!"
+          timeout 60s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
+          echo "✅ Express is ready!"
 
-      - name: Run Express 100 times
+      - name: Run Express benchmark 100 times
         run: |
           cd Server
-          node scripts/run-express-100.js
+          docker compose -f docker-compose.express.yml run --rm benchmark node test-runner.js express 100
 
-      - name: Run Fastify 100 times
-        run: |
-          cd Server
-          node scripts/run-fastify-100.js
-
-      - name: Upload all results
+      - name: Save Express results
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results
+          name: express-benchmark-results
           path: Server/benchmark/results/
           retention-days: 30
 
-      - name: Stop services
+      - name: Stop Express services
         if: always()
         run: |
           cd Server
-          docker compose down
+          docker compose -f docker-compose.express.yml down
+
+  benchmark-fastify:
+    runs-on: ubuntu-latest
+    name: Benchmark Fastify (100 runs)
+    needs: benchmark-express
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and start Fastify only
+        run: |
+          cd Server
+          docker compose -f docker-compose.fastify.yml up -d --build
+          sleep 15
+
+      - name: Check Fastify status
+        run: |
+          cd Server
+          echo "=== Container Status ==="
+          docker compose -f docker-compose.fastify.yml ps
+          
+          echo "=== Fastify Logs ==="
+          docker compose -f docker-compose.fastify.yml logs app || echo "No logs for fastify"
+
+      - name: Wait for Fastify to be ready
+        run: |
+          cd Server
+          echo "=== Testing Fastify ==="
+          timeout 60s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
+          echo "✅ Fastify is ready!"
+
+      - name: Run Fastify benchmark 100 times
+        run: |
+          cd Server
+          docker compose -f docker-compose.fastify.yml run --rm benchmark node test-runner.js fastify 100
+
+      - name: Save Fastify results
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastify-benchmark-results
+          path: Server/benchmark/results/
+          retention-days: 30
+
+      - name: Stop Fastify services
+        if: always()
+        run: |
+          cd Server
+          docker compose -f docker-compose.fastify.yml down
+
+  generate-report:
+    runs-on: ubuntu-latest
+    name: Generate Final Report
+    needs: [benchmark-express, benchmark-fastify]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Express results
+        uses: actions/download-artifact@v4
+        with:
+          name: express-benchmark-results
+          path: express-results
+
+      - name: Download Fastify results
+        uses: actions/download-artifact@v4
+        with:
+          name: fastify-benchmark-results
+          path: fastify-results
+
+      - name: Generate comparison report
+        run: |
+          echo "📊 FINAL COMPARISON REPORT"
+          echo "=========================="
+          
+          # Здесь можно добавить скрипт для сравнения результатов
+          echo "Express results:"
+          ls -la express-results/
+          echo ""
+          echo "Fastify results:"
+          ls -la fastify-results/
+          
+          echo "✅ Benchmark completed! Check artifacts for detailed results."
+
+      - name: Upload combined results
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-benchmark-results
+          path: |
+            express-results/
+            fastify-results/
+          retention-days: 30

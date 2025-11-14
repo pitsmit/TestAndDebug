@@ -10,7 +10,7 @@ execSync('cd ../Server && docker-compose -f docker-compose.fastify.yml up -d', {
 execSync('sleep 20');
 
 // Запускаем 100 прогонов
-execSync('cd ../Server && docker-compose -f docker-compose.fastify.yml run --rm benchmark node test-runner.js fastify 100', {
+execSync('cd ../Server && docker-compose -f docker-compose.fastify.yml run --rm benchmark node test-runner.js fastify 5', {
     stdio: 'inherit'
 });
 
