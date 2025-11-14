@@ -1,9 +1,8 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
 class BenchmarkRunner {
-    constructor(framework, totalRuns = 100) {
+    constructor(framework, totalRuns = 5) {
         this.framework = framework;
         this.totalRuns = totalRuns;
         this.results = [];
@@ -125,14 +124,14 @@ class BenchmarkRunner {
 
     calculatePercentile(arr, p) {
         const sorted = [...arr].sort((a, b) => a - b);
-        const index = (p / 100) * (sorted.length - 1);
+        const index = (p / 5) * (sorted.length - 1);
         return sorted[Math.floor(index)];
     }
 }
 
 // Запуск
 const framework = process.argv[2] || 'express';
-const runs = parseInt(process.argv[3]) || 100;
+const runs = parseInt(process.argv[3]) || 5;
 
 const runner = new BenchmarkRunner(framework, runs);
 runner.runAllTests().catch(console.error);
