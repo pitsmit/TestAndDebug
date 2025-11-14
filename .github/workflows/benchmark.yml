@@ -1,0 +1,45 @@
+name: Benchmark Express vs Fastify
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Позволяет запускать вручную
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and start services
+        run: |
+          docker-compose up -d --build
+          sleep 10  # Ждем запуска сервисов
+
+      - name: Wait for services to be ready
+        run: |
+          timeout 30s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 1; done'
+          timeout 30s bash -c 'until curl -f http://localhost:3001/api/health; do sleep 1; done'
+
+      - name: Run benchmark
+        run: |
+          docker-compose run benchmark node test-simple.js
+
+      - name: Save benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            results/
+          retention-days: 30
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down

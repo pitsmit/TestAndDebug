@@ -1,0 +1,50 @@
+[
+  {
+    "framework": "express",
+    "run": 1,
+    "requestsPerSecond": 8798.8,
+    "latencyP99": 5,
+    "totalRequests": 87980,
+    "errors": 0
+  },
+  {
+    "framework": "fastify",
+    "run": 1,
+    "requestsPerSecond": 22652.37,
+    "latencyP99": 0,
+    "totalRequests": 249178,
+    "errors": 0
+  },
+  {
+    "framework": "express",
+    "run": 2,
+    "requestsPerSecond": 8404.91,
+    "latencyP99": 5,
+    "totalRequests": 92454,
+    "errors": 0
+  },
+  {
+    "framework": "fastify",
+    "run": 2,
+    "requestsPerSecond": 21359.64,
+    "latencyP99": 0,
+    "totalRequests": 234965,
+    "errors": 0
+  },
+  {
+    "framework": "express",
+    "run": 3,
+    "requestsPerSecond": 8595.46,
+    "latencyP99": 5,
+    "totalRequests": 94556,
+    "errors": 0
+  },
+  {
+    "framework": "fastify",
+    "run": 3,
+    "requestsPerSecond": 23605.1,
+    "latencyP99": 0,
+    "totalRequests": 259659,
+    "errors": 0
+  }
+]

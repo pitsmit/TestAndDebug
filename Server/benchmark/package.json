@@ -1,0 +1,6 @@
+{
+  "name": "benchmark",
+  "dependencies": {
+    "autocannon": "^7.10.0"
+  }
+}

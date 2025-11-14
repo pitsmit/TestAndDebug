@@ -440,17 +440,14 @@ components:
         text: Некая шутка
       properties:
         id:
-          example: 1
           type: integer
         text:
-          example: Некая шутка
           type: string
         hasBadWords:
           default: false
           description: Наличие в тексте анекдота ненормативной лексики
           type: boolean
         lastModifiedDate:
-          example: 2025-10-07 12:58:05.000000
           type: string
       required:
       - hasBadWords
@@ -489,20 +486,16 @@ components:
       example:
         role: 0
         name: name
-        login: login
         token: token
       properties:
         token:
           description: JWT токен для авторизации
-          type: string
-        login:
           type: string
         name:
           type: string
         role:
           $ref: "#/components/schemas/UserRole"
       required:
-      - login
       - name
       - role
       - token
