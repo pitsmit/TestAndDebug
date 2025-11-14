@@ -1,5 +1,5 @@
 services:
-  express-app:
+  framework-express:  # ← изменил имя
     build:
       context: .
       dockerfile: Dockerfile.express
@@ -10,7 +10,7 @@ services:
     networks:
       - test-network
 
-  fastify-app:
+  framework-fastify:  # ← изменил имя
     build:
       context: .
       dockerfile: Dockerfile.fastify

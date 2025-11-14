@@ -2,8 +2,8 @@ const autocannon = require('autocannon');
 const fs = require('fs');
 
 const targets = [
-    { name: 'express', url: 'http://express-app:3000/api/health' },
-    { name: 'fastify', url: 'http://fastify-app:3000/api/health' }
+    { name: 'express', url: 'http://framework-express:3000/api/health' },
+    { name: 'fastify', url: 'http://framework-fastify:3000/api/health' }
 ];
 
 async function runTest(target, duration = 30, connections = 10) {
