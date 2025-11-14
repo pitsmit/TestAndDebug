@@ -1,6 +1,7 @@
 const path = require('path');
 const commonPath = path.join(__dirname, '..', '..', 'common');
-const service = require(path.join('.', commonPath, 'services', 'AnekdotService'));
+console.log(commonPath);
+const service = require(path.join('.' + commonPath, 'services', 'AnekdotService'));
 //const service = require('../../common/services/AnekdotService');
 
 const apiV1AnekdotsIdDELETE = async (request, reply) => {
