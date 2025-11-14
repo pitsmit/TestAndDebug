@@ -3,7 +3,7 @@ const config = require('./config');
 const ExpressServer = require('./expressServer');
 const path = require('path');
 const commonPath = path.join(__dirname, '..', 'common');
-const {setupTestDatabase} = require(commonPath + '/database-setup');
+const {setupTestDatabase} = require('.' + commonPath + '/database-setup');
 
 const launchServer = async () => {
   require('dotenv').config();
