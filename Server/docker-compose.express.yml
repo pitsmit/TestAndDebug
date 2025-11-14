@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: anekdot_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.express
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_NAME=anekdot_test
+      - DATABASE_HOST=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile.benchmark
+    volumes:
+      - ./benchmark/results:/app/results
