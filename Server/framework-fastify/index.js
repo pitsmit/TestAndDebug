@@ -1,7 +1,9 @@
 require('module-alias/register');
 const config = require('./config');
 const FastifyServer = require('./fastifyServer');
-const {setupTestDatabase} = require("../common/database-setup");
+const path = require('path');
+const commonPath = path.join(__dirname, '..', 'common');
+const {setupTestDatabase} = require(commonPath + '/database-setup');
 
 const launchServer = async () => {
     require('dotenv').config();
