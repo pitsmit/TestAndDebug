@@ -57,7 +57,7 @@ jobs:
       - name: Run benchmark
         run: |
           cd Server
-          docker compose run benchmark node test-simple.js
+          docker compose run --rm benchmark node test-simple.js
 
       - name: Save benchmark results
         uses: actions/upload-artifact@v4

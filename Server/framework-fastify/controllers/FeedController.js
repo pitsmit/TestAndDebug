@@ -1,6 +1,4 @@
-const path = require('path');
-const service = require(path.join(__dirname, 'common', 'services', 'FeedService'));
-//const service = require('../../common/services/FeedService');
+const service = require('../../common/services/FeedService');
 
 const apiV1FeedGET = async (request, reply) => {
   try {

@@ -23,7 +23,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_NAME=anekdot_test
-      - DATABASE_HOST=postgres  # ← ИЗМЕНИ localhost на postgres
+      - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=password
@@ -41,7 +41,7 @@ services:
       - "3001:3000"
     environment:
       - DATABASE_NAME=anekdot_test
-      - DATABASE_HOST=postgres  # ← ИЗМЕНИ localhost на postgres
+      - DATABASE_HOST=postgres
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=password
@@ -57,7 +57,9 @@ services:
       dockerfile: Dockerfile.benchmark
     networks:
       - test-network
+    privileged: true
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./results:/app/results
 
 networks:
