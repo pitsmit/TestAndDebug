@@ -6,4 +6,4 @@ COPY benchmark/package*.json ./
 RUN npm install
 COPY benchmark/ ./
 
-CMD ["node", "test-simple.js"]
+CMD ["node", "test-express.js"]

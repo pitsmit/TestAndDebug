@@ -15,6 +15,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # ТОЛЬКО EXPRESS ДЛЯ EXPRESS БЕНЧМАРКА
   framework-express:
     build:
       context: .
@@ -33,6 +34,7 @@ services:
     networks:
       - test-network
 
+  # ТОЛЬКО FASTIFY ДЛЯ FASTIFY БЕНЧМАРКА
   framework-fastify:
     build:
       context: .
@@ -51,15 +53,22 @@ services:
     networks:
       - test-network
 
-  benchmark:
+  benchmark-express:
     build:
       context: .
       dockerfile: Dockerfile.benchmark
     networks:
       - test-network
-    privileged: true
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ./results:/app/results
+
+  benchmark-fastify:
+    build:
+      context: .
+      dockerfile: Dockerfile.benchmark
+    networks:
+      - test-network
+    volumes:
       - ./results:/app/results
 
 networks:

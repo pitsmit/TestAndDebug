@@ -54,10 +54,25 @@ jobs:
           curl -f http://localhost:3000/api/health && echo "✅ Express is ready!"
           curl -f http://localhost:3001/api/health && echo "✅ Fastify is ready!"
 
-      - name: Run benchmark
+      - name: Run Express benchmark
         run: |
           cd Server
-          docker compose run --rm benchmark node test-simple.js
+          # Запускаем ТОЛЬКО express и postgres
+          docker compose up -d postgres framework-express
+          sleep 20
+          # Запускаем express бенчмарк
+          docker compose run --rm benchmark-express node test-express.js
+          # Останавливаем express
+          docker compose stop framework-express
+
+      - name: Run Fastify benchmark
+        run: |
+          cd Server
+          # Запускаем ТОЛЬКО fastify (postgres уже запущен)
+          docker compose up -d framework-fastify
+          sleep 20
+          # Запускаем fastify бенчмарк
+          docker compose run --rm benchmark-fastify node test-fastify.js
 
       - name: Save benchmark results
         uses: actions/upload-artifact@v4
