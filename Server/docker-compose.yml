@@ -1,25 +1,34 @@
 services:
-  framework-express:
-    build: ./framework-express
+  express-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.express
     ports:
       - "3000:3000"
+    environment:
+      - DATABASE_NAME=anekdot_test
     networks:
       - test-network
 
-  framework-fastify:
-    build: ./framework-fastify
+  fastify-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.fastify
     ports:
       - "3001:3000"
+    environment:
+      - DATABASE_NAME=anekdot_test
     networks:
       - test-network
 
   benchmark:
-    build: ./benchmark
+    build:
+      context: .
+      dockerfile: Dockerfile.benchmark
     networks:
       - test-network
-    depends_on:
-      - framework-express
-      - framework-fastify
+    volumes:
+      - ./results:/app/results
 
 networks:
   test-network:

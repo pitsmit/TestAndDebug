@@ -1,0 +1,13 @@
+FROM node:20-bullseye
+WORKDIR /app
+
+# Копируем common папку
+COPY common ./common
+
+# Копируем исходный код Express
+COPY framework-express/package*.json ./
+RUN npm install
+COPY framework-express/ ./
+
+EXPOSE 3000
+CMD ["node", "index.js"]

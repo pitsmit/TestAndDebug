@@ -1,0 +1,13 @@
+FROM node:20-bullseye
+WORKDIR /app
+
+# Копируем common папку
+COPY common ./common
+
+# Копируем исходный код Fastify
+COPY framework-fastify/package*.json ./
+RUN npm install
+COPY framework-fastify/ ./
+
+EXPOSE 3000
+CMD ["node", "index.js"]
