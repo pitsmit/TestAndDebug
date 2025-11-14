@@ -8,7 +8,7 @@ on:
 jobs:
   benchmark-express:
     runs-on: ubuntu-latest
-    name: Benchmark Express (100 runs)
+    name: Benchmark Express (5 runs)
 
     steps:
       - name: Checkout code
@@ -39,10 +39,10 @@ jobs:
           timeout 60s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
           echo "✅ Express is ready!"
 
-      - name: Run Express benchmark 100 times
+      - name: Run Express benchmark 5 times
         run: |
           cd Server
-          docker compose -f docker-compose.express.yml run --rm benchmark node test-runner.js express 100
+          docker compose -f docker-compose.express.yml run --rm benchmark node test-runner.js express 5
 
       - name: Save Express results
         uses: actions/upload-artifact@v4
@@ -59,7 +59,7 @@ jobs:
 
   benchmark-fastify:
     runs-on: ubuntu-latest
-    name: Benchmark Fastify (100 runs)
+    name: Benchmark Fastify (5 runs)
     needs: benchmark-express
 
     steps:
@@ -91,10 +91,10 @@ jobs:
           timeout 60s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
           echo "✅ Fastify is ready!"
 
-      - name: Run Fastify benchmark 100 times
+      - name: Run Fastify benchmark 5 times
         run: |
           cd Server
-          docker compose -f docker-compose.fastify.yml run --rm benchmark node test-runner.js fastify 100
+          docker compose -f docker-compose.fastify.yml run --rm benchmark node test-runner.js fastify 5
 
       - name: Save Fastify results
         uses: actions/upload-artifact@v4
