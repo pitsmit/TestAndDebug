@@ -1,0 +1,6 @@
+{
+  "name": "common",
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}

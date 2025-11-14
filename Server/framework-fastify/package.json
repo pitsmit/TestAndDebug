@@ -23,6 +23,7 @@
     "fastify-openapi-glue": "^4.10.0",
     "js-yaml": "^3.3.0",
     "module-alias": "^2.2.3",
-    "cross-env": "^10.1.0"
+    "cross-env": "^10.1.0",
+    "pg": "^8.16.3"
   }
 }
