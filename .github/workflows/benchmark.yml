@@ -5,7 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # Позволяет запускать вручную
+  workflow_dispatch:
 
 jobs:
   benchmark:
@@ -20,8 +20,8 @@ jobs:
 
       - name: Build and start services
         run: |
-          docker-compose up -d --build
-          sleep 10  # Ждем запуска сервисов
+          docker compose up -d --build
+          sleep 10
 
       - name: Wait for services to be ready
         run: |
@@ -30,16 +30,15 @@ jobs:
 
       - name: Run benchmark
         run: |
-          docker-compose run benchmark node test-simple.js
+          docker compose run benchmark node test-simple.js
 
       - name: Save benchmark results
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
-          path: |
-            results/
+          path: results/
           retention-days: 30
 
       - name: Stop services
         if: always()
-        run: docker-compose down
+        run: docker compose down
