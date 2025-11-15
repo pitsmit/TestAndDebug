@@ -67,7 +67,7 @@ class ResultsAggregator {
         const finalDir = path.join(__dirname, '..', '..', 'final-results', this.framework);
         fs.mkdirSync(finalDir, { recursive: true });
         fs.writeFileSync(
-            path.join(finalDir, `final-stats-${this.resultFileName}.json`),
+            path.join(finalDir, `final-stats-${this.resultFileName}`),
             JSON.stringify(stats, null, 2)
         );
 
