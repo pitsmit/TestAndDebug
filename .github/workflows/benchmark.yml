@@ -17,6 +17,23 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
+      - name: Create all results directories in advance
+        run: |
+          cd Server
+          TOTAL_RUNS=5
+          
+          # Создаем ВСЕ директории заранее
+          for ((i=1; i<=TOTAL_RUNS; i++)); do
+            mkdir -p benchmark/results/express/run-$i
+            mkdir -p benchmark/results/fastify/run-$i
+          done
+          
+          # Даем права
+          chmod -R 777 benchmark/results/
+          
+          echo "📁 Created directories:"
+          ls -la benchmark/results/express/
+
       - name: Run benchmark with loop
         run: |
           cd Server
@@ -42,10 +59,7 @@ jobs:
             '
             echo "✅ Express is ready for run $i!"
           
-            # Создаем директорию для результатов
-            mkdir -p benchmark/results/express/run-$i
-          
-            # Запускаем тест
+            # Запускаем тест (директория УЖЕ создана)
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.express.yml run --rm \
               -e RUN_NUMBER=$i \
@@ -149,8 +163,6 @@ jobs:
               done
             '
             echo "✅ Fastify is ready for run $i!"
-          
-            mkdir -p benchmark/results/fastify/run-$i
           
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.fastify.yml run --rm \
