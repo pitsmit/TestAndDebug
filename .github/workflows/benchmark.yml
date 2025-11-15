@@ -199,6 +199,19 @@ jobs:
           name: fastify-final-results
           path: final-results/fastify
 
+      - name: Debug file structure
+        run: |
+          echo "📁 Current directory: $(pwd)"
+          echo ""
+          echo "📁 FINAL-RESULTS structure:"
+          find final-results -type f -name "*.json" | head -20
+          echo ""
+          echo "📁 Express files:"
+          ls -la final-results/express/ || echo "No express directory"
+          echo ""
+          echo "📁 Fastify files:"
+          ls -la final-results/fastify/ || echo "No fastify directory"
+
       - name: Generate comparison
         run: |
           cd Server
