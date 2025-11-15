@@ -85,7 +85,7 @@ jobs:
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
           cd Server
-          node scripts/aggregate-results.js express $TOTAL_RUNS serialization.json
+          node scripts/aggregate-results.js express $TOTAL_RUNS serialization
 
       - name: Upload final express results
         uses: actions/upload-artifact@v4
@@ -169,7 +169,7 @@ jobs:
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
           cd Server
-          node scripts/aggregate-results.js fastify $TOTAL_RUNS serialization.json
+          node scripts/aggregate-results.js fastify $TOTAL_RUNS serialization
 
       - name: Upload final fastify results
         uses: actions/upload-artifact@v4
