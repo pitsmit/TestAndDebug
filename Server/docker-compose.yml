@@ -40,7 +40,7 @@ services:
       context: .
       dockerfile: Dockerfile.fastify
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       - DATABASE_NAME=anekdot_test
       - DATABASE_HOST=postgres
