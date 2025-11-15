@@ -2,7 +2,7 @@ const autocannon = require('autocannon');
 
 async function runTest() {
     const result = await autocannon({
-        url: 'http://app:3000/api/v1/feed?page=1&limit=5',
+        url: 'http://localhost:3000/api/v1/feed?page=1&limit=5',
         connections: 10,
         duration: 5,
         timeout: 5,
@@ -23,6 +23,8 @@ async function runTest() {
         start: result.start,
         finish: result.finish
     };
+
+    console.log(JSON.stringify(detailedResult, null, 2));
 
     return detailedResult;
 }

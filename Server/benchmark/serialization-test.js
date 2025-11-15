@@ -13,47 +13,15 @@ class SerializationTestRunner {
     }
 
     async run() {
-        try {
-            const testFile = `serialization-test/${this.framework}.js`;
-            const output = execSync(`node ${testFile}`, {
-                encoding: 'utf8',
-                stdio: 'pipe',
-                timeout: 60000
-            });
+        const testFile = `serialization-test/${this.framework}.js`;
+        const result = execSync(`node ${testFile}`, {
+            encoding: 'utf8',
+            stdio: 'pipe',
+            timeout: 60000
+        });
 
-            console.log(`📋 Test output: ${output}`);
+        console.log(`📋 Test output: ${JSON.stringify(result, null, 2)}`);
 
-            const match = output.match(/✅.*?(\d+\.?\d*) req\/sec/);
-            const rps = match ? parseFloat(match[1]) : 0;
-
-            const result = {
-                run: parseInt(this.runNumber),
-                framework: this.framework,
-                requestsPerSecond: rps,
-                timestamp: new Date().toISOString(),
-                status: 'success'
-            };
-
-            this.saveResult(result);
-            console.log(`✅ Run ${this.runNumber} completed: ${rps} req/sec`);
-            return result;
-
-        } catch (error) {
-            console.error(`❌ Run ${this.runNumber} failed:`, error.message);
-            const result = {
-                run: parseInt(this.runNumber),
-                framework: this.framework,
-                requestsPerSecond: 0,
-                timestamp: new Date().toISOString(),
-                status: 'failed',
-                error: error.message
-            };
-            this.saveResult(result);
-            return result;
-        }
-    }
-
-    saveResult(result) {
         const jsonFile = path.join(this.resultsDir, `serialization.json`);
         fs.writeFileSync(jsonFile, JSON.stringify(result, null, 2));
     }

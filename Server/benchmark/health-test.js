@@ -28,7 +28,6 @@ class HealthTestRunner {
 
             const result = {
                 run: parseInt(this.runNumber),
-                framework: this.framework,
                 requestsPerSecond: rps,
                 timestamp: new Date().toISOString(),
                 status: 'success'
@@ -42,7 +41,6 @@ class HealthTestRunner {
             console.error(`❌ Run ${this.runNumber} failed:`, error.message);
             const result = {
                 run: parseInt(this.runNumber),
-                framework: this.framework,
                 requestsPerSecond: 0,
                 timestamp: new Date().toISOString(),
                 status: 'failed',

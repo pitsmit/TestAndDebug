@@ -221,5 +221,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: final-comparison-report
-          path: comparison-data/
+          path: |
+            comparison-data/
+            final-results/
           retention-days: 30
