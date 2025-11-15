@@ -2,19 +2,19 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-class HealthTestRunner {
+class SerializationTestRunner {
     constructor(framework) {
         this.framework = framework;
         this.runNumber = process.env.RUN_NUMBER || 1;
         this.resultsDir = `/app/results/${this.framework}/run-${this.runNumber}`;
 
         fs.mkdirSync(this.resultsDir, { recursive: true });
-        console.log(`🎯 HealthTestRunner for ${this.framework}, run ${this.runNumber}`);
+        console.log(`🎯 SerializationTestRunner for ${this.framework}, run ${this.runNumber}`);
     }
 
     async run() {
         try {
-            const testFile = `health-test/${this.framework}.js`;
+            const testFile = `serialization-test/${this.framework}.js`;
             const output = execSync(`node ${testFile}`, {
                 encoding: 'utf8',
                 stdio: 'pipe',
@@ -54,13 +54,13 @@ class HealthTestRunner {
     }
 
     saveResult(result) {
-        const jsonFile = path.join(this.resultsDir, `health.json`);
+        const jsonFile = path.join(this.resultsDir, `serialization.json`);
         fs.writeFileSync(jsonFile, JSON.stringify(result, null, 2));
     }
 }
 
 const framework = process.argv[2];
-const runner = new HealthTestRunner(framework);
+const runner = new SerializationTestRunner(framework);
 runner.run().catch(error => {
     console.error(error);
     process.exit(1);

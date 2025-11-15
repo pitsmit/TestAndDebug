@@ -2,9 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 class ResultsAggregator {
-    constructor(framework, totalRuns) {
+    constructor(framework, totalRuns, resultFileName) {
         this.framework = framework;
         this.totalRuns = totalRuns;
+        this.resultFileName = resultFileName;
         this.results = [];
     }
 
@@ -15,7 +16,7 @@ class ResultsAggregator {
 
         for (let i = 1; i <= this.totalRuns; i++) {
             const runDir = path.join(resultsDir, `run-${i}`);
-            const resultFile = path.join(runDir, `result.json`);
+            const resultFile = path.join(runDir, this.resultFileName);
 
             if (fs.existsSync(resultFile)) {
                 try {
@@ -70,7 +71,7 @@ class ResultsAggregator {
             JSON.stringify(stats, null, 2)
         );
 
-        console.log(`💾 Saved final stats to: ${path.join(finalDir, 'final-stats.json')}`);
+        console.log(`💾 Saved final stats to: ${path.join(finalDir, `final-stats-${this.resultFileName}.json`)}`);
     }
 
     calculateAverage(arr) {
@@ -85,7 +86,8 @@ class ResultsAggregator {
 }
 
 const framework = process.argv[2];
-const totalRuns = parseInt(process.argv[3]) || 5;
-const aggregator = new ResultsAggregator(framework, totalRuns);
+const totalRuns = parseInt(process.argv[3]);
+const resultFileName = process.argv[4];
+const aggregator = new ResultsAggregator(framework, totalRuns, resultFileName);
 aggregator.loadResults();
 aggregator.generateFinalReport();

@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 class ComparisonGenerator {
-    constructor(totalRuns) {
+    constructor(totalRuns, resultFileName) {
         this.totalRuns = totalRuns;
+        this.resultFileName = resultFileName;
         this.results = {
             express: null,
             fastify: null
@@ -11,7 +12,7 @@ class ComparisonGenerator {
     }
 
     loadFrameworkStats(framework) {
-        const statsPath = path.join(__dirname, '..', '..', 'comparison-data', framework, 'final-stats.json');
+        const statsPath = path.join(__dirname, '..', '..', 'comparison-data', framework, `final-stats-${this.resultFileName}.json`);
 
         console.log(`📁 Looking for ${framework} stats at: ${statsPath}`);
 
@@ -83,8 +84,9 @@ class ComparisonGenerator {
     }
 }
 
-const totalRuns = parseInt(process.argv[2]) || 5;
-const generator = new ComparisonGenerator(totalRuns);
+const totalRuns = parseInt(process.argv[2]);
+const resultFileName = process.argv[3];
+const generator = new ComparisonGenerator(totalRuns, resultFileName);
 generator.loadFrameworkStats('express');
 generator.loadFrameworkStats('fastify');
 generator.generateComparison();

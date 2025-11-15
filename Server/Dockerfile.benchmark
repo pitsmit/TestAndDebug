@@ -5,4 +5,4 @@ COPY benchmark/package*.json ./
 RUN npm install
 COPY benchmark/ ./
 
-CMD ["node", "test-express.js"]
+CMD ["node", "express.js"]

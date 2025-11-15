@@ -41,7 +41,7 @@ jobs:
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.express.yml run --rm \
               -e RUN_NUMBER=$i \
-              benchmark node single-test.js express
+              benchmark node serialization-test.js express
           
             echo "✅ Test $i completed!"
             docker compose -f docker-compose.express.yml down --remove-orphans
@@ -85,17 +85,7 @@ jobs:
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
           cd Server
-          node scripts/aggregate-results.js express $TOTAL_RUNS
-
-      - name: Check final express stats
-        run: |
-          echo "📁 Final express stats:"
-          ls -la final-results/express/
-          if [ -f "final-results/express/final-stats.json" ]; then
-            cat final-results/express/final-stats.json
-          else
-            echo "No final-stats.json found for express"
-          fi
+          node scripts/aggregate-results.js express $TOTAL_RUNS serialization.json
 
       - name: Upload final express results
         uses: actions/upload-artifact@v4
@@ -140,7 +130,7 @@ jobs:
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.fastify.yml run --rm \
               -e RUN_NUMBER=$i \
-              benchmark node single-test.js fastify
+              benchmark node serialization-test.js fastify
           
             echo "✅ Test $i completed!"
             docker compose -f docker-compose.fastify.yml down --remove-orphans
@@ -179,17 +169,7 @@ jobs:
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
           cd Server
-          node scripts/aggregate-results.js fastify $TOTAL_RUNS
-
-      - name: Check final fastify stats
-        run: |
-          echo "📁 Final fastify stats:"
-          ls -la final-results/fastify/
-          if [ -f "final-results/fastify/final-stats.json" ]; then
-            cat final-results/fastify/final-stats.json
-          else
-            echo "No final-stats.json found for fastify"
-          fi
+          node scripts/aggregate-results.js fastify $TOTAL_RUNS serialization.json
 
       - name: Upload final fastify results
         uses: actions/upload-artifact@v4
@@ -222,7 +202,7 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
-          node scripts/generate-comparison.js 2
+          node scripts/generate-comparison.js 2 serialization
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4
