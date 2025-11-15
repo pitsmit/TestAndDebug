@@ -28,6 +28,7 @@ jobs:
             docker compose -f docker-compose.express.yml down --remove-orphans --volumes
             docker compose -f docker-compose.express.yml up -d --build --force-recreate
             sleep 15
+          
 
             echo "⏳ Waiting for Express to start..."
             timeout 90s bash -c '
