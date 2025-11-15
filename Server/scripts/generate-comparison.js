@@ -11,9 +11,9 @@ class ComparisonGenerator {
     }
 
     loadFrameworkStats(framework) {
-        const statsPath = path.join(__dirname, '..', '..', 'final-results', framework, 'final-stats.json');
+        const statsPath = path.join(__dirname, '..', '..', 'comparison-data', framework, 'final-stats.json');
 
-        console.log(`📁 Looking for stats at: ${statsPath}`);
+        console.log(`📁 Looking for ${framework} stats at: ${statsPath}`);
 
         if (fs.existsSync(statsPath)) {
             try {
@@ -24,7 +24,7 @@ class ComparisonGenerator {
                 console.log(`❌ Failed to load ${framework} stats: ${error.message}`);
             }
         } else {
-            console.log(`⚠️  No stats found for ${framework}`);
+            console.log(`⚠️  No stats found for ${framework} at ${statsPath}`);
         }
     }
 
@@ -72,6 +72,8 @@ class ComparisonGenerator {
                 path.join(comparisonDir, 'comparison-report.json'),
                 JSON.stringify(comparison, null, 2)
             );
+
+            console.log(`\n💾 Comparison report saved to: comparison-data/comparison-report.json`);
 
         } else {
             console.log('❌ Cannot generate comparison - missing data');
