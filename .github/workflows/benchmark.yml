@@ -119,7 +119,8 @@ jobs:
           # Копируем JSON файлы
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
-          # Генерируем финальный отчет
+          # Генерируем финальный отчет - ИСПРАВЛЕННЫЙ ПУТЬ
+          cd Server
           node scripts/aggregate-results.js express $TOTAL_RUNS
           
           echo "✅ Express benchmark completed - $TOTAL_RUNS runs"
@@ -219,6 +220,8 @@ jobs:
           
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
+          # Генерируем финальный отчет - ИСПРАВЛЕННЫЙ ПУТЬ
+          cd Server
           node scripts/aggregate-results.js fastify $TOTAL_RUNS
           
           echo "✅ Fastify benchmark completed - $TOTAL_RUNS runs"
@@ -272,6 +275,7 @@ jobs:
           
           echo ""
           echo "📊 Generating comparison..."
+          cd Server
           node scripts/generate-comparison.js 5
           
           echo ""
