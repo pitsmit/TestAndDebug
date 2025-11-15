@@ -5,10 +5,18 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  TOTAL_RUNS: 5  # 🎯 ЛЕГКО МЕНЯЕТСЯ НА 100!
+
 jobs:
   benchmark-express:
     runs-on: ubuntu-latest
-    name: Benchmark Express (5 runs)
+    name: Benchmark Express (${{ env.TOTAL_RUNS }} runs)
+
+    strategy:
+      matrix:
+        run_number: [1, 2, 3, 4, 5]  # Автоматически генерируется ниже
+      max-parallel: 2  # Ограничиваем параллельные запуски
 
     steps:
       - name: Checkout code
@@ -17,138 +25,252 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and start Express only
+      - name: Create unique results directory
         run: |
-          cd Server
-          docker compose -f docker-compose.express.yml up -d --build
-          sleep 15
+          mkdir -p Server/benchmark/results/express/run-${{ matrix.run_number }}
 
-      - name: Check Express status
+      - name: Start fresh Express container
         run: |
           cd Server
-          echo "=== Container Status ==="
-          docker compose -f docker-compose.express.yml ps
+          echo "🚀 Starting FRESH Express container for run ${{ matrix.run_number }}/${{ env.TOTAL_RUNS }}"
           
-          echo "=== Express Logs ==="
-          docker compose -f docker-compose.express.yml logs app || echo "No logs for express"
+          # Полная очистка предыдущих контейнеров
+          docker compose -f docker-compose.express.yml down --remove-orphans --volumes
+          
+          # Запуск нового чистого образа
+          docker compose -f docker-compose.express.yml up -d --build --force-recreate
+          
+          echo "⏳ Waiting for Express to start..."
+          sleep 10
 
-      - name: Wait for Express to be ready
+      - name: Wait for Express health check
         run: |
           cd Server
-          echo "=== Testing Express ==="
-          timeout 60s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
-          echo "✅ Express is ready!"
+          timeout 60s bash -c '
+            until curl -f -s http://localhost:3000/api/health > /dev/null; do
+              echo "Waiting for Express...";
+              sleep 3;
+            done
+          '
+          echo "✅ Express is ready for run ${{ matrix.run_number }}!"
 
-      - name: Run Express benchmark 5 times
+      - name: Run single benchmark test
         run: |
           cd Server
-          docker compose -f docker-compose.express.yml run --rm benchmark node test-runner.js express 5
+          echo "🎯 Running benchmark test ${{ matrix.run_number }}/${{ env.TOTAL_RUNS }}"
+          
+          # Запускаем один тест и сохраняем результат
+          docker compose -f docker-compose.express.yml run --rm \
+            -e RUN_NUMBER=${{ matrix.run_number }} \
+            benchmark node single-test.js express
+          
+          echo "✅ Test ${{ matrix.run_number }} completed!"
 
-      - name: Save Express results
+      - name: Save individual run results
         uses: actions/upload-artifact@v4
         with:
-          name: express-benchmark-results
-          path: Server/benchmark/results/
+          name: express-run-${{ matrix.run_number }}
+          path: Server/benchmark/results/express/run-${{ matrix.run_number }}/
           retention-days: 30
 
-      - name: Stop Express services
+      - name: Stop and cleanup
         if: always()
         run: |
           cd Server
-          docker compose -f docker-compose.express.yml down
+          echo "🧹 Cleaning up run ${{ matrix.run_number }}"
+          docker compose -f docker-compose.express.yml down --remove-orphans
+
+  aggregate-express-results:
+    runs-on: ubuntu-latest
+    name: Aggregate Express Results
+    needs: benchmark-express
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all express results
+        uses: actions/download-artifact@v4
+        with:
+          path: all-express-results
+          pattern: express-run-*
+          merge-multiple: true
+
+      - name: Aggregate and generate final report
+        run: |
+          echo "📊 Aggregating results from ${{ env.TOTAL_RUNS }} runs..."
+          
+          # Собираем все CSV/JSON файлы
+          mkdir -p final-results/express
+          find all-express-results -name "*.csv" -exec cat {} >> final-results/express/combined.csv \;
+          find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
+          
+          # Генерируем финальный отчет
+          node scripts/aggregate-results.js express ${{ env.TOTAL_RUNS }}
+          
+          echo "✅ Express benchmark completed - ${{ env.TOTAL_RUNS }} runs"
+
+      - name: Upload final express results
+        uses: actions/upload-artifact@v4
+        with:
+          name: express-final-results
+          path: final-results/express/
+          retention-days: 30
 
   benchmark-fastify:
     runs-on: ubuntu-latest
-    name: Benchmark Fastify (5 runs)
-    needs: benchmark-express
+    name: Benchmark Fastify (${{ env.TOTAL_RUNS }} runs)
+    needs: aggregate-express-results
+
+    strategy:
+      matrix:
+        run_number: [1, 2, 3, 4, 5]
+      max-parallel: 2
 
     steps:
+      # АНАЛОГИЧНО Express, но для Fastify
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and start Fastify only
+      - name: Create unique results directory
         run: |
-          cd Server
-          docker compose -f docker-compose.fastify.yml up -d --build
-          sleep 15
+          mkdir -p Server/benchmark/results/fastify/run-${{ matrix.run_number }}
 
-      - name: Check Fastify status
+      - name: Start fresh Fastify container
         run: |
           cd Server
-          echo "=== Container Status ==="
-          docker compose -f docker-compose.fastify.yml ps
+          echo "🚀 Starting FRESH Fastify container for run ${{ matrix.run_number }}/${{ env.TOTAL_RUNS }}"
+          docker compose -f docker-compose.fastify.yml down --remove-orphans --volumes
+          docker compose -f docker-compose.fastify.yml up -d --build --force-recreate
+          sleep 10
+
+      - name: Wait for Fastify health check
+        run: |
+          cd Server
+          timeout 60s bash -c '
+            until curl -f -s http://localhost:3001/api/health > /dev/null; do
+              echo "Waiting for Fastify...";
+              sleep 3;
+            done
+          '
+          echo "✅ Fastify is ready for run ${{ matrix.run_number }}!"
+
+      - name: Run single benchmark test
+        run: |
+          cd Server
+          echo "🎯 Running benchmark test ${{ matrix.run_number }}/${{ env.TOTAL_RUNS }}"
+          docker compose -f docker-compose.fastify.yml run --rm \
+            -e RUN_NUMBER=${{ matrix.run_number }} \
+            benchmark node single-test.js fastify
           
-          echo "=== Fastify Logs ==="
-          docker compose -f docker-compose.fastify.yml logs app || echo "No logs for fastify"
+          echo "✅ Test ${{ matrix.run_number }} completed!"
 
-      - name: Wait for Fastify to be ready
-        run: |
-          cd Server
-          echo "=== Testing Fastify ==="
-          timeout 60s bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
-          echo "✅ Fastify is ready!"
-
-      - name: Run Fastify benchmark 5 times
-        run: |
-          cd Server
-          docker compose -f docker-compose.fastify.yml run --rm benchmark node test-runner.js fastify 5
-
-      - name: Save Fastify results
+      - name: Save individual run results
         uses: actions/upload-artifact@v4
         with:
-          name: fastify-benchmark-results
-          path: Server/benchmark/results/
+          name: fastify-run-${{ matrix.run_number }}
+          path: Server/benchmark/results/fastify/run-${{ matrix.run_number }}/
           retention-days: 30
 
-      - name: Stop Fastify services
+      - name: Stop and cleanup
         if: always()
         run: |
           cd Server
-          docker compose -f docker-compose.fastify.yml down
+          docker compose -f docker-compose.fastify.yml down --remove-orphans
 
-  generate-report:
+  aggregate-fastify-results:
     runs-on: ubuntu-latest
-    name: Generate Final Report
-    needs: [benchmark-express, benchmark-fastify]
+    name: Aggregate Fastify Results
+    needs: benchmark-fastify
+    if: always()
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Express results
+      - name: Download all fastify results
         uses: actions/download-artifact@v4
         with:
-          name: express-benchmark-results
-          path: express-results
+          path: all-fastify-results
+          pattern: fastify-run-*
+          merge-multiple: true
 
-      - name: Download Fastify results
-        uses: actions/download-artifact@v4
-        with:
-          name: fastify-benchmark-results
-          path: fastify-results
-
-      - name: Generate comparison report
+      - name: Aggregate and generate final report
         run: |
-          echo "📊 FINAL COMPARISON REPORT"
-          echo "=========================="
+          echo "📊 Aggregating results from ${{ env.TOTAL_RUNS }} runs..."
           
-          # Здесь можно добавить скрипт для сравнения результатов
-          echo "Express results:"
-          ls -la express-results/
-          echo ""
-          echo "Fastify results:"
-          ls -la fastify-results/
+          mkdir -p final-results/fastify
+          find all-fastify-results -name "*.csv" -exec cat {} >> final-results/fastify/combined.csv \;
+          find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
-          echo "✅ Benchmark completed! Check artifacts for detailed results."
+          node scripts/aggregate-results.js fastify ${{ env.TOTAL_RUNS }}
+          
+          echo "✅ Fastify benchmark completed - ${{ env.TOTAL_RUNS }} runs"
 
-      - name: Upload combined results
+      - name: Upload final fastify results
         uses: actions/upload-artifact@v4
         with:
-          name: combined-benchmark-results
-          path: |
-            express-results/
-            fastify-results/
+          name: fastify-final-results
+          path: final-results/fastify/
+          retention-days: 30
+
+  generate-comparison-report:
+    runs-on: ubuntu-latest
+    name: Generate Comparison Report
+    needs: [aggregate-express-results, aggregate-fastify-results]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download express final results
+        uses: actions/download-artifact@v4
+        with:
+          name: express-final-results
+          path: comparison-data/express
+
+      - name: Download fastify final results
+        uses: actions/download-artifact@v4
+        with:
+          name: fastify-final-results
+          path: comparison-data/fastify
+
+      - name: Generate comprehensive comparison
+        run: |
+          echo "📈 FINAL COMPARISON REPORT"
+          echo "=========================="
+          echo "Total runs per framework: ${{ env.TOTAL_RUNS }}"
+          echo ""
+          
+          # Проверяем существование файлов
+          echo "📁 Express results:"
+          find comparison-data/express -name "*.json" -o -name "*.csv" 2>/dev/null | while read file; do
+            echo "  - $(basename "$file")"
+          done || echo "  No express results found"
+          
+          echo ""
+          echo "📁 Fastify results:"
+          find comparison-data/fastify -name "*.json" -o -name "*.csv" 2>/dev/null | while read file; do
+            echo "  - $(basename "$file")"
+          done || echo "  No fastify results found"
+          
+          # Генерируем сравнение
+          echo ""
+          echo "📊 Generating comparison..."
+          node scripts/generate-comparison.js
+          
+          echo ""
+          echo "✅ Benchmark completed successfully!"
+          echo "🎯 Change TOTAL_RUNS to 100 for production benchmarking"
+
+      - name: Upload comparison report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-comparison-report
+          path: comparison-data/
           retention-days: 30
