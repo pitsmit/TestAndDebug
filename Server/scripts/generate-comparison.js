@@ -12,7 +12,7 @@ class ComparisonGenerator {
     }
 
     loadFrameworkStats(framework) {
-        const statsPath = path.join(__dirname, '..', '..', 'comparison-data', framework, `final-stats-${this.resultFileName}.json`);
+        const statsPath = path.join(__dirname, '..', '..', 'final-results', framework, `final-stats-${this.resultFileName}.json`);
 
         console.log(`📁 Looking for ${framework} stats at: ${statsPath}`);
 

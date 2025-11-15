@@ -191,13 +191,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: express-final-results
-          path: comparison-data/express
+          path: final-results/express
 
       - name: Download fastify final results
         uses: actions/download-artifact@v4
         with:
           name: fastify-final-results
-          path: comparison-data/fastify
+          path: final-results/fastify
 
       - name: Generate comparison
         run: |
