@@ -9,23 +9,36 @@ class ResultsAggregator {
     }
 
     loadResults() {
+        const resultsDir = path.join(__dirname, '..', 'final-results', this.framework);
+
         for (let i = 1; i <= this.totalRuns; i++) {
-            const runDir = path.join(__dirname, '..', 'all-express-results', `express-run-${i}`);
-            if (fs.existsSync(runDir)) {
-                const files = fs.readdirSync(runDir);
-                const jsonFile = files.find(f => f.endsWith('.json'));
-                if (jsonFile) {
-                    const content = fs.readFileSync(path.join(runDir, jsonFile), 'utf8');
+            const resultFile = path.join(resultsDir, `result-run-${i}.json`);
+            if (fs.existsSync(resultFile)) {
+                try {
+                    const content = fs.readFileSync(resultFile, 'utf8');
                     this.results.push(JSON.parse(content));
+                } catch (error) {
+                    console.log(`❌ Error loading run ${i}: ${error.message}`);
                 }
             }
+        }
+
+        if (this.results.length === 0) {
+            const allJsonFiles = path.join(resultsDir, '*.json');
+            console.log(`No individual run files found. Looking for: ${allJsonFiles}`);
         }
     }
 
     generateFinalReport() {
         const successful = this.results.filter(r => r.status === 'success' && r.requestsPerSecond > 0);
-        const rpsValues = successful.map(r => r.requestsPerSecond);
 
+        if (successful.length === 0) {
+            console.log(`❌ No successful runs for ${this.framework}`);
+            console.log(`All results:`, JSON.stringify(this.results, null, 2));
+            return;
+        }
+
+        const rpsValues = successful.map(r => r.requestsPerSecond);
         const stats = {
             framework: this.framework,
             totalRuns: this.totalRuns,
@@ -67,7 +80,6 @@ class ResultsAggregator {
 
 const framework = process.argv[2];
 const totalRuns = parseInt(process.argv[3]) || 5;
-
 const aggregator = new ResultsAggregator(framework, totalRuns);
 aggregator.loadResults();
 aggregator.generateFinalReport();

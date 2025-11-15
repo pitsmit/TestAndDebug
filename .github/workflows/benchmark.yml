@@ -17,67 +17,55 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Create all results directories in advance
+      - name: Create results directories
         run: |
           cd Server
-          TOTAL_RUNS=5
-          
-          # Создаем ВСЕ директории заранее
+          TOTAL_RUNS=2
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             mkdir -p benchmark/results/express/run-$i
-            mkdir -p benchmark/results/fastify/run-$i
           done
-          
-          # Даем права
           chmod -R 777 benchmark/results/
-          
-          echo "📁 Created directories:"
-          ls -la benchmark/results/express/
 
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=5  # 🎯 МЕНЯЕМ ТОЛЬКО ЗДЕСЬ!
+          TOTAL_RUNS=2
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             echo "🚀 Starting FRESH Express container for run $i/$TOTAL_RUNS"
           
-            # Очистка предыдущих контейнеров
             docker compose -f docker-compose.express.yml down --remove-orphans --volumes
-          
-            # Запуск нового чистого образа
             docker compose -f docker-compose.express.yml up -d --build --force-recreate
-            sleep 10
-          
-            # Ждем готовности
+            sleep 15
+
             echo "⏳ Waiting for Express to start..."
-            timeout 60s bash -c '
+            timeout 90s bash -c '
               until curl -f -s http://localhost:3000/api/health > /dev/null; do
                 echo "Waiting for Express...";
-                sleep 3;
+                sleep 5;
               done
             '
             echo "✅ Express is ready for run $i!"
           
-            # Запускаем тест (директория УЖЕ создана)
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.express.yml run --rm \
               -e RUN_NUMBER=$i \
               benchmark node single-test.js express
           
             echo "✅ Test $i completed!"
-          
-            # Останавливаем контейнер
             docker compose -f docker-compose.express.yml down --remove-orphans
           
-            # Пауза между прогонами
             if [ $i -lt $TOTAL_RUNS ]; then
-              echo "⏸️  Pausing between runs..."
-              sleep 2
+              sleep 3
             fi
           done
 
-      - name: Save all express results
+      - name: Check results
+        run: |
+          echo "📁 Express results:"
+          find Server/benchmark/results/express -name "*.json" -o -name "*.csv" | head -20
+
+      - name: Save express results
         uses: actions/upload-artifact@v4
         with:
           name: express-all-results
@@ -88,7 +76,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Aggregate Express Results
     needs: benchmark-express
-    if: always()
 
     steps:
       - name: Checkout code
@@ -100,15 +87,11 @@ jobs:
           name: express-all-results
           path: all-express-results
 
-      - name: Aggregate and generate final report
+      - name: Aggregate results
         run: |
-          echo "📊 Aggregating results..."
-          
-          TOTAL_RUNS=5  # 🎯 ТАКОЕ ЖЕ ЗНАЧЕНИЕ КАК ВЫШЕ!
-          
+          TOTAL_RUNS=2
           mkdir -p final-results/express
           
-          # Собираем все CSV файлы
           echo "Run,Framework,RequestsPerSecond,Timestamp,Status" > final-results/express/combined.csv
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             if [ -f "all-express-results/run-$i/results.csv" ]; then
@@ -116,14 +99,10 @@ jobs:
             fi
           done
           
-          # Копируем JSON файлы
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
-          # Генерируем финальный отчет - ИСПРАВЛЕННЫЙ ПУТЬ
           cd Server
           node scripts/aggregate-results.js express $TOTAL_RUNS
-          
-          echo "✅ Express benchmark completed - $TOTAL_RUNS runs"
 
       - name: Upload final express results
         uses: actions/upload-artifact@v4
@@ -144,23 +123,32 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
+      - name: Create results directories
+        run: |
+          cd Server
+          TOTAL_RUNS=2
+          for ((i=1; i<=TOTAL_RUNS; i++)); do
+            mkdir -p benchmark/results/fastify/run-$i
+          done
+          chmod -R 777 benchmark/results/
+
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=5  # 🎯 МЕНЯЕМ ТОЛЬКО ЗДЕСЬ!
+          TOTAL_RUNS=2
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             echo "🚀 Starting FRESH Fastify container for run $i/$TOTAL_RUNS"
           
             docker compose -f docker-compose.fastify.yml down --remove-orphans --volumes
             docker compose -f docker-compose.fastify.yml up -d --build --force-recreate
-            sleep 10
-          
+            sleep 15
+
             echo "⏳ Waiting for Fastify to start..."
-            timeout 60s bash -c '
+            timeout 90s bash -c '
               until curl -f -s http://localhost:3000/api/health > /dev/null; do
                 echo "Waiting for Fastify...";
-                sleep 3;
+                sleep 5;
               done
             '
             echo "✅ Fastify is ready for run $i!"
@@ -171,16 +159,14 @@ jobs:
               benchmark node single-test.js fastify
           
             echo "✅ Test $i completed!"
-          
             docker compose -f docker-compose.fastify.yml down --remove-orphans
           
             if [ $i -lt $TOTAL_RUNS ]; then
-              echo "⏸️  Pausing between runs..."
-              sleep 2
+              sleep 3
             fi
           done
 
-      - name: Save all fastify results
+      - name: Save fastify results
         uses: actions/upload-artifact@v4
         with:
           name: fastify-all-results
@@ -191,7 +177,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Aggregate Fastify Results
     needs: benchmark-fastify
-    if: always()
 
     steps:
       - name: Checkout code
@@ -203,12 +188,9 @@ jobs:
           name: fastify-all-results
           path: all-fastify-results
 
-      - name: Aggregate and generate final report
+      - name: Aggregate results
         run: |
-          echo "📊 Aggregating results..."
-          
-          TOTAL_RUNS=5  # 🎯 ТАКОЕ ЖЕ ЗНАЧЕНИЕ КАК ВЫШЕ!
-          
+          TOTAL_RUNS=2
           mkdir -p final-results/fastify
           
           echo "Run,Framework,RequestsPerSecond,Timestamp,Status" > final-results/fastify/combined.csv
@@ -220,11 +202,8 @@ jobs:
           
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
-          # Генерируем финальный отчет - ИСПРАВЛЕННЫЙ ПУТЬ
           cd Server
           node scripts/aggregate-results.js fastify $TOTAL_RUNS
-          
-          echo "✅ Fastify benchmark completed - $TOTAL_RUNS runs"
 
       - name: Upload final fastify results
         uses: actions/upload-artifact@v4
@@ -237,7 +216,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Generate Comparison Report
     needs: [aggregate-express-results, aggregate-fastify-results]
-    if: always()
 
     steps:
       - name: Checkout code
@@ -255,32 +233,10 @@ jobs:
           name: fastify-final-results
           path: comparison-data/fastify
 
-      - name: Generate comprehensive comparison
+      - name: Generate comparison
         run: |
-          echo "📈 FINAL COMPARISON REPORT"
-          echo "=========================="
-          echo "Total runs per framework: 5"
-          echo ""
-          
-          echo "📁 Express results:"
-          find comparison-data/express -name "*.json" -o -name "*.csv" 2>/dev/null | while read file; do
-            echo "  - $(basename "$file")"
-          done || echo "  No express results found"
-          
-          echo ""
-          echo "📁 Fastify results:"
-          find comparison-data/fastify -name "*.json" -o -name "*.csv" 2>/dev/null | while read file; do
-            echo "  - $(basename "$file")"
-          done || echo "  No fastify results found"
-          
-          echo ""
-          echo "📊 Generating comparison..."
           cd Server
-          node scripts/generate-comparison.js 5
-          
-          echo ""
-          echo "✅ Benchmark completed successfully!"
-          echo "🎯 To scale to 100 runs: change TOTAL_RUNS=5 to TOTAL_RUNS=100 in both benchmark jobs"
+          node scripts/generate-comparison.js 2
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4
