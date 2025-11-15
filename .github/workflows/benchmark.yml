@@ -87,6 +87,14 @@ jobs:
           name: express-all-results
           path: all-express-results
 
+      - name: Debug file structure
+        run: |
+          echo "📁 All express results structure:"
+          find all-express-results -type f -name "*.json" -o -name "*.csv" | head -20
+          echo ""
+          echo "📁 Run 1 contents:"
+          ls -la all-express-results/run-1/ || echo "No run-1 directory"
+
       - name: Aggregate results
         run: |
           TOTAL_RUNS=2
@@ -187,6 +195,11 @@ jobs:
         with:
           name: fastify-all-results
           path: all-fastify-results
+
+      - name: Debug file structure
+        run: |
+          echo "📁 All fastify results structure:"
+          find all-fastify-results -type f -name "*.json" -o -name "*.csv" | head -20
 
       - name: Aggregate results
         run: |

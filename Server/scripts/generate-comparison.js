@@ -11,7 +11,9 @@ class ComparisonGenerator {
     }
 
     loadFrameworkStats(framework) {
-        const statsPath = path.join(__dirname, '..', 'comparison-data', framework, 'final-stats.json');
+        const statsPath = path.join(__dirname, '..', '..', 'final-results', framework, 'final-stats.json');
+
+        console.log(`📁 Looking for stats at: ${statsPath}`);
 
         if (fs.existsSync(statsPath)) {
             try {
@@ -22,7 +24,7 @@ class ComparisonGenerator {
                 console.log(`❌ Failed to load ${framework} stats: ${error.message}`);
             }
         } else {
-            console.log(`⚠️  No stats found for ${framework} at ${statsPath}`);
+            console.log(`⚠️  No stats found for ${framework}`);
         }
     }
 
@@ -64,8 +66,10 @@ class ComparisonGenerator {
                 }
             };
 
+            const comparisonDir = path.join(__dirname, '..', '..', 'comparison-data');
+            fs.mkdirSync(comparisonDir, { recursive: true });
             fs.writeFileSync(
-                path.join(__dirname, '..', 'comparison-data', 'comparison-report.json'),
+                path.join(comparisonDir, 'comparison-report.json'),
                 JSON.stringify(comparison, null, 2)
             );
 

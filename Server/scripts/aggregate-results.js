@@ -9,24 +9,29 @@ class ResultsAggregator {
     }
 
     loadResults() {
-        const resultsDir = path.join(__dirname, '..', 'final-results', this.framework);
+        const resultsDir = path.join(__dirname, '..', '..', 'all-express-results');
+
+        console.log(`📁 Looking for results in: ${resultsDir}`);
 
         for (let i = 1; i <= this.totalRuns; i++) {
-            const resultFile = path.join(resultsDir, `result-run-${i}.json`);
+            const runDir = path.join(resultsDir, `run-${i}`);
+            const resultFile = path.join(runDir, `result.json`);
+
             if (fs.existsSync(resultFile)) {
                 try {
                     const content = fs.readFileSync(resultFile, 'utf8');
-                    this.results.push(JSON.parse(content));
+                    const result = JSON.parse(content);
+                    this.results.push(result);
+                    console.log(`✅ Loaded run ${i}: ${result.requestsPerSecond} req/sec`);
                 } catch (error) {
                     console.log(`❌ Error loading run ${i}: ${error.message}`);
                 }
+            } else {
+                console.log(`❌ Result file not found: ${resultFile}`);
             }
         }
 
-        if (this.results.length === 0) {
-            const allJsonFiles = path.join(resultsDir, '*.json');
-            console.log(`No individual run files found. Looking for: ${allJsonFiles}`);
-        }
+        console.log(`📊 Loaded ${this.results.length} results out of ${this.totalRuns} runs`);
     }
 
     generateFinalReport() {
@@ -59,7 +64,7 @@ class ResultsAggregator {
         console.log(`Range: ${stats.minRPS.toFixed(0)} - ${stats.maxRPS.toFixed(0)}`);
         console.log(`Std Dev: ${stats.stdDev.toFixed(0)}`);
 
-        const finalDir = path.join(__dirname, '..', 'final-results', this.framework);
+        const finalDir = path.join(__dirname, '..', '..', 'final-results', this.framework);
         fs.mkdirSync(finalDir, { recursive: true });
         fs.writeFileSync(
             path.join(finalDir, 'final-stats.json'),
