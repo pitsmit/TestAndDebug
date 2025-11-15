@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  TOTAL_RUNS: 5  # 🎯 ЛЕГКО МЕНЯЕТСЯ НА 100!
+  TOTAL_RUNS: 5  # 🎯 МЕНЯЕМ ТОЛЬКО ЗДЕСЬ!
 
 jobs:
   benchmark-express:
@@ -15,8 +15,8 @@ jobs:
 
     strategy:
       matrix:
-        run_number: [1, 2, 3, 4, 5]  # Автоматически генерируется ниже
-      max-parallel: 2  # Ограничиваем параллельные запуски
+        run_number: ${{ fromJson(format('[{0}]', join(range(1, env.TOTAL_RUNS | int + 1), ','))) }}
+      max-parallel: 2
 
     steps:
       - name: Checkout code
@@ -34,13 +34,8 @@ jobs:
           cd Server
           echo "🚀 Starting FRESH Express container for run ${{ matrix.run_number }}/${{ env.TOTAL_RUNS }}"
           
-          # Полная очистка предыдущих контейнеров
           docker compose -f docker-compose.express.yml down --remove-orphans --volumes
-          
-          # Запуск нового чистого образа
           docker compose -f docker-compose.express.yml up -d --build --force-recreate
-          
-          echo "⏳ Waiting for Express to start..."
           sleep 10
 
       - name: Wait for Express health check
@@ -59,7 +54,6 @@ jobs:
           cd Server
           echo "🎯 Running benchmark test ${{ matrix.run_number }}/${{ env.TOTAL_RUNS }}"
           
-          # Запускаем один тест и сохраняем результат
           docker compose -f docker-compose.express.yml run --rm \
             -e RUN_NUMBER=${{ matrix.run_number }} \
             benchmark node single-test.js express
@@ -101,12 +95,10 @@ jobs:
         run: |
           echo "📊 Aggregating results from ${{ env.TOTAL_RUNS }} runs..."
           
-          # Собираем все CSV/JSON файлы
           mkdir -p final-results/express
           find all-express-results -name "*.csv" -exec cat {} >> final-results/express/combined.csv \;
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
-          # Генерируем финальный отчет
           node scripts/aggregate-results.js express ${{ env.TOTAL_RUNS }}
           
           echo "✅ Express benchmark completed - ${{ env.TOTAL_RUNS }} runs"
@@ -125,11 +117,10 @@ jobs:
 
     strategy:
       matrix:
-        run_number: [1, 2, 3, 4, 5]
+        run_number: ${{ fromJson(format('[{0}]', join(range(1, env.TOTAL_RUNS | int + 1), ','))) }}
       max-parallel: 2
 
     steps:
-      # АНАЛОГИЧНО Express, но для Fastify
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -247,7 +238,6 @@ jobs:
           echo "Total runs per framework: ${{ env.TOTAL_RUNS }}"
           echo ""
           
-          # Проверяем существование файлов
           echo "📁 Express results:"
           find comparison-data/express -name "*.json" -o -name "*.csv" 2>/dev/null | while read file; do
             echo "  - $(basename "$file")"
@@ -259,10 +249,9 @@ jobs:
             echo "  - $(basename "$file")"
           done || echo "  No fastify results found"
           
-          # Генерируем сравнение
           echo ""
           echo "📊 Generating comparison..."
-          node scripts/generate-comparison.js
+          node scripts/generate-comparison.js ${{ env.TOTAL_RUNS }}
           
           echo ""
           echo "✅ Benchmark completed successfully!"
