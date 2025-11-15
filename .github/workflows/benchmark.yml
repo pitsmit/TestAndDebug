@@ -81,15 +81,7 @@ jobs:
       - name: Aggregate express results
         run: |
           TOTAL_RUNS=2
-          mkdir -p final-results/express
-          
-          echo "Run,Framework,RequestsPerSecond,Timestamp,Status" > final-results/express/combined.csv
-          for ((i=1; i<=TOTAL_RUNS; i++)); do
-            if [ -f "all-express-results/run-$i/results.csv" ]; then
-              tail -n +2 "all-express-results/run-$i/results.csv" >> final-results/express/combined.csv
-            fi
-          done
-          
+          mkdir -p final-results/express         
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
           cd Server
@@ -123,15 +115,6 @@ jobs:
 
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
-
-      - name: Create results directories
-        run: |
-          cd Server
-          TOTAL_RUNS=2
-          for ((i=1; i<=TOTAL_RUNS; i++)); do
-            mkdir -p benchmark/results/fastify/run-$i
-          done
-          chmod -R 777 benchmark/results/
 
       - name: Run benchmark with loop
         run: |
@@ -189,26 +172,10 @@ jobs:
           name: fastify-all-results
           path: all-fastify-results
 
-      - name: Debug fastify file structure
-        run: |
-          echo "📁 All fastify results structure:"
-          find all-fastify-results -type f -name "*.json" -o -name "*.csv" | head -20
-          echo ""
-          echo "📁 Run 1 contents:"
-          ls -la all-fastify-results/run-1/ || echo "No run-1 directory"
-
       - name: Aggregate fastify results
         run: |
           TOTAL_RUNS=2
-          mkdir -p final-results/fastify
-          
-          echo "Run,Framework,RequestsPerSecond,Timestamp,Status" > final-results/fastify/combined.csv
-          for ((i=1; i<=TOTAL_RUNS; i++)); do
-            if [ -f "all-fastify-results/run-$i/results.csv" ]; then
-              tail -n +2 "all-fastify-results/run-$i/results.csv" >> final-results/fastify/combined.csv
-            fi
-          done
-          
+          mkdir -p final-results/fastify         
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
           cd Server
@@ -251,17 +218,6 @@ jobs:
         with:
           name: fastify-final-results
           path: comparison-data/fastify
-
-      - name: Check downloaded files
-        run: |
-          echo "📁 Comparison data structure:"
-          find comparison-data -name "*.json" -o -name "*.csv" | head -20
-          echo ""
-          echo "📁 Express stats:"
-          cat comparison-data/express/final-stats.json || echo "No express stats"
-          echo ""
-          echo "📁 Fastify stats:"
-          cat comparison-data/fastify/final-stats.json || echo "No fastify stats"
 
       - name: Generate comparison
         run: |

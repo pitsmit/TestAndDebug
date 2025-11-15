@@ -56,22 +56,6 @@ class SingleTestRunner {
     saveResult(result) {
         const jsonFile = path.join(this.resultsDir, `result.json`);
         fs.writeFileSync(jsonFile, JSON.stringify(result, null, 2));
-
-        const csvFile = path.join(this.resultsDir, 'results.csv');
-        const csvRow = [
-            result.run,
-            result.framework,
-            result.requestsPerSecond,
-            result.timestamp,
-            result.status
-        ].join(',');
-
-        if (!fs.existsSync(csvFile)) {
-            const header = 'Run,Framework,RequestsPerSecond,Timestamp,Status\n';
-            fs.writeFileSync(csvFile, header);
-        }
-
-        fs.appendFileSync(csvFile, csvRow + '\n');
     }
 }
 
