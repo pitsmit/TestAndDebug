@@ -9,9 +9,9 @@ class ResultsAggregator {
     }
 
     loadResults() {
-        const resultsDir = path.join(__dirname, '..', '..', 'all-express-results');
+        const resultsDir = path.join(__dirname, '..', '..', `all-${this.framework}-results`);
 
-        console.log(`📁 Looking for results in: ${resultsDir}`);
+        console.log(`📁 Looking for ${this.framework} results in: ${resultsDir}`);
 
         for (let i = 1; i <= this.totalRuns; i++) {
             const runDir = path.join(resultsDir, `run-${i}`);
@@ -22,16 +22,16 @@ class ResultsAggregator {
                     const content = fs.readFileSync(resultFile, 'utf8');
                     const result = JSON.parse(content);
                     this.results.push(result);
-                    console.log(`✅ Loaded run ${i}: ${result.requestsPerSecond} req/sec`);
+                    console.log(`✅ Loaded ${this.framework} run ${i}: ${result.requestsPerSecond} req/sec`);
                 } catch (error) {
-                    console.log(`❌ Error loading run ${i}: ${error.message}`);
+                    console.log(`❌ Error loading ${this.framework} run ${i}: ${error.message}`);
                 }
             } else {
-                console.log(`❌ Result file not found: ${resultFile}`);
+                console.log(`❌ ${this.framework} result file not found: ${resultFile}`);
             }
         }
 
-        console.log(`📊 Loaded ${this.results.length} results out of ${this.totalRuns} runs`);
+        console.log(`📊 Loaded ${this.results.length} ${this.framework} results out of ${this.totalRuns} runs`);
     }
 
     generateFinalReport() {
@@ -39,7 +39,6 @@ class ResultsAggregator {
 
         if (successful.length === 0) {
             console.log(`❌ No successful runs for ${this.framework}`);
-            console.log(`All results:`, JSON.stringify(this.results, null, 2));
             return;
         }
 
@@ -70,6 +69,8 @@ class ResultsAggregator {
             path.join(finalDir, 'final-stats.json'),
             JSON.stringify(stats, null, 2)
         );
+
+        console.log(`💾 Saved final stats to: ${path.join(finalDir, 'final-stats.json')}`);
     }
 
     calculateAverage(arr) {
