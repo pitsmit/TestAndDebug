@@ -6,8 +6,8 @@ class ResultsAggregator {
         this.framework = framework;
         this.totalRuns = totalRuns;
         this.resultFileName = resultFileName.replace('.json', '');
-        this.rawResults = []; // Сохраняем сырые данные autocannon
-        this.processedResults = []; // И обработанные метрики
+        this.rawResults = [];
+        this.processedResults = [];
     }
 
     loadResults() {
@@ -24,17 +24,13 @@ class ResultsAggregator {
                     const content = fs.readFileSync(resultFile, 'utf8');
                     const autocannonResult = JSON.parse(content);
 
-                    // ✅ Сохраняем ВСЕ сырые данные от autocannon
                     this.rawResults.push({
                         run: i,
-                        timestamp: new Date().toISOString(),
                         ...autocannonResult
                     });
 
-                    // ✅ Также создаем обработанную версию для удобства
                     const processed = {
                         run: i,
-                        timestamp: new Date().toISOString(),
                         requests_per_second: autocannonResult.requests.average,
                         total_requests: autocannonResult.requests.total,
 
@@ -44,7 +40,7 @@ class ResultsAggregator {
                             p50: autocannonResult.latency.p50,
                             p75: autocannonResult.latency.p75,
                             p90: autocannonResult.latency.p90,
-                            p95: autocannonResult.latency.p97_5, // Ближайший к p95
+                            p95: autocannonResult.latency.p97_5,
                             p99: autocannonResult.latency.p99,
                             p99_9: autocannonResult.latency.p99_9,
                             p99_99: autocannonResult.latency.p99_99,
@@ -82,8 +78,6 @@ class ResultsAggregator {
                 console.log(`❌ ${this.framework} result file not found: ${resultFile}`);
             }
         }
-
-        console.log(`📊 Loaded ${this.rawResults.length} ${this.framework} results out of ${this.totalRuns} runs`);
     }
 
     generateFinalReport() {
@@ -92,84 +86,43 @@ class ResultsAggregator {
             return;
         }
 
-        // ✅ Агрегируем статистику используя данные autocannon
         const rpsValues = this.processedResults.map(r => r.requests_per_second);
-        const latencyP99Values = this.processedResults.map(r => r.latency_percentiles.p99);
 
         const stats = {
-            // 📋 Мета информация
-            framework: this.framework,
-            test_type: this.resultFileName,
             total_runs: this.totalRuns,
-            successful_runs: this.rawResults.length,
-            aggregation_timestamp: new Date().toISOString(),
 
-            // 📊 СВОДНАЯ СТАТИСТИКА (агрегированная по всем прогонам)
             summary: {
-                // RPS статистика
                 requests_per_second: {
                     average: this.calculateAverage(rpsValues),
                     min: Math.min(...rpsValues),
                     max: Math.max(...rpsValues),
                     stddev: this.calculateStdDev(rpsValues),
-                    // ✅ Все перцентили из агрегированных данных
                     percentiles: this.calculatePercentiles(rpsValues)
                 },
 
-                // Latency статистика (P99)
-                latency_p99: {
-                    average: this.calculateAverage(latencyP99Values),
-                    min: Math.min(...latencyP99Values),
-                    max: Math.max(...latencyP99Values),
-                    stddev: this.calculateStdDev(latencyP99Values)
+                latency: {
+                    average: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.average)),
+                    min: Math.min(...this.processedResults.map(r => r.latency_percentiles.average)),
+                    max: Math.max(...this.processedResults.map(r => r.latency_percentiles.average)),
+                    stddev: this.calculateStdDev(this.processedResults.map(r => r.latency_percentiles.average)),
+                    percentiles: this.calculatePercentiles(this.processedResults.map(r => r.latency_percentiles.average))
                 },
 
-                // Общая статистика ошибок
+                throughput: {
+                    average: this.calculateAverage(this.processedResults.map(r => r.throughput.average)),
+                    min: Math.min(...this.processedResults.map(r => r.throughput.average)),
+                    max: Math.max(...this.processedResults.map(r => r.throughput.average)),
+                    stddev: this.calculateStdDev(this.processedResults.map(r => r.throughput.average)),
+                    percentiles: this.calculatePercentiles(this.processedResults.map(r => r.throughput.average))
+                },
+
                 errors_summary: {
                     total_errors: this.processedResults.reduce((sum, r) => sum + r.errors, 0),
                     total_timeouts: this.processedResults.reduce((sum, r) => sum + r.timeouts, 0),
                     error_rate: (this.processedResults.reduce((sum, r) => sum + r.errors, 0) /
                         this.processedResults.reduce((sum, r) => sum + r.total_requests, 0) * 100).toFixed(4) + '%'
                 }
-            },
-
-            // 📈 ДЕТАЛЬНЫЕ ДАННЫЕ ДЛЯ ГРАФИКОВ И АНАЛИЗА
-            chart_data: {
-                // RPS по прогонам
-                rps_over_time: this.processedResults.map(r => ({
-                    run: r.run,
-                    rps: r.requests_per_second,
-                    timestamp: r.timestamp
-                })),
-
-                // Все перцентили задержек по прогонам
-                latency_distribution: this.processedResults.map(r => ({
-                    run: r.run,
-                    average: r.latency_percentiles.average,
-                    p50: r.latency_percentiles.p50,
-                    p75: r.latency_percentiles.p75,
-                    p90: r.latency_percentiles.p90,
-                    p95: r.latency_percentiles.p95,
-                    p99: r.latency_percentiles.p99,
-                    p99_9: r.latency_percentiles.p99_9,
-                    p99_99: r.latency_percentiles.p99_99,
-                    min: r.latency_percentiles.min,
-                    max: r.latency_percentiles.max
-                })),
-
-                // Throughput по прогонам
-                throughput_over_time: this.processedResults.map(r => ({
-                    run: r.run,
-                    throughput: r.throughput.average,
-                    timestamp: r.timestamp
-                }))
-            },
-
-            // 🗂️ ПОЛНЫЕ ДАННЫЕ КАЖДОГО ПРОГОНА (ВСЕ поля autocannon)
-            individual_runs: this.rawResults,
-
-            // 📄 ОБРАБОТАННЫЕ ДАННЫЕ ДЛЯ УДОБСТВА
-            processed_runs: this.processedResults
+            }
         };
 
         console.log('\n📊 FINAL AGGREGATED REPORT');
@@ -179,34 +132,24 @@ class ResultsAggregator {
         console.log(`Runs: ${stats.successful_runs}/${stats.total_runs} successful`);
         console.log(`Average RPS: ${stats.summary.requests_per_second.average.toFixed(0)}`);
         console.log(`RPS Range: ${stats.summary.requests_per_second.min.toFixed(0)} - ${stats.summary.requests_per_second.max.toFixed(0)}`);
-        console.log(`P99 Latency: ${stats.summary.latency_p99.average.toFixed(1)}ms`);
         console.log(`Total Errors: ${stats.summary.errors_summary.total_errors}`);
         console.log(`Error Rate: ${stats.summary.errors_summary.error_rate}`);
 
         const finalDir = path.join(__dirname, '..', '..', 'final-results', this.framework);
         fs.mkdirSync(finalDir, { recursive: true });
 
-        // ✅ Сохраняем ПОЛНУЮ статистику
         fs.writeFileSync(
             path.join(finalDir, `complete-stats-${this.resultFileName}.json`),
             JSON.stringify(stats, null, 2)
         );
 
-        // ✅ Сохраняем только сырые данные autocannon
         fs.writeFileSync(
             path.join(finalDir, `raw-autocannon-data-${this.resultFileName}.json`),
             JSON.stringify(this.rawResults, null, 2)
         );
 
-        // ✅ Сохраняем данные для графиков (отдельно)
-        fs.writeFileSync(
-            path.join(finalDir, `chart-data-${this.resultFileName}.json`),
-            JSON.stringify(stats.chart_data, null, 2)
-        );
-
         console.log(`💾 Saved complete stats to: ${path.join(finalDir, `complete-stats-${this.resultFileName}.json`)}`);
         console.log(`💾 Saved raw data to: ${path.join(finalDir, `raw-autocannon-data-${this.resultFileName}.json`)}`);
-        console.log(`💾 Saved chart data to: ${path.join(finalDir, `chart-data-${this.resultFileName}.json`)}`);
     }
 
     calculateAverage(arr) {

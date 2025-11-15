@@ -20,10 +20,12 @@ class SerializationTestRunner {
             timeout: 60000
         });
 
-        console.log(`📋 Test output: ${JSON.stringify(result, null, 2)}`);
+        const formattedResult = JSON.stringify(JSON.parse(result), null, 2);
+
+        console.log(`📋 Test output: ${formattedResult}`);
 
         const jsonFile = path.join(this.resultsDir, `serialization.json`);
-        fs.writeFileSync(jsonFile, JSON.stringify(result, null, 2));
+        fs.writeFileSync(jsonFile, formattedResult);
     }
 }
 
