@@ -13,8 +13,6 @@ class SingleTestRunner {
     }
 
     async run() {
-        console.log(`\n🚀 Starting single test for ${this.framework} (Run ${this.runNumber})`);
-
         try {
             const testFile = `test-${this.framework}.js`;
             const output = execSync(`node ${testFile}`, {
@@ -80,6 +78,6 @@ class SingleTestRunner {
 const framework = process.argv[2];
 const runner = new SingleTestRunner(framework);
 runner.run().catch(error => {
-    console.error('💥 Fatal error:', error);
+    console.error(error);
     process.exit(1);
 });

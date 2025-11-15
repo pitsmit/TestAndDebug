@@ -17,15 +17,6 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Create results directories
-        run: |
-          cd Server
-          TOTAL_RUNS=2
-          for ((i=1; i<=TOTAL_RUNS; i++)); do
-            mkdir -p benchmark/results/express/run-$i
-          done
-          chmod -R 777 benchmark/results/
-
       - name: Run benchmark with loop
         run: |
           cd Server
