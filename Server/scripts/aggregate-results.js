@@ -71,7 +71,7 @@ class ResultsAggregator {
             JSON.stringify(stats, null, 2)
         );
 
-        console.log(`💾 Saved final stats to: ${path.join(finalDir, `final-stats-${this.resultFileName}.json`)}`);
+        console.log(`💾 Saved final stats to: ${path.join(finalDir, `final-stats-${this.resultFileName}`)}`);
     }
 
     calculateAverage(arr) {
