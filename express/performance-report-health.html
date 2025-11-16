@@ -29,19 +29,19 @@
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">7422</div>
+                <div class="metric-value">7335</div>
                 <div class="metric-label">Average RPS</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">128.69ms</div>
+                <div class="metric-value">132.01ms</div>
                 <div class="metric-label">Average Latency</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">2345045</div>
+                <div class="metric-value">2317312</div>
                 <div class="metric-label">Average Throughput</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">80</div>
+                <div class="metric-value">10</div>
                 <div class="metric-label">Total Errors</div>
             </div>
         </div>
@@ -67,24 +67,24 @@
             </tr>
             <tr>
                 <td>Requests Per Second</td>
-                <td>7422</td>
-                <td>7416</td>
-                <td>7428</td>
-                <td>6.34</td>
+                <td>7335</td>
+                <td>7299</td>
+                <td>7370</td>
+                <td>35.40</td>
             </tr>
             <tr>
                 <td>Latency (ms)</td>
-                <td>128.69</td>
-                <td>128.25</td>
-                <td>129.14</td>
-                <td>0.44</td>
+                <td>132.01</td>
+                <td>129.71</td>
+                <td>134.31</td>
+                <td>2.30</td>
             </tr>
             <tr>
                 <td>Throughput</td>
-                <td>2345045</td>
-                <td>2342656</td>
-                <td>2347435</td>
-                <td>2389.33</td>
+                <td>2317312</td>
+                <td>2305946</td>
+                <td>2328678</td>
+                <td>11366.40</td>
             </tr>
         </table>
 
@@ -98,21 +98,21 @@
             </tr>
             <tr>
                 <td>p50</td>
-                <td>129.14</td>
+                <td>134.31</td>
                 <td>p90</td>
-                <td>129.14</td>
+                <td>134.31</td>
             </tr>
             <tr>
                 <td>p75</td>
-                <td>129.14</td>
+                <td>134.31</td>
                 <td>p95</td>
-                <td>129.14</td>
+                <td>134.31</td>
             </tr>
             <tr>
                 <td>p99</td>
-                <td>129.14</td>
+                <td>134.31</td>
                 <td>p99.9</td>
-                <td>129.14</td>
+                <td>134.31</td>
             </tr>
         </table>
     </div>
@@ -123,7 +123,7 @@
             {
                 type: 'bar',
                 data: {
-                    labels: ["128.25-128.25ms","128.25-128.25ms","128.25-128.25ms","128.25-128.25ms","128.25-129.14ms","129.14-129.14ms","129.14-129.14ms","129.14-129.14ms","129.14-129.14ms","129.14-129.14ms","129.14-129.14ms","129.14-129.14ms"],
+                    labels: ["129.71-129.71ms","129.71-129.71ms","129.71-129.71ms","129.71-129.71ms","129.71-134.31ms","134.31-134.31ms","134.31-134.31ms","134.31-134.31ms","134.31-134.31ms","134.31-134.31ms","134.31-134.31ms","134.31-134.31ms"],
                     datasets: [{
                         label: 'Number of Requests',
                         data: [100,150,750,1500,2500,2500,1500,500,400,90,9,1],
@@ -153,7 +153,7 @@
             }
         );
 
-        const rpsData = {"p1":7415.67,"p2_5":7415.67,"p10":7415.67,"p25":7415.67,"p50":7428.34,"p75":7428.34,"p90":7428.34,"p95":7428.34,"p99":7428.34,"p99_9":7428.34,"p99_99":7428.34};
+        const rpsData = {"p1":7299.2,"p2_5":7299.2,"p10":7299.2,"p25":7299.2,"p50":7370,"p75":7370,"p90":7370,"p95":7370,"p99":7370,"p99_9":7370,"p99_99":7370};
         const rpsChart = new Chart(
             document.getElementById('rpsChart'),
             {
