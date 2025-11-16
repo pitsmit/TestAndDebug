@@ -24,20 +24,20 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Performance Report - fastify</h1>
-            <p>Test Type: serialization | Total Runs: 5</p>
+            <p>Test Type: serialization | Total Runs: 2</p>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">12291</div>
+                <div class="metric-value">12210</div>
                 <div class="metric-label">Average RPS</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">80.71ms</div>
+                <div class="metric-value">81.19ms</div>
                 <div class="metric-label">Average Latency</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">5174067</div>
+                <div class="metric-value">5140309</div>
                 <div class="metric-label">Average Throughput</div>
             </div>
             <div class="metric-card">
@@ -67,24 +67,24 @@
             </tr>
             <tr>
                 <td>Requests Per Second</td>
-                <td>12291</td>
-                <td>11504</td>
-                <td>12687</td>
-                <td>410.54</td>
+                <td>12210</td>
+                <td>12161</td>
+                <td>12258</td>
+                <td>48.50</td>
             </tr>
             <tr>
                 <td>Latency (ms)</td>
-                <td>80.71</td>
-                <td>78.11</td>
-                <td>86.12</td>
-                <td>2.81</td>
+                <td>81.19</td>
+                <td>80.83</td>
+                <td>81.56</td>
+                <td>0.37</td>
             </tr>
             <tr>
                 <td>Throughput</td>
-                <td>5174067</td>
-                <td>4843349</td>
-                <td>5340160</td>
-                <td>172438.89</td>
+                <td>5140309</td>
+                <td>5120171</td>
+                <td>5160448</td>
+                <td>20138.67</td>
             </tr>
         </table>
 
@@ -98,21 +98,21 @@
             </tr>
             <tr>
                 <td>p50</td>
-                <td>79.82</td>
+                <td>81.56</td>
                 <td>p90</td>
-                <td>86.12</td>
+                <td>81.56</td>
             </tr>
             <tr>
                 <td>p75</td>
-                <td>80.37</td>
+                <td>81.56</td>
                 <td>p95</td>
-                <td>86.12</td>
+                <td>81.56</td>
             </tr>
             <tr>
                 <td>p99</td>
-                <td>86.12</td>
+                <td>81.56</td>
                 <td>p99.9</td>
-                <td>86.12</td>
+                <td>81.56</td>
             </tr>
         </table>
     </div>
@@ -123,7 +123,7 @@
             {
                 type: 'bar',
                 data: {
-                    labels: ["78.11-78.11ms","78.11-78.11ms","78.11-78.11ms","78.11-79.12ms","79.12-79.82ms","79.82-80.37ms","80.37-86.12ms","86.12-86.12ms","86.12-86.12ms","86.12-86.12ms","86.12-86.12ms","86.12-86.12ms"],
+                    labels: ["80.83-80.83ms","80.83-80.83ms","80.83-80.83ms","80.83-80.83ms","80.83-81.56ms","81.56-81.56ms","81.56-81.56ms","81.56-81.56ms","81.56-81.56ms","81.56-81.56ms","81.56-81.56ms","81.56-81.56ms"],
                     datasets: [{
                         label: 'Number of Requests',
                         data: [100,150,750,1500,2500,2500,1500,500,400,90,9,1],
@@ -153,7 +153,7 @@
             }
         );
 
-        const rpsData = {"p1":11504,"p2_5":11504,"p10":11504,"p25":12337.34,"p50":12417.34,"p75":12510.67,"p90":12687.2,"p95":12687.2,"p99":12687.2,"p99_9":12687.2,"p99_99":12687.2};
+        const rpsData = {"p1":12161.34,"p2_5":12161.34,"p10":12161.34,"p25":12161.34,"p50":12258.34,"p75":12258.34,"p90":12258.34,"p95":12258.34,"p99":12258.34,"p99_9":12258.34,"p99_99":12258.34};
         const rpsChart = new Chart(
             document.getElementById('rpsChart'),
             {
