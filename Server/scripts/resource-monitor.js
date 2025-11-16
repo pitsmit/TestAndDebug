@@ -1,4 +1,4 @@
-// Server/benchmark/scripts/resource-monitor.js
+// Server/scripts/resource-monitor.js
 const fs = require('fs');
 const path = require('path');
 
@@ -10,7 +10,6 @@ class ResourceMonitor {
         this.metrics = [];
     }
 
-    // Теперь просто сохраняем метрики, сбор происходит в workflow
     addMetrics(metricsData) {
         this.metrics.push({
             timestamp: new Date().toISOString(),
@@ -39,8 +38,9 @@ class ResourceMonitor {
             time_series: this.metrics
         };
 
-        const filename = `metrics-${this.testType}.json`;
-        const resultsDir = `/app/results/${this.framework}/run-${this.runNumber}`;
+        // ✅ ПРАВИЛЬНЫЙ ПУТЬ ДЛЯ ХОСТА
+        const filename = `resource-metrics-${this.testType}.json`;
+        const resultsDir = `Server/benchmark/results/${this.framework}/run-${this.runNumber}`;
 
         fs.mkdirSync(resultsDir, { recursive: true });
         fs.writeFileSync(path.join(resultsDir, filename), JSON.stringify(summary, null, 2));

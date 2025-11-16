@@ -1,4 +1,4 @@
-// Server/benchmark/scripts/process-stats.js
+// Server/scripts/process-stats.js
 const fs = require('fs');
 const path = require('path');
 const ResourceMonitor = require('./resource-monitor');
@@ -6,7 +6,6 @@ const ResourceMonitor = require('./resource-monitor');
 function parseDockerStats(logContent, framework, runNumber) {
     const lines = logContent.split('\n').filter(line => line.trim());
 
-    // Пропускаем заголовок и пустые строки
     const dataLines = lines.slice(1).filter(line =>
         line.includes('%') &&
         (line.includes('MiB') || line.includes('GiB'))
@@ -16,13 +15,11 @@ function parseDockerStats(logContent, framework, runNumber) {
 
     dataLines.forEach(line => {
         try {
-            // Формат: "CPU% MEM USAGE/LIMIT NET I/O BLOCK I/O"
             const parts = line.split(/\s+/).filter(p => p.trim());
 
             if (parts.length >= 4) {
                 const cpuPercent = parseFloat(parts[0].replace('%', '')) || 0;
 
-                // Парсим память: "120.5MiB/2GiB" -> берем первую часть
                 const memoryPart = parts[1].split('/')[0];
                 let memoryMB = 0;
 
@@ -47,6 +44,7 @@ function parseDockerStats(logContent, framework, runNumber) {
     return monitor.saveMetrics();
 }
 
+// Запуск из командной строки
 if (require.main === module) {
     const framework = process.argv[2];
     const runNumber = process.argv[3];
@@ -56,6 +54,7 @@ if (require.main === module) {
         console.log('❌ Stats log file not found:', logFile);
         process.exit(1);
     }
+
     const logContent = fs.readFileSync(logFile, 'utf8');
     const result = parseDockerStats(logContent, framework, runNumber);
 
