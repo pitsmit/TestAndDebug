@@ -39,6 +39,11 @@ jobs:
             '
             echo "✅ Express is ready for run $i!"
           
+            # ЗАПУСКАЕМ МОНИТОРИНГ РЕСУРСОВ В ФОНЕ
+            echo "📊 Starting resource monitoring..."
+            docker stats server-express-1 --format "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > docker-stats-run-$i.log 2>&1 &
+            STATS_PID=$!
+          
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.express.yml run --rm \
               -e RUN_NUMBER=$i \
@@ -46,6 +51,15 @@ jobs:
             docker compose -f docker-compose.express.yml run --rm \
               -e RUN_NUMBER=$i \
               benchmark node serialization-test.js express
+          
+            # ОСТАНАВЛИВАЕМ МОНИТОРИНГ
+            echo "📊 Stopping resource monitoring..."
+            kill $STATS_PID 2>/dev/null || true
+            sleep 2
+      
+            # ОБРАБАТЫВАЕМ ЛОГИ МОНИТОРИНГА
+            echo "📈 Processing resource metrics..."
+            node scripts/process-stats.js express $i docker-stats-run-$i.log
           
             echo "✅ Test $i completed!"
             docker compose -f docker-compose.express.yml down --remove-orphans
