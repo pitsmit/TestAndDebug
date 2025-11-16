@@ -1,4 +1,4 @@
-// Server/scripts/resource-monitor.js
+// Server/benchmark/scripts/resource-monitor.js
 const fs = require('fs');
 const path = require('path');
 
@@ -38,11 +38,9 @@ class ResourceMonitor {
             time_series: this.metrics
         };
 
-        // ✅ ПРАВИЛЬНЫЙ ПУТЬ ДЛЯ ХОСТА
+        // ✅ ПРОСТОЙ ПУТЬ В DOCKER - /app/results/
         const filename = `resource-metrics-${this.testType}.json`;
-        //const resultsDir = `Server/benchmark/results/${this.framework}/run-${this.runNumber}`;
-
-        const resultsDir = path.join(__dirname, '..', '..', `results/${this.framework}/run-${this.runNumber}`);
+        const resultsDir = `/app/results/${this.framework}/run-${this.runNumber}`;
 
         fs.mkdirSync(resultsDir, { recursive: true });
         fs.writeFileSync(path.join(resultsDir, filename), JSON.stringify(summary, null, 2));
