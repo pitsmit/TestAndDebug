@@ -40,8 +40,9 @@ class ResourceMonitor {
         };
 
         const filename = `metrics-${this.testType}-run-${this.runNumber}.json`;
-        const resultsDir = `/app/results/${this.framework}/run-${this.runNumber}`;
+        const resultsDir = `../results/${this.framework}/run-${this.runNumber}`;
 
+        fs.mkdirSync(resultsDir, { recursive: true });
         fs.writeFileSync(path.join(resultsDir, filename), JSON.stringify(summary, null, 2));
 
         console.log(`💾 Saved resource metrics to: ${resultsDir + '/' + filename}`);
