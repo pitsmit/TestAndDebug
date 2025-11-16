@@ -42,6 +42,9 @@ jobs:
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.express.yml run --rm \
               -e RUN_NUMBER=$i \
+              benchmark node health-test.js express && \
+            docker compose -f docker-compose.express.yml run --rm \
+              -e RUN_NUMBER=$i \
               benchmark node serialization-test.js express
           
             echo "✅ Test $i completed!"
@@ -86,6 +89,7 @@ jobs:
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
           cd Server
+          node scripts/aggregate-results.js express $TOTAL_RUNS health.json
           node scripts/aggregate-results.js express $TOTAL_RUNS serialization.json
 
       - name: Upload final express results
@@ -95,7 +99,7 @@ jobs:
           path: final-results/express/
           retention-days: 30
 
-  deploy:
+  deploy-express:
     needs: aggregate-express-results
     runs-on: ubuntu-latest
     permissions:
@@ -111,7 +115,6 @@ jobs:
         run: |
           mkdir -p ./gh-pages
           cp artifact-content/performance-report-*.html ./gh-pages/
-          cp artifact-content/performance-report-serialization.html ./gh-pages/index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -155,6 +158,9 @@ jobs:
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
             docker compose -f docker-compose.fastify.yml run --rm \
               -e RUN_NUMBER=$i \
+              benchmark node health-test.js fastify && \
+            docker compose -f docker-compose.fastify.yml run --rm \
+              -e RUN_NUMBER=$i \
               benchmark node serialization-test.js fastify
           
             echo "✅ Test $i completed!"
@@ -194,6 +200,7 @@ jobs:
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
           cd Server
+          node scripts/aggregate-results.js fastify $TOTAL_RUNS health.json
           node scripts/aggregate-results.js fastify $TOTAL_RUNS serialization.json
 
       - name: Upload final fastify results
@@ -202,6 +209,29 @@ jobs:
           name: fastify-final-results
           path: final-results/fastify/
           retention-days: 30
+
+  deploy-fastify:
+    needs: aggregate-fastify-results
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download fastify results artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fastify-final-results
+          path: ./artifact-content
+
+      - name: Prepare GitHub Pages content
+        run: |
+          mkdir -p ./gh-pages
+          cp artifact-content/performance-report-*.html ./gh-pages/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
 
   generate-comparison-report:
     runs-on: ubuntu-latest
@@ -240,6 +270,7 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
+          node scripts/generate-comparison.js 5 health
           node scripts/generate-comparison.js 5 serialization
 
       - name: Upload comparison report
