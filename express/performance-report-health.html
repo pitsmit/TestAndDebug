@@ -29,19 +29,19 @@
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">7550</div>
+                <div class="metric-value">7340</div>
                 <div class="metric-label">Average RPS</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">130.68ms</div>
+                <div class="metric-value">130.51ms</div>
                 <div class="metric-label">Average Latency</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">2385753</div>
+                <div class="metric-value">2319213</div>
                 <div class="metric-label">Average Throughput</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">10</div>
+                <div class="metric-value">110</div>
                 <div class="metric-label">Total Errors</div>
             </div>
         </div>
@@ -67,24 +67,24 @@
             </tr>
             <tr>
                 <td>Requests Per Second</td>
-                <td>7550</td>
-                <td>7279</td>
-                <td>7780</td>
-                <td>189.48</td>
+                <td>7340</td>
+                <td>6787</td>
+                <td>7718</td>
+                <td>322.86</td>
             </tr>
             <tr>
                 <td>Latency (ms)</td>
-                <td>130.68</td>
-                <td>127.07</td>
-                <td>136.03</td>
-                <td>3.66</td>
+                <td>130.51</td>
+                <td>128.30</td>
+                <td>135.14</td>
+                <td>2.65</td>
             </tr>
             <tr>
                 <td>Throughput</td>
-                <td>2385753</td>
-                <td>2300672</td>
-                <td>2458709</td>
-                <td>59806.50</td>
+                <td>2319213</td>
+                <td>2144461</td>
+                <td>2438229</td>
+                <td>101910.19</td>
             </tr>
         </table>
 
@@ -98,21 +98,21 @@
             </tr>
             <tr>
                 <td>p50</td>
-                <td>128.99</td>
+                <td>128.77</td>
                 <td>p90</td>
-                <td>136.03</td>
+                <td>135.14</td>
             </tr>
             <tr>
                 <td>p75</td>
-                <td>134.02</td>
+                <td>131.81</td>
                 <td>p95</td>
-                <td>136.03</td>
+                <td>135.14</td>
             </tr>
             <tr>
                 <td>p99</td>
-                <td>136.03</td>
+                <td>135.14</td>
                 <td>p99.9</td>
-                <td>136.03</td>
+                <td>135.14</td>
             </tr>
         </table>
     </div>
@@ -123,7 +123,7 @@
             {
                 type: 'bar',
                 data: {
-                    labels: ["127.07-127.07ms","127.07-127.07ms","127.07-127.07ms","127.07-127.31ms","127.31-128.99ms","128.99-134.02ms","134.02-136.03ms","136.03-136.03ms","136.03-136.03ms","136.03-136.03ms","136.03-136.03ms","136.03-136.03ms"],
+                    labels: ["128.3-128.3ms","128.3-128.3ms","128.3-128.3ms","128.3-128.52ms","128.52-128.77ms","128.77-131.81ms","131.81-135.14ms","135.14-135.14ms","135.14-135.14ms","135.14-135.14ms","135.14-135.14ms","135.14-135.14ms"],
                     datasets: [{
                         label: 'Number of Requests',
                         data: [100,150,750,1500,2500,2500,1500,500,400,90,9,1],
@@ -153,7 +153,7 @@
             }
         );
 
-        const rpsData = {"p1":7279,"p2_5":7279,"p10":7279,"p25":7378.4,"p50":7634,"p75":7679.67,"p90":7779.67,"p95":7779.67,"p99":7779.67,"p99_9":7779.67,"p99_99":7779.67};
+        const rpsData = {"p1":6786.8,"p2_5":6786.8,"p10":6786.8,"p25":7194.8,"p50":7484.67,"p75":7514.67,"p90":7717.67,"p95":7717.67,"p99":7717.67,"p99_9":7717.67,"p99_99":7717.67};
         const rpsChart = new Chart(
             document.getElementById('rpsChart'),
             {
