@@ -254,6 +254,14 @@ jobs:
           name: fastify-final-results
           path: ./fastify-content
 
+      - name: Debug artifact contents
+        run: |
+          echo "📁 Express artifact files:"
+          find express-content -type f | head -20
+          echo ""
+          echo "📁 Fastify artifact files:"
+          find fastify-content -type f | head -20
+
       - name: Prepare GitHub Pages content
         run: |
           mkdir -p ./gh-pages
