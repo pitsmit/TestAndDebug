@@ -30,3 +30,4 @@ services:
       dockerfile: Dockerfile.benchmark
     volumes:
       - ./benchmark/results:/app/results
+      - ./benchmark/scripts:/app/scripts
