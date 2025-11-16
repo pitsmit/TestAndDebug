@@ -1,7 +1,7 @@
 // Server/benchmark/serialization-test/resource-test.js
 const fs = require('fs');
 const path = require('path');
-const ResourceMonitor = require('../scripts/resource-monitor');
+const ResourceMonitor = require('./resource-monitor');
 
 function parseDockerStats(logContent, framework, runNumber) {
     const lines = logContent.split('\n').filter(line => line.trim());
