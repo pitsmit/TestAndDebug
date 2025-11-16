@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performance Report - express</title>
+    <title>Performance Report - fastify</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
@@ -23,21 +23,21 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Performance Report - express</h1>
+            <h1>🚀 Performance Report - fastify</h1>
             <p>Test Type: serialization | Total Runs: 5</p>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">4337</div>
+                <div class="metric-value">12181</div>
                 <div class="metric-label">Average RPS</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">225.97ms</div>
+                <div class="metric-value">81.47ms</div>
                 <div class="metric-label">Average Latency</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">2653693</div>
+                <div class="metric-value">5127496</div>
                 <div class="metric-label">Average Throughput</div>
             </div>
             <div class="metric-card">
@@ -67,24 +67,24 @@
             </tr>
             <tr>
                 <td>Requests Per Second</td>
-                <td>4337</td>
-                <td>4239</td>
-                <td>4404</td>
-                <td>57.88</td>
+                <td>12181</td>
+                <td>11448</td>
+                <td>12698</td>
+                <td>445.54</td>
             </tr>
             <tr>
                 <td>Latency (ms)</td>
-                <td>225.97</td>
-                <td>222.39</td>
-                <td>230.64</td>
-                <td>2.87</td>
+                <td>81.47</td>
+                <td>78.06</td>
+                <td>86.57</td>
+                <td>3.03</td>
             </tr>
             <tr>
                 <td>Throughput</td>
-                <td>2653693</td>
-                <td>2593280</td>
-                <td>2695373</td>
-                <td>35679.69</td>
+                <td>5127496</td>
+                <td>4819115</td>
+                <td>5344870</td>
+                <td>187507.32</td>
             </tr>
         </table>
 
@@ -98,21 +98,21 @@
             </tr>
             <tr>
                 <td>p50</td>
-                <td>225.56</td>
+                <td>80.61</td>
                 <td>p90</td>
-                <td>230.64</td>
+                <td>86.57</td>
             </tr>
             <tr>
                 <td>p75</td>
-                <td>227.40</td>
+                <td>82.98</td>
                 <td>p95</td>
-                <td>230.64</td>
+                <td>86.57</td>
             </tr>
             <tr>
                 <td>p99</td>
-                <td>230.64</td>
+                <td>86.57</td>
                 <td>p99.9</td>
-                <td>230.64</td>
+                <td>86.57</td>
             </tr>
         </table>
     </div>
@@ -123,7 +123,7 @@
             {
                 type: 'bar',
                 data: {
-                    labels: ["222.39-222.39ms","222.39-222.39ms","222.39-222.39ms","222.39-223.87ms","223.87-225.56ms","225.56-227.4ms","227.4-230.64ms","230.64-230.64ms","230.64-230.64ms","230.64-230.64ms","230.64-230.64ms","230.64-230.64ms"],
+                    labels: ["78.06-78.06ms","78.06-78.06ms","78.06-78.06ms","78.06-79.15ms","79.15-80.61ms","80.61-82.98ms","82.98-86.57ms","86.57-86.57ms","86.57-86.57ms","86.57-86.57ms","86.57-86.57ms","86.57-86.57ms"],
                     datasets: [{
                         label: 'Number of Requests',
                         data: [100,150,750,1500,2500,2500,1500,500,400,90,9,1],
@@ -153,7 +153,7 @@
             }
         );
 
-        const rpsData = {"p1":4239,"p2_5":4239,"p10":4239,"p25":4309.4,"p50":4355.84,"p75":4376.61,"p90":4403.8,"p95":4403.8,"p99":4403.8,"p99_9":4403.8,"p99_99":4403.8};
+        const rpsData = {"p1":11448.34,"p2_5":11448.34,"p10":11448.34,"p25":11940,"p50":12292,"p75":12524,"p90":12698.4,"p95":12698.4,"p99":12698.4,"p99_9":12698.4,"p99_99":12698.4};
         const rpsChart = new Chart(
             document.getElementById('rpsChart'),
             {
