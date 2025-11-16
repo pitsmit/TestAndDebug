@@ -59,7 +59,6 @@ services:
       - test-network
     volumes:
       - ./results:/app/results
-      - ./benchmark/scripts:/app/scripts
 
   benchmark-fastify:
     build:
@@ -69,7 +68,6 @@ services:
       - test-network
     volumes:
       - ./results:/app/results
-      - ./benchmark/scripts:/app/scripts
 
 networks:
   test-network:

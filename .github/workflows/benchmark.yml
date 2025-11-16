@@ -60,8 +60,9 @@ jobs:
             # ✅ ЗАПУСКАЕМ ОБРАБОТКУ ИЗ КОНТЕЙНЕРА (ПРОСТОЙ ПУТЬ!)
             echo "📈 Processing resource metrics from Docker..."
             docker compose -f docker-compose.express.yml run --rm \
-            -v $(pwd)/docker-stats-run-$i.log:/app/stats.log \
-            benchmark node scripts/process-stats.js express $i /app/stats.log
+              -e RUN_NUMBER=$i \
+              -v $(pwd)/docker-stats-run-$i.log:/app/stats.log \
+              benchmark node resource-test.js express $i /app/stats.log
           
             echo "✅ Test $i completed!"
             docker compose -f docker-compose.express.yml down --remove-orphans
