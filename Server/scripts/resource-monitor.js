@@ -40,7 +40,9 @@ class ResourceMonitor {
 
         // ✅ ПРАВИЛЬНЫЙ ПУТЬ ДЛЯ ХОСТА
         const filename = `resource-metrics-${this.testType}.json`;
-        const resultsDir = `Server/benchmark/results/${this.framework}/run-${this.runNumber}`;
+        //const resultsDir = `Server/benchmark/results/${this.framework}/run-${this.runNumber}`;
+
+        const resultsDir = path.join(__dirname, '..', '..', `results/${this.framework}/run-${this.runNumber}`);
 
         fs.mkdirSync(resultsDir, { recursive: true });
         fs.writeFileSync(path.join(resultsDir, filename), JSON.stringify(summary, null, 2));
