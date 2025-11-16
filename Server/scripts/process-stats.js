@@ -63,8 +63,9 @@ if (require.main === module) {
         console.log('❌ Stats log file not found:', logFile);
         process.exit(1);
     }
-
+    console.log("file exists");
     const logContent = fs.readFileSync(logFile, 'utf8');
+    console.log(logContent);
     const result = parseDockerStats(logContent, framework, runNumber);
 
     if (result) {
