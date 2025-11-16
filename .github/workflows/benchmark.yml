@@ -41,7 +41,7 @@ jobs:
           
             # ЗАПУСКАЕМ МОНИТОРИНГ РЕСУРСОВ В ФОНЕ
             echo "📊 Starting resource monitoring..."
-            docker stats server-express-1 --format "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > docker-stats-run-$i.log 2>&1 &
+            docker stats server-app-1 --format "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > docker-stats-run-$i.log 2>&1 &
             STATS_PID=$!
           
             echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
