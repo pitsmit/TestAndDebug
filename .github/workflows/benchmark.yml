@@ -20,7 +20,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=2
+          TOTAL_RUNS=5
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             echo "🚀 Starting FRESH Express container for run $i/$TOTAL_RUNS"
@@ -81,7 +81,7 @@ jobs:
 
       - name: Aggregate express results
         run: |
-          TOTAL_RUNS=2
+          TOTAL_RUNS=5
           mkdir -p final-results/express         
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
@@ -94,6 +94,30 @@ jobs:
           name: express-final-results
           path: final-results/express/
           retention-days: 30
+
+  deploy:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download express results artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: express-final-results
+          path: ./artifact-content
+
+      - name: Prepare GitHub Pages content
+        run: |
+          mkdir -p ./gh-pages
+          cp artifact-content/performance-report-*.html ./gh-pages/
+          cp artifact-content/performance-report-serialization.html ./gh-pages/index.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
 
   benchmark-fastify:
     runs-on: ubuntu-latest
@@ -110,7 +134,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=2
+          TOTAL_RUNS=5
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             echo "🚀 Starting FRESH Fastify container for run $i/$TOTAL_RUNS"
@@ -165,7 +189,7 @@ jobs:
 
       - name: Aggregate fastify results
         run: |
-          TOTAL_RUNS=2
+          TOTAL_RUNS=5
           mkdir -p final-results/fastify         
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
@@ -216,7 +240,7 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
-          node scripts/generate-comparison.js 2 serialization
+          node scripts/generate-comparison.js 5 serialization
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4

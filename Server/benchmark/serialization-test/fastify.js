@@ -3,10 +3,10 @@ const autocannon = require('autocannon');
 async function runTest() {
     const result = await autocannon({
         url: 'http://app:3000/api/v1/feed?page=1&limit=5',
-        connections: 10,
+        connections: 100,
         duration: 5,
         timeout: 5,
-        pipelining: 1,
+        pipelining: 10,
         latency: true,
         renderStatusCodes: true,
         json: true,
