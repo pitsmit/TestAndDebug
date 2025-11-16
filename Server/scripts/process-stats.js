@@ -19,9 +19,6 @@ function parseDockerStats(logContent, framework, runNumber) {
             // Формат: "CPU% MEM USAGE/LIMIT NET I/O BLOCK I/O"
             const parts = line.split(/\s+/).filter(p => p.trim());
 
-            console.log(parts);
-            console.log(parts.length);
-
             if (parts.length >= 4) {
                 const cpuPercent = parseFloat(parts[0].replace('%', '')) || 0;
 
