@@ -187,82 +187,6 @@ jobs:
           path: final-results/fastify/
           retention-days: 30
 
-  deploy-all:
-    needs: [aggregate-express-results, aggregate-fastify-results]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download express results
-        uses: actions/download-artifact@v4
-        with:
-          name: express-final-results
-          path: ./express-content
-
-      - name: Download fastify results
-        uses: actions/download-artifact@v4
-        with:
-          name: fastify-final-results
-          path: ./fastify-content
-
-      - name: Prepare GitHub Pages content
-        run: |
-          mkdir -p ./gh-pages
-          
-          # Express отчеты
-          mkdir -p ./gh-pages/express
-          cp express-content/performance-report-*.html ./gh-pages/express/
-          
-          # Fastify отчеты  
-          mkdir -p ./gh-pages/fastify
-          cp fastify-content/performance-report-*.html ./gh-pages/fastify/
-          
-          # Создаем главную страницу
-          cat > ./gh-pages/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>Benchmark Reports</title>
-              <style>
-                  body { font-family: Arial, sans-serif; margin: 40px; }
-                  .container { max-width: 800px; margin: 0 auto; }
-                  h1 { color: #333; }
-                  .framework { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
-                  .framework h2 { margin-top: 0; }
-                  .links a { display: block; margin: 10px 0; padding: 10px; background: #f5f5f5; text-decoration: none; color: #0366d6; }
-                  .links a:hover { background: #e1e1e1; }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1>🚀 Benchmark Reports</h1>
-          
-                  <div class="framework">
-                      <h2>Express</h2>
-                      <div class="links">
-                          <a href="./express/performance-report-health.html">Health Test Report</a>
-                          <a href="./express/performance-report-serialization.html">Serialization Test Report</a>
-                      </div>
-                  </div>
-          
-                  <div class="framework">
-                      <h2>Fastify</h2>
-                      <div class="links">
-                          <a href="./fastify/performance-report-health.html">Health Test Report</a>
-                          <a href="./fastify/performance-report-serialization.html">Serialization Test Report</a>
-                      </div>
-                  </div>
-              </div>
-          </body>
-          </html>
-          EOF
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gh-pages
-
   generate-comparison-report:
     runs-on: ubuntu-latest
     name: Generate Comparison Report
@@ -311,3 +235,79 @@ jobs:
             comparison-data/
             final-results/
           retention-days: 30
+
+  deploy-all:
+    needs: generate-comparison-report  # ← ИЗМЕНИЛ ЗДЕСЬ
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download express results
+        uses: actions/download-artifact@v4
+        with:
+          name: express-final-results
+          path: ./express-content
+
+      - name: Download fastify results
+        uses: actions/download-artifact@v4
+        with:
+          name: fastify-final-results
+          path: ./fastify-content
+
+      - name: Prepare GitHub Pages content
+        run: |
+          mkdir -p ./gh-pages
+
+          # Express отчеты
+          mkdir -p ./gh-pages/express
+          cp express-content/performance-report-*.html ./gh-pages/express/
+
+          # Fastify отчеты  
+          mkdir -p ./gh-pages/fastify
+          cp fastify-content/performance-report-*.html ./gh-pages/fastify/
+
+          # Создаем главную страницу
+          cat > ./gh-pages/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Benchmark Reports</title>
+              <style>
+                  body { font-family: Arial, sans-serif; margin: 40px; }
+                  .container { max-width: 800px; margin: 0 auto; }
+                  h1 { color: #333; }
+                  .framework { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+                  .framework h2 { margin-top: 0; }
+                  .links a { display: block; margin: 10px 0; padding: 10px; background: #f5f5f5; text-decoration: none; color: #0366d6; }
+                  .links a:hover { background: #e1e1e1; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🚀 Benchmark Reports</h1>
+
+                  <div class="framework">
+                      <h2>Express</h2>
+                      <div class="links">
+                          <a href="./express/performance-report-health.html">Health Test Report</a>
+                          <a href="./express/performance-report-serialization.html">Serialization Test Report</a>
+                      </div>
+                  </div>
+
+                  <div class="framework">
+                      <h2>Fastify</h2>
+                      <div class="links">
+                          <a href="./fastify/performance-report-health.html">Health Test Report</a>
+                          <a href="./fastify/performance-report-serialization.html">Serialization Test Report</a>
+                      </div>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
