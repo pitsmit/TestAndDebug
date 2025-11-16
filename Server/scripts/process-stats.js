@@ -53,9 +53,11 @@ function parseDockerStats(logContent, framework, runNumber) {
 
 // Запуск из командной строки
 if (require.main === module) {
+    console.log("SOSALLLLLL");
     const framework = process.argv[2];
     const runNumber = process.argv[3];
     const logFile = process.argv[4];
+    console.log(framework, runNumber, logFile);
 
     if (!fs.existsSync(logFile)) {
         console.log('❌ Stats log file not found:', logFile);
