@@ -113,8 +113,8 @@ jobs:
 
       - name: Prepare GitHub Pages content
         run: |
-          mkdir -p ./gh-pages
-          cp artifact-content/performance-report-*.html ./gh-pages/
+          mkdir -p ./gh-pages/express
+          cp artifact-content/performance-report-*.html ./gh-pages/express/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -224,8 +224,8 @@ jobs:
 
       - name: Prepare GitHub Pages content
         run: |
-          mkdir -p ./gh-pages
-          cp artifact-content/performance-report-*.html ./gh-pages/
+          mkdir -p ./gh-pages/fastify
+          cp artifact-content/performance-report-*.html ./gh-pages/fastify/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
