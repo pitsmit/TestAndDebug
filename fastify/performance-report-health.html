@@ -29,15 +29,15 @@
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">28636</div>
+                <div class="metric-value">28805</div>
                 <div class="metric-label">Average RPS</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">34.45ms</div>
+                <div class="metric-value">34.25ms</div>
                 <div class="metric-label">Average Latency</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">8132267</div>
+                <div class="metric-value">8179883</div>
                 <div class="metric-label">Average Throughput</div>
             </div>
             <div class="metric-card">
@@ -45,6 +45,32 @@
                 <div class="metric-label">Total Errors</div>
             </div>
         </div>
+
+        
+        <div class="chart-container">
+            <h2>💻 Resource Usage Over Time</h2>
+            <canvas id="resourceChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">91.7%</div>
+                <div class="metric-label">Avg CPU Usage</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">70MB</div>
+                <div class="metric-label">Avg Memory Usage</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">128.8%</div>
+                <div class="metric-label">Max CPU Usage</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">87MB</div>
+                <div class="metric-label">Max Memory Usage</div>
+            </div>
+        </div>
+        
 
         <div class="chart-container">
             <h2>📊 Latency Distribution Histogram</h2>
@@ -67,24 +93,24 @@
             </tr>
             <tr>
                 <td>Requests Per Second</td>
-                <td>28636</td>
-                <td>28632</td>
-                <td>28640</td>
-                <td>4.00</td>
+                <td>28805</td>
+                <td>28416</td>
+                <td>29195</td>
+                <td>389.33</td>
             </tr>
             <tr>
                 <td>Latency (ms)</td>
-                <td>34.45</td>
-                <td>34.45</td>
-                <td>34.45</td>
-                <td>0.00</td>
+                <td>34.25</td>
+                <td>33.79</td>
+                <td>34.72</td>
+                <td>0.46</td>
             </tr>
             <tr>
                 <td>Throughput</td>
-                <td>8132267</td>
-                <td>8131584</td>
-                <td>8132949</td>
-                <td>682.67</td>
+                <td>8179883</td>
+                <td>8069803</td>
+                <td>8289963</td>
+                <td>110080.00</td>
             </tr>
         </table>
 
@@ -98,21 +124,21 @@
             </tr>
             <tr>
                 <td>p50</td>
-                <td>34.45</td>
+                <td>34.72</td>
                 <td>p90</td>
-                <td>34.45</td>
+                <td>34.72</td>
             </tr>
             <tr>
                 <td>p75</td>
-                <td>34.45</td>
+                <td>34.72</td>
                 <td>p95</td>
-                <td>34.45</td>
+                <td>34.72</td>
             </tr>
             <tr>
                 <td>p99</td>
-                <td>34.45</td>
+                <td>34.72</td>
                 <td>p99.9</td>
-                <td>34.45</td>
+                <td>34.72</td>
             </tr>
         </table>
     </div>
@@ -123,7 +149,7 @@
             {
                 type: 'bar',
                 data: {
-                    labels: ["34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms","34.45-34.45ms"],
+                    labels: ["33.79-33.79ms","33.79-33.79ms","33.79-33.79ms","33.79-33.79ms","33.79-34.72ms","34.72-34.72ms","34.72-34.72ms","34.72-34.72ms","34.72-34.72ms","34.72-34.72ms","34.72-34.72ms","34.72-34.72ms"],
                     datasets: [{
                         label: 'Number of Requests',
                         data: [100,150,750,1500,2500,2500,1500,500,400,90,9,1],
@@ -153,7 +179,7 @@
             }
         );
 
-        const rpsData = {"p1":28632,"p2_5":28632,"p10":28632,"p25":28632,"p50":28640,"p75":28640,"p90":28640,"p95":28640,"p99":28640,"p99_9":28640,"p99_99":28640};
+        const rpsData = {"p1":28416,"p2_5":28416,"p10":28416,"p25":28416,"p50":29194.67,"p75":29194.67,"p90":29194.67,"p95":29194.67,"p99":29194.67,"p99_9":29194.67,"p99_99":29194.67};
         const rpsChart = new Chart(
             document.getElementById('rpsChart'),
             {
@@ -197,6 +223,66 @@
                 }
             }
         );
+
+        
+        const resourceChart = new Chart(
+            document.getElementById('resourceChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103],
+                    datasets: [
+                        {
+                            label: 'CPU Usage %',
+                            data: [1.12,1.12,1.12,1.12,92.57,92.57,92.57,92.57,103.34,103.34,103.34,103.34,102.28,102.28,102.28,102.28,103.52,103.52,103.52,103.52,101.04,101.04,101.04,101.04,101.27,101.27,101.27,101.27,52.44,52.44,52.44,52.44,128.82,128.82,128.82,128.82,101,101,101,101,101.25,101.25,101.25,101.25,100.91,100.91,100.91,100.91,101.02,101.02,101.02,101.02,0.78,0.78,0.78,0.78,89.37,89.37,89.37,89.37,105.02,105.02,105.02,105.02,101.47,101.47,101.47,101.47,104.47,104.47,104.47,104.47,101.23,101.23,101.23,101.23,100.6,100.6,100.6,100.6,60.5,60.5,60.5,60.5,125.35,125.35,125.35,125.35,101.45,101.45,101.45,101.45,100.73,100.73,100.73,100.73,101.84,101.84,101.84,101.84,101.66,101.66,101.66,101.66],
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            yAxisID: 'y',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Memory Usage MB',
+                            data: [43,43,43,43,51,51,51,51,56,56,56,56,57,57,57,57,65,65,65,65,65,65,65,65,66,66,66,66,65,65,65,65,84,84,84,84,84,84,84,84,84,84,84,84,84,84,84,84,84,84,84,84,44,44,44,44,50,50,50,50,56,56,56,56,56,56,56,56,68,68,68,68,68,68,68,68,68,68,68,68,83,83,83,83,87,87,87,87,87,87,87,87,87,87,87,87,87,87,87,87,87,87,87,87],
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            yAxisID: 'y1',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'CPU Usage %'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Memory Usage MB'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            }
+        );
+        
     </script>
 </body>
 </html>
