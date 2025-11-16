@@ -20,7 +20,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=5
+          TOTAL_RUNS=2
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             echo "🚀 Starting FRESH Express container for run $i/$TOTAL_RUNS"
@@ -84,7 +84,7 @@ jobs:
 
       - name: Aggregate express results
         run: |
-          TOTAL_RUNS=5
+          TOTAL_RUNS=2
           mkdir -p final-results/express         
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
@@ -114,7 +114,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=5
+          TOTAL_RUNS=2
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             echo "🚀 Starting FRESH Fastify container for run $i/$TOTAL_RUNS"
@@ -172,7 +172,7 @@ jobs:
 
       - name: Aggregate fastify results
         run: |
-          TOTAL_RUNS=5
+          TOTAL_RUNS=2
           mkdir -p final-results/fastify         
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
@@ -224,8 +224,8 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
-          node scripts/generate-comparison.js 5 health
-          node scripts/generate-comparison.js 5 serialization
+          node scripts/generate-comparison.js 2 health
+          node scripts/generate-comparison.js 2 serialization
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4
@@ -273,6 +273,13 @@ jobs:
           # Fastify отчеты  
           mkdir -p ./gh-pages/fastify
           cp fastify-content/performance-report-*.html ./gh-pages/fastify/
+
+          # Проверим что скопировалось
+          echo "📁 Copied Express files:"
+          ls -la ./gh-pages/express/
+          echo ""
+          echo "📁 Copied Fastify files:"
+          ls -la ./gh-pages/fastify/
 
           # Создаем главную страницу
           cat > ./gh-pages/index.html << 'EOF'
