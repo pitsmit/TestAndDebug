@@ -24,24 +24,24 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Performance Report - express</h1>
-            <p>Test Type: serialization | Total Runs: 5</p>
+            <p>Test Type: health | Total Runs: 5</p>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-value">3903</div>
+                <div class="metric-value">7562</div>
                 <div class="metric-label">Average RPS</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">204.56ms</div>
+                <div class="metric-value">127.49ms</div>
                 <div class="metric-label">Average Latency</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">2388091</div>
+                <div class="metric-value">2389282</div>
                 <div class="metric-label">Average Throughput</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value">820</div>
+                <div class="metric-value">160</div>
                 <div class="metric-label">Total Errors</div>
             </div>
         </div>
@@ -67,24 +67,24 @@
             </tr>
             <tr>
                 <td>Requests Per Second</td>
-                <td>3903</td>
-                <td>3687</td>
-                <td>3997</td>
-                <td>111.63</td>
+                <td>7562</td>
+                <td>7431</td>
+                <td>7644</td>
+                <td>70.83</td>
             </tr>
             <tr>
                 <td>Latency (ms)</td>
-                <td>204.56</td>
-                <td>188.02</td>
-                <td>250.61</td>
-                <td>23.39</td>
+                <td>127.49</td>
+                <td>126.30</td>
+                <td>128.88</td>
+                <td>0.83</td>
             </tr>
             <tr>
                 <td>Throughput</td>
-                <td>2388091</td>
-                <td>2256179</td>
-                <td>2445397</td>
-                <td>68042.32</td>
+                <td>2389282</td>
+                <td>2348117</td>
+                <td>2415531</td>
+                <td>22326.28</td>
             </tr>
         </table>
 
@@ -98,21 +98,21 @@
             </tr>
             <tr>
                 <td>p50</td>
-                <td>191.95</td>
+                <td>127.55</td>
                 <td>p90</td>
-                <td>250.61</td>
+                <td>128.88</td>
             </tr>
             <tr>
                 <td>p75</td>
-                <td>200.58</td>
+                <td>127.56</td>
                 <td>p95</td>
-                <td>250.61</td>
+                <td>128.88</td>
             </tr>
             <tr>
                 <td>p99</td>
-                <td>250.61</td>
+                <td>128.88</td>
                 <td>p99.9</td>
-                <td>250.61</td>
+                <td>128.88</td>
             </tr>
         </table>
     </div>
@@ -123,7 +123,7 @@
             {
                 type: 'bar',
                 data: {
-                    labels: ["188.02-188.02ms","188.02-188.02ms","188.02-188.02ms","188.02-191.66ms","191.66-191.95ms","191.95-200.58ms","200.58-250.61ms","250.61-250.61ms","250.61-250.61ms","250.61-250.61ms","250.61-250.61ms","250.61-250.61ms"],
+                    labels: ["126.3-126.3ms","126.3-126.3ms","126.3-126.3ms","126.3-127.16ms","127.16-127.55ms","127.55-127.56ms","127.56-128.88ms","128.88-128.88ms","128.88-128.88ms","128.88-128.88ms","128.88-128.88ms","128.88-128.88ms"],
                     datasets: [{
                         label: 'Number of Requests',
                         data: [100,150,750,1500,2500,2500,1500,500,400,90,9,1],
@@ -153,7 +153,7 @@
             }
         );
 
-        const rpsData = {"p1":3686.6,"p2_5":3686.6,"p10":3686.6,"p25":3912.8,"p50":3946.8,"p75":3971,"p90":3997,"p95":3997,"p99":3997,"p99_9":3997,"p99_99":3997};
+        const rpsData = {"p1":7430.67,"p2_5":7430.67,"p10":7430.67,"p25":7567.34,"p50":7573.34,"p75":7592,"p90":7644.34,"p95":7644.34,"p99":7644.34,"p99_9":7644.34,"p99_99":7644.34};
         const rpsChart = new Chart(
             document.getElementById('rpsChart'),
             {
