@@ -96,7 +96,7 @@ jobs:
           retention-days: 30
 
   deploy:
-    needs: benchmark
+    needs: aggregate-express-results
     runs-on: ubuntu-latest
     permissions:
       contents: write
