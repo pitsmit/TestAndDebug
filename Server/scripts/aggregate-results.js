@@ -51,7 +51,7 @@ class ResultsAggregator {
         return bins;
     }
 
-    generateHTMLReport(stats, histogramData) {
+    generateHTMLReport(stats, histogramData, resourceData) {
         const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -99,6 +99,32 @@ class ResultsAggregator {
                 <div class="metric-label">Total Errors</div>
             </div>
         </div>
+
+        ${resourceData ? `
+        <div class="chart-container">
+            <h2>💻 Resource Usage Over Time</h2>
+            <canvas id="resourceChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">${resourceData.cpu?.average?.toFixed(1) || 0}%</div>
+                <div class="metric-label">Avg CPU Usage</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">${resourceData.memory?.average?.toFixed(0) || 0}MB</div>
+                <div class="metric-label">Avg Memory Usage</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">${resourceData.cpu?.max?.toFixed(1) || 0}%</div>
+                <div class="metric-label">Max CPU Usage</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">${resourceData.memory?.max?.toFixed(0) || 0}MB</div>
+                <div class="metric-label">Max Memory Usage</div>
+            </div>
+        </div>
+        ` : ''}
 
         <div class="chart-container">
             <h2>📊 Latency Distribution Histogram</h2>
@@ -251,11 +277,150 @@ class ResultsAggregator {
                 }
             }
         );
+
+        ${resourceData ? `
+        const resourceChart = new Chart(
+            document.getElementById('resourceChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: ${JSON.stringify(resourceData.time_series.map((_, i) => i))},
+                    datasets: [
+                        {
+                            label: 'CPU Usage %',
+                            data: ${JSON.stringify(resourceData.time_series.map(ts => ts.cpu_percent))},
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            yAxisID: 'y',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Memory Usage MB',
+                            data: ${JSON.stringify(resourceData.time_series.map(ts => ts.memory_mb))},
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            yAxisID: 'y1',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'CPU Usage %'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Memory Usage MB'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            }
+        );
+        ` : ''}
     </script>
 </body>
 </html>`;
 
         return html;
+    }
+
+    loadResourceMetrics() {
+        const resourceMetrics = [];
+        const resultsDir = path.join(__dirname, '..', '..', `all-${this.framework}-results`);
+
+        console.log(`📊 Looking for resource metrics for ${this.framework}`);
+
+        for (let i = 1; i <= this.totalRuns; i++) {
+            const runDir = path.join(resultsDir, `run-${i}`);
+            const resourceFile = path.join(runDir, `resource-metrics-combined.json`);
+
+            if (fs.existsSync(resourceFile)) {
+                try {
+                    const content = fs.readFileSync(resourceFile, 'utf8');
+                    const resourceData = JSON.parse(content);
+                    resourceMetrics.push(resourceData);
+                    console.log(`✅ Loaded resource metrics for ${this.framework} run ${i}`);
+                } catch (error) {
+                    console.log(`❌ Error loading resource metrics for run ${i}: ${error.message}`);
+                }
+            } else {
+                console.log(`⚠️ No resource metrics found for run ${i}: ${resourceFile}`);
+            }
+        }
+
+        return resourceMetrics;
+    }
+
+    aggregateResourceMetrics(resourceMetrics) {
+        if (resourceMetrics.length === 0) {
+            console.log('❌ No resource metrics to aggregate');
+            return null;
+        }
+
+        // Агрегируем CPU и Memory по всем прогонам
+        const allCpuData = [];
+        const allMemoryData = [];
+        const allTimeSeries = [];
+
+        resourceMetrics.forEach(metric => {
+            if (metric.time_series && metric.time_series.length > 0) {
+                allTimeSeries.push(...metric.time_series.map((ts, index) => ({
+                    ...ts,
+                    run: metric.metadata.run_number,
+                    global_timestamp: index // Для синхронизации графиков
+                })));
+            }
+
+            if (metric.resource_usage) {
+                allCpuData.push(metric.resource_usage.cpu);
+                allMemoryData.push(metric.resource_usage.memory);
+            }
+        });
+
+        return {
+            cpu: this.calculateResourceStats(allCpuData),
+            memory: this.calculateResourceStats(allMemoryData),
+            time_series: allTimeSeries,
+            runs_aggregated: resourceMetrics.length
+        };
+    }
+
+// Вспомогательный метод для статистики ресурсов
+    calculateResourceStats(metricsArray) {
+        const averages = metricsArray.map(m => m?.average).filter(v => !isNaN(v));
+        const mins = metricsArray.map(m => m?.min).filter(v => !isNaN(v));
+        const maxs = metricsArray.map(m => m?.max).filter(v => !isNaN(v));
+        const medians = metricsArray.map(m => m?.median).filter(v => !isNaN(v));
+
+        if (averages.length === 0) return null;
+
+        return {
+            average: this.calculateAverage(averages),
+            min: Math.min(...mins),
+            max: Math.max(...maxs),
+            median: this.calculateAverage(medians),
+            stddev: this.calculateStdDev(averages)
+        };
     }
 
     loadResults() {
@@ -375,6 +540,15 @@ class ResultsAggregator {
 
         const histogramData = this.createHistogramFromPercentiles(stats.summary.latency);
 
+        // ЗАГРУЖАЕМ И АГРЕГИРУЕМ МЕТРИКИ РЕСУРСОВ
+        const resourceMetrics = this.loadResourceMetrics();
+        const aggregatedResourceData = this.aggregateResourceMetrics(resourceMetrics);
+
+        // Добавляем ресурсы в stats если нужно
+        if (aggregatedResourceData) {
+            stats.summary.resource_usage = aggregatedResourceData;
+        }
+
         const finalDir = path.join(__dirname, '..', '..', 'final-results', this.framework);
         fs.mkdirSync(finalDir, { recursive: true });
 
@@ -388,7 +562,7 @@ class ResultsAggregator {
             JSON.stringify(this.rawResults, null, 2)
         );
 
-        const htmlReport = this.generateHTMLReport(stats, histogramData);
+        const htmlReport = this.generateHTMLReport(stats, histogramData, aggregatedResourceData);
         fs.writeFileSync(
             path.join(finalDir, `performance-report-${this.resultFileName}.html`),
             htmlReport

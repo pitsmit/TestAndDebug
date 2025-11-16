@@ -1,6 +1,4 @@
-// Server/benchmark/serialization-test/resource-test.js
 const fs = require('fs');
-const path = require('path');
 const ResourceMonitor = require('./resource-monitor');
 
 function parseDockerStats(logContent, framework, runNumber) {
@@ -66,7 +64,6 @@ async function processResourceStats() {
     }
 }
 
-// Запуск из командной строки
 if (require.main === module) {
     processResourceStats().catch(console.error);
 }

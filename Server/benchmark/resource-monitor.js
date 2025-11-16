@@ -12,7 +12,6 @@ class ResourceMonitor {
 
     addMetrics(metricsData) {
         this.metrics.push({
-            timestamp: new Date().toISOString(),
             ...metricsData
         });
     }
@@ -25,10 +24,6 @@ class ResourceMonitor {
 
         const summary = {
             metadata: {
-                framework: this.framework,
-                test_type: this.testType,
-                run_number: this.runNumber,
-                timestamp: new Date().toISOString(),
                 duration_seconds: this.metrics.length * 2
             },
             resource_usage: {
@@ -38,7 +33,6 @@ class ResourceMonitor {
             time_series: this.metrics
         };
 
-        // ✅ ПРОСТОЙ ПУТЬ В DOCKER - /app/results/
         const filename = `resource-metrics-${this.testType}.json`;
         const resultsDir = `/app/results/${this.framework}/run-${this.runNumber}`;
 
