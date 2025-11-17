@@ -501,6 +501,8 @@ class ResultsAggregator {
 
         const rpsValues = this.processedResults.map(r => r.requests_per_second);
 
+        console.log(this.processedResults[0].latency_percentiles);
+
         const stats = {
             total_runs: this.totalRuns,
 
@@ -515,10 +517,22 @@ class ResultsAggregator {
 
                 latency: {
                     average: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.average)),
-                    min: Math.min(...this.processedResults.map(r => r.latency_percentiles.average)),
-                    max: Math.max(...this.processedResults.map(r => r.latency_percentiles.average)),
+                    min: Math.min(...this.processedResults.map(r => r.latency_percentiles.min)),
+                    max: Math.max(...this.processedResults.map(r => r.latency_percentiles.max)),
                     stddev: this.calculateStdDev(this.processedResults.map(r => r.latency_percentiles.average)),
-                    percentiles: this.calculatePercentiles(this.processedResults.map(r => r.latency_percentiles.average))
+                    percentiles: {
+                        p1: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p1)),
+                        p2_5: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p2_5)),
+                        p10: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p10)),
+                        p25: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p25)),
+                        p50: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p50)),
+                        p75: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p75)),
+                        p90: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p90)),
+                        p95: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p95)),
+                        p99: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p99)),
+                        p99_9: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p99_9)),
+                        p99_99: this.calculateAverage(this.processedResults.map(r => r.latency_percentiles.p99_99))
+                    }
                 },
 
                 throughput: {
@@ -538,13 +552,12 @@ class ResultsAggregator {
             }
         };
 
+        console.log(stats.summary.latency);
         const histogramData = this.createHistogramFromPercentiles(stats.summary.latency);
 
-        // ЗАГРУЖАЕМ И АГРЕГИРУЕМ МЕТРИКИ РЕСУРСОВ
         const resourceMetrics = this.loadResourceMetrics();
         const aggregatedResourceData = this.aggregateResourceMetrics(resourceMetrics);
 
-        // Добавляем ресурсы в stats если нужно
         if (aggregatedResourceData) {
             stats.summary.resource_usage = aggregatedResourceData;
         }
