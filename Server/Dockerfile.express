@@ -33,5 +33,5 @@ ENV USER=postgres
 ENV PASSWORD=password
 
 # ✅ ЗАПУСКАЕМ ИЗ КОРНЯ, ГДЕ ВСЕ СОБРАНО
-WORKDIR /app
-CMD ["node", "framework-express/index.js"]
+WORKDIR /app/framework-express
+CMD ["node", "index.js"]
