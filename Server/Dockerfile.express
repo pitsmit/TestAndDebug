@@ -32,5 +32,6 @@ ENV DATABASE_NAME=anekdot_test
 ENV USER=postgres
 ENV PASSWORD=password
 
-WORKDIR /app/framework-express
-CMD ["node", "index.js"]
+# ✅ ЗАПУСКАЕМ ИЗ КОРНЯ, ГДЕ ВСЕ СОБРАНО
+WORKDIR /app
+CMD ["node", "framework-express/index.js"]
