@@ -21,7 +21,7 @@
     "dotenv": "^17.2.3",
     "fastify": "^4.24.3",
     "fastify-openapi-glue": "^4.10.0",
-    "js-yaml": "^3.3.0",
+    "js-yaml": "4.1.1",
     "module-alias": "^2.2.3",
     "cross-env": "^10.1.0",
     "pg": "^8.16.3"

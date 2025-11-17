@@ -1,9 +1,30 @@
 FROM node:20-bullseye
 WORKDIR /app
 
-COPY framework-fastify/package*.json ./
+COPY package*.json ./
+COPY babel.config.js ./
+COPY .babelignore ./
+COPY tsconfig.json ./
+
 RUN npm install
-COPY framework-fastify/ ./
+
+COPY src ./src
+
+COPY framework-fastify ./framework-fastify
+
+WORKDIR /app/framework-fastify
+RUN npm install
+
+WORKDIR /app
+RUN npm run build
 
 EXPOSE 3000
-CMD ["npm", "run", "start:test"]
+
+ENV HOST=postgres
+ENV PORT=5432
+ENV DATABASE_NAME=anekdot_test
+ENV USER=postgres
+ENV PASSWORD=password
+
+WORKDIR /app/framework-fastify
+CMD ["node", "index.js"]

@@ -17,20 +17,6 @@ jobs:
       - name: Setup Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Debug application startup
-        run: |
-          cd Server
-          docker compose -f docker-compose.express.yml up -d
-          sleep 10
-          echo "=== CONTAINER STATUS ==="
-          docker compose -f docker-compose.express.yml ps
-          echo ""
-          echo "=== APP LOGS ==="
-          docker compose -f docker-compose.express.yml logs app || true
-          echo ""
-          echo "=== DATABASE LOGS ==="
-          docker compose -f docker-compose.express.yml logs postgres || true
-
       - name: Run benchmark with loop
         run: |
           cd Server
