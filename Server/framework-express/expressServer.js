@@ -12,7 +12,7 @@ class ExpressServer {
     this.port = port;
     this.app = express();
     this.openApiPath = openApiYaml;
-    this.schema = jsYaml.safeLoad(fs.readFileSync(openApiYaml), null);
+    this.schema = jsYaml.load(fs.readFileSync(openApiYaml), null);
 
     this.setupMiddleware();
   }
