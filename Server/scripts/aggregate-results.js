@@ -377,20 +377,51 @@ class ResultsAggregator {
             return null;
         }
 
-        // Агрегируем CPU и Memory по всем прогонам
+        // Находим максимальную длину time series среди всех прогонов
+        const maxLength = Math.max(...resourceMetrics.map(metric =>
+            metric.time_series ? metric.time_series.length : 0
+        ));
+
+        // Создаем агрегированные временные точки
+        const aggregatedTimeSeries = [];
+
+        for (let i = 0; i < maxLength; i++) {
+            const cpuValues = [];
+            const memoryValues = [];
+            let validPoints = 0;
+
+            // Собираем значения для текущего timestamp из всех прогонов
+            resourceMetrics.forEach(metric => {
+                if (metric.time_series && metric.time_series[i]) {
+                    const point = metric.time_series[i];
+                    if (point.cpu_percent !== undefined && point.memory_mb !== undefined) {
+                        cpuValues.push(point.cpu_percent);
+                        memoryValues.push(point.memory_mb);
+                        validPoints++;
+                    }
+                }
+            });
+
+            // Если есть данные для этого timestamp, вычисляем средние
+            if (validPoints > 0) {
+                aggregatedTimeSeries.push({
+                    timestamp: i, // Нормализованный timestamp
+                    cpu_percent: this.calculateAverage(cpuValues),
+                    memory_mb: this.calculateAverage(memoryValues),
+                    runs_contributing: validPoints,
+                    min_cpu: Math.min(...cpuValues),
+                    max_cpu: Math.max(...cpuValues),
+                    min_memory: Math.min(...memoryValues),
+                    max_memory: Math.max(...memoryValues)
+                });
+            }
+        }
+
+        // Агрегируем общую статистику по CPU и Memory
         const allCpuData = [];
         const allMemoryData = [];
-        const allTimeSeries = [];
 
         resourceMetrics.forEach(metric => {
-            if (metric.time_series && metric.time_series.length > 0) {
-                allTimeSeries.push(...metric.time_series.map((ts, index) => ({
-                    ...ts,
-                    run: metric.metadata.run_number,
-                    global_timestamp: index // Для синхронизации графиков
-                })));
-            }
-
             if (metric.resource_usage) {
                 allCpuData.push(metric.resource_usage.cpu);
                 allMemoryData.push(metric.resource_usage.memory);
@@ -400,12 +431,16 @@ class ResultsAggregator {
         return {
             cpu: this.calculateResourceStats(allCpuData),
             memory: this.calculateResourceStats(allMemoryData),
-            time_series: allTimeSeries,
-            runs_aggregated: resourceMetrics.length
+            time_series: aggregatedTimeSeries,
+            runs_aggregated: resourceMetrics.length,
+            aggregation_info: {
+                total_time_points: aggregatedTimeSeries.length,
+                max_original_length: maxLength,
+                aggregation_method: "average_across_runs"
+            }
         };
     }
 
-// Вспомогательный метод для статистики ресурсов
     calculateResourceStats(metricsArray) {
         const averages = metricsArray.map(m => m?.average).filter(v => !isNaN(v));
         const mins = metricsArray.map(m => m?.min).filter(v => !isNaN(v));
@@ -501,8 +536,6 @@ class ResultsAggregator {
 
         const rpsValues = this.processedResults.map(r => r.requests_per_second);
 
-        console.log(this.processedResults[0].latency_percentiles);
-
         const stats = {
             total_runs: this.totalRuns,
 
@@ -552,7 +585,6 @@ class ResultsAggregator {
             }
         };
 
-        console.log(stats.summary.latency);
         const histogramData = this.createHistogramFromPercentiles(stats.summary.latency);
 
         const resourceMetrics = this.loadResourceMetrics();
