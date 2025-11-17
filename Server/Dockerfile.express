@@ -8,7 +8,7 @@ COPY .babelignore ./
 COPY tsconfig.json ./
 
 # Устанавливаем зависимости корневого проекта
-RUN npm ci
+RUN npm install
 
 # Копируем исходный код
 COPY src ./src
@@ -18,7 +18,7 @@ COPY framework-express ./framework-express
 
 # Устанавливаем зависимости Express
 WORKDIR /app/framework-express
-RUN npm ci
+RUN npm install
 
 # Собираем проект
 WORKDIR /app
