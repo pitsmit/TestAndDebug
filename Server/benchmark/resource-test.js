@@ -1,7 +1,7 @@
 const fs = require('fs');
 const ResourceMonitor = require('./resource-monitor');
 
-function parseDockerStats(logContent, framework, runNumber) {
+function parseDockerStats(logContent, framework, runNumber, testType) {
     const lines = logContent.split('\n').filter(line => line.trim());
 
     const dataLines = lines.slice(1).filter(line =>
@@ -9,7 +9,7 @@ function parseDockerStats(logContent, framework, runNumber) {
         (line.includes('MiB') || line.includes('GiB'))
     );
 
-    const monitor = new ResourceMonitor(framework, 'combined', runNumber);
+    const monitor = new ResourceMonitor(framework, testType, runNumber);
 
     dataLines.forEach(line => {
         try {
@@ -46,6 +46,7 @@ async function processResourceStats() {
     const framework = process.argv[2];
     const runNumber = process.argv[3];
     const logFile = process.argv[4];
+    const testType = process.argv[5];
 
     console.log(`📊 Processing resources for ${framework} run ${runNumber}`);
 
@@ -55,7 +56,7 @@ async function processResourceStats() {
     }
 
     const logContent = fs.readFileSync(logFile, 'utf8');
-    const result = parseDockerStats(logContent, framework, runNumber);
+    const result = parseDockerStats(logContent, framework, runNumber, testType);
 
     if (result) {
         console.log('✅ Resource metrics processed successfully');

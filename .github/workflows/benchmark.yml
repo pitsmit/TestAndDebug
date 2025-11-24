@@ -22,51 +22,55 @@ jobs:
           cd Server
           TOTAL_RUNS=10
           
+          # Массив с тестами
+          TESTS=("health-test" "serialization-test")
+          
           for ((i=1; i<=TOTAL_RUNS; i++)); do
-            echo "🚀 Starting FRESH Express container for run $i/$TOTAL_RUNS"
+            for test_name in "${TESTS[@]}"; do
+              echo "🚀 Starting FRESH Express container for $test_name (run $i/$TOTAL_RUNS)"
           
-            docker compose -f docker-compose.express.yml down --remove-orphans --volumes
-            docker compose -f docker-compose.express.yml up -d --build --force-recreate
-            sleep 15
+              # Полная очистка и пересборка для каждого теста
+              docker compose -f docker-compose.express.yml down --remove-orphans --volumes
+              docker compose -f docker-compose.express.yml up -d --build --force-recreate
+              sleep 10
           
-
-            echo "⏳ Waiting for Express to start..."
-            timeout 90s bash -c '
-              until curl -f -s http://localhost:3000/api/health > /dev/null; do
-                echo "Waiting for Express...";
-                sleep 5;
-              done
-            '
-            echo "✅ Express is ready for run $i!"
+              echo "⏳ Waiting for Express to start for $test_name..."
+              timeout 90s bash -c '
+                until curl -f -s http://localhost:3000/api/health > /dev/null; do
+                  echo "Waiting for Express for $test_name...";
+                  sleep 5;
+                done
+              '
+              echo "✅ Express is ready for $test_name (run $i)!"
           
-            echo "📊 Starting resource monitoring..."
-            docker stats server-app-1 --format "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > docker-stats-run-$i.log 2>&1 &
-            STATS_PID=$!
+              echo "📊 Starting resource monitoring for $test_name..."
+              docker stats server-app-1 --format "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > docker-stats-run-$i-$test_name.log 2>&1 &
+              STATS_PID=$!
           
-            echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
-            docker compose -f docker-compose.express.yml run --rm \
-              -e RUN_NUMBER=$i \
-              benchmark node health-test.js express && \
-            docker compose -f docker-compose.express.yml run --rm \
-              -e RUN_NUMBER=$i \
-              benchmark node serialization-test.js express
+              echo "🎯 Running benchmark test: $test_name (run $i/$TOTAL_RUNS)"
+              docker compose -f docker-compose.express.yml run --rm \
+                -e RUN_NUMBER=$i \
+                benchmark node $test_name.js express
           
-            echo "📊 Stopping resource monitoring..."
-            kill $STATS_PID 2>/dev/null || true
-            sleep 2
-      
-            echo "📈 Processing resource metrics from Docker..."
-            docker compose -f docker-compose.express.yml run --rm \
-              -e RUN_NUMBER=$i \
-              -v $(pwd)/docker-stats-run-$i.log:/app/stats.log \
-              benchmark node resource-test.js express $i /app/stats.log
+              echo "📊 Stopping resource monitoring for $test_name..."
+              kill $STATS_PID 2>/dev/null || true
+              sleep 2
           
-            echo "✅ Test $i completed!"
-            docker compose -f docker-compose.express.yml down --remove-orphans
+              echo "📈 Processing resource metrics from Docker for $test_name..."
+              docker compose -f docker-compose.express.yml run --rm \
+                -e RUN_NUMBER=$i \
+                -v $(pwd)/docker-stats-run-$i-$test_name.log:/app/stats.log \
+                benchmark node resource-test.js express $i /app/stats.log $test_name
           
-            if [ $i -lt $TOTAL_RUNS ]; then
-              sleep 3
-            fi
+              echo "✅ Test $test_name completed for run $i!"
+          
+              # Останавливаем контейнеры после каждого теста
+              docker compose -f docker-compose.express.yml down --remove-orphans
+          
+              if [ $i -lt $TOTAL_RUNS ] || [ "$test_name" != "${TESTS[-1]}" ]; then
+                sleep 3
+              fi
+            done
           done
 
       - name: Check results
