@@ -20,9 +20,9 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=4
+          TOTAL_RUNS=2
           
-          TESTS=("health-test" "serialization-test")
+          TESTS=("health-test" "serialization-test" "login-test")
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             for test_name in "${TESTS[@]}"; do
@@ -99,13 +99,14 @@ jobs:
 
       - name: Aggregate express results
         run: |
-          TOTAL_RUNS=4
+          TOTAL_RUNS=2
           mkdir -p final-results/express         
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
           cd Server
           node scripts/aggregate-results.js express $TOTAL_RUNS health.json health-test
           node scripts/aggregate-results.js express $TOTAL_RUNS serialization.json serialization-test
+          node scripts/aggregate-results.js express $TOTAL_RUNS login.json login-test
 
       - name: Upload final express results
         uses: actions/upload-artifact@v4
@@ -129,9 +130,9 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=4
+          TOTAL_RUNS=2
 
-          TESTS=("health-test" "serialization-test")
+          TESTS=("health-test" "serialization-test" "login-test")
 
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             for test_name in "${TESTS[@]}"; do
@@ -203,13 +204,14 @@ jobs:
 
       - name: Aggregate fastify results
         run: |
-          TOTAL_RUNS=4
+          TOTAL_RUNS=2
           mkdir -p final-results/fastify         
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
           cd Server
           node scripts/aggregate-results.js fastify $TOTAL_RUNS health.json health-test
           node scripts/aggregate-results.js fastify $TOTAL_RUNS serialization.json serialization-test
+          node scripts/aggregate-results.js fastify $TOTAL_RUNS login.json login-test
 
       - name: Upload final fastify results
         uses: actions/upload-artifact@v4
@@ -255,8 +257,9 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
-          node scripts/generate-comparison.js 4 health
-          node scripts/generate-comparison.js 4 serialization
+          node scripts/generate-comparison.js 2 health
+          node scripts/generate-comparison.js 2 serialization
+          node scripts/generate-comparison.js 2 login
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4
@@ -337,6 +340,7 @@ jobs:
                       <div class="links">
                           <a href="./express/performance-report-health.html">Health Test Report</a>
                           <a href="./express/performance-report-serialization.html">Serialization Test Report</a>
+                          <a href="./express/performance-report-login.html">Login Test Report</a>
                       </div>
                   </div>
 
@@ -345,6 +349,7 @@ jobs:
                       <div class="links">
                           <a href="./fastify/performance-report-health.html">Health Test Report</a>
                           <a href="./fastify/performance-report-serialization.html">Serialization Test Report</a>
+                          <a href="./fastify/performance-report-login.html">Login Test Report</a>
                       </div>
                   </div>
               </div>
