@@ -2,12 +2,13 @@ const fs = require('fs');
 const path = require('path');
 
 class ResultsAggregator {
-    constructor(framework, totalRuns, resultFileName) {
+    constructor(framework, totalRuns, resultFileName, testType) {
         this.framework = framework;
         this.totalRuns = totalRuns;
         this.resultFileName = resultFileName.replace('.json', '');
         this.rawResults = [];
         this.processedResults = [];
+        this.testType = testType;
     }
 
     createHistogramFromPercentiles(latencyData, totalCount = 10000) {
@@ -352,7 +353,7 @@ class ResultsAggregator {
 
         for (let i = 1; i <= this.totalRuns; i++) {
             const runDir = path.join(resultsDir, `run-${i}`);
-            const resourceFile = path.join(runDir, `resource-metrics-combined.json`);
+            const resourceFile = path.join(runDir, `resource-metrics-${this.testType}.json`);
 
             if (fs.existsSync(resourceFile)) {
                 try {
@@ -649,6 +650,7 @@ class ResultsAggregator {
 const framework = process.argv[2];
 const totalRuns = parseInt(process.argv[3]);
 const resultFileName = process.argv[4] || 'results';
-const aggregator = new ResultsAggregator(framework, totalRuns, resultFileName);
+const testType = process.argv[5];
+const aggregator = new ResultsAggregator(framework, totalRuns, resultFileName, testType);
 aggregator.loadResults();
 aggregator.generateFinalReport();
