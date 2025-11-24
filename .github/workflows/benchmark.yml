@@ -20,16 +20,14 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=2
+          TOTAL_RUNS=4
           
-          # Массив с тестами
           TESTS=("health-test" "serialization-test")
           
           for ((i=1; i<=TOTAL_RUNS; i++)); do
             for test_name in "${TESTS[@]}"; do
               echo "🚀 Starting FRESH Express container for $test_name (run $i/$TOTAL_RUNS)"
           
-              # Полная очистка и пересборка для каждого теста
               docker compose -f docker-compose.express.yml down --remove-orphans --volumes
               docker compose -f docker-compose.express.yml up -d --build --force-recreate
               sleep 10
@@ -64,7 +62,6 @@ jobs:
           
               echo "✅ Test $test_name completed for run $i!"
           
-              # Останавливаем контейнеры после каждого теста
               docker compose -f docker-compose.express.yml down --remove-orphans
           
               if [ $i -lt $TOTAL_RUNS ] || [ "$test_name" != "${TESTS[-1]}" ]; then
@@ -102,7 +99,7 @@ jobs:
 
       - name: Aggregate express results
         run: |
-          TOTAL_RUNS=2
+          TOTAL_RUNS=4
           mkdir -p final-results/express         
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
@@ -132,52 +129,54 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=2
-          
-          for ((i=1; i<=TOTAL_RUNS; i++)); do
-            echo "🚀 Starting FRESH Fastify container for run $i/$TOTAL_RUNS"
-          
-            docker compose -f docker-compose.fastify.yml down --remove-orphans --volumes
-            docker compose -f docker-compose.fastify.yml up -d --build --force-recreate
-            sleep 15
+          TOTAL_RUNS=4
 
-            echo "⏳ Waiting for Fastify to start..."
-            timeout 90s bash -c '
-              until curl -f -s http://localhost:3000/api/health > /dev/null; do
-                echo "Waiting for Fastify...";
-                sleep 5;
-              done
-            '
-            echo "✅ Fastify is ready for run $i!"
-          
-            echo "📊 Starting resource monitoring..."
-            docker stats server-app-1 --format "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > docker-stats-run-$i.log 2>&1 &
-            STATS_PID=$!
-          
-            echo "🎯 Running benchmark test $i/$TOTAL_RUNS"
-            docker compose -f docker-compose.fastify.yml run --rm \
-              -e RUN_NUMBER=$i \
-              benchmark node health-test.js fastify && \
-            docker compose -f docker-compose.fastify.yml run --rm \
-              -e RUN_NUMBER=$i \
-              benchmark node serialization-test.js fastify
-          
-            echo "📊 Stopping resource monitoring..."
-            kill $STATS_PID 2>/dev/null || true
-            sleep 2
-          
-            echo "📈 Processing resource metrics from Docker..."
-            docker compose -f docker-compose.fastify.yml run --rm \
-              -e RUN_NUMBER=$i \
-              -v $(pwd)/docker-stats-run-$i.log:/app/stats.log \
-              benchmark node resource-test.js fastify $i /app/stats.log
-          
-            echo "✅ Test $i completed!"
-            docker compose -f docker-compose.fastify.yml down --remove-orphans
-          
-            if [ $i -lt $TOTAL_RUNS ]; then
-              sleep 3
-            fi
+          TESTS=("health-test" "serialization-test")
+
+          for ((i=1; i<=TOTAL_RUNS; i++)); do
+            for test_name in "${TESTS[@]}"; do
+              echo "🚀 Starting FRESH Fastify container for $test_name (run $i/$TOTAL_RUNS)"
+
+              docker compose -f docker-compose.fastify.yml down --remove-orphans --volumes
+              docker compose -f docker-compose.fastify.yml up -d --build --force-recreate
+              sleep 10
+
+              echo "⏳ Waiting for Fastify to start for $test_name..."
+              timeout 90s bash -c '
+                until curl -f -s http://localhost:3000/api/health > /dev/null; do
+                  echo "Waiting for Fastify for $test_name...";
+                  sleep 5;
+                done
+              '
+              echo "✅ Fastify is ready for $test_name (run $i)!"
+
+              echo "📊 Starting resource monitoring for $test_name..."
+              docker stats server-app-1 --format "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" > docker-stats-run-$i-$test_name.log 2>&1 &
+              STATS_PID=$!
+
+              echo "🎯 Running benchmark test: $test_name (run $i/$TOTAL_RUNS)"
+              docker compose -f docker-compose.fastify.yml run --rm \
+                -e RUN_NUMBER=$i \
+                benchmark node $test_name.js fastify
+
+              echo "📊 Stopping resource monitoring for $test_name..."
+              kill $STATS_PID 2>/dev/null || true
+              sleep 2
+
+              echo "📈 Processing resource metrics from Docker for $test_name..."
+              docker compose -f docker-compose.fastify.yml run --rm \
+                -e RUN_NUMBER=$i \
+                -v $(pwd)/docker-stats-run-$i-$test_name.log:/app/stats.log \
+                benchmark node resource-test.js fastify $i /app/stats.log $test_name
+
+              echo "✅ Test $test_name completed for run $i!"
+
+              docker compose -f docker-compose.fastify.yml down --remove-orphans
+
+              if [ $i -lt $TOTAL_RUNS ] || [ "$test_name" != "${TESTS[-1]}" ]; then
+                sleep 3
+              fi
+            done
           done
 
       - name: Save fastify results
@@ -204,13 +203,13 @@ jobs:
 
       - name: Aggregate fastify results
         run: |
-          TOTAL_RUNS=2
+          TOTAL_RUNS=4
           mkdir -p final-results/fastify         
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
           cd Server
-          node scripts/aggregate-results.js fastify $TOTAL_RUNS health.json
-          node scripts/aggregate-results.js fastify $TOTAL_RUNS serialization.json
+          node scripts/aggregate-results.js fastify $TOTAL_RUNS health.json health-test
+          node scripts/aggregate-results.js fastify $TOTAL_RUNS serialization.json serialization-test
 
       - name: Upload final fastify results
         uses: actions/upload-artifact@v4
@@ -256,8 +255,8 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
-          node scripts/generate-comparison.js 2 health
-          node scripts/generate-comparison.js 2 serialization
+          node scripts/generate-comparison.js 4 health
+          node scripts/generate-comparison.js 4 serialization
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4
@@ -269,7 +268,7 @@ jobs:
           retention-days: 30
 
   deploy-all:
-    needs: generate-comparison-report  # ← ИЗМЕНИЛ ЗДЕСЬ
+    needs: generate-comparison-report
     runs-on: ubuntu-latest
     permissions:
       contents: write
