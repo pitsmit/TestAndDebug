@@ -5,7 +5,7 @@ async function runTest() {
         url: 'http://app:3000/api/health',
         connections: 100,
         duration: 10,
-        timeout: 5,
+        timeout: 3,
         pipelining: 1,
         latency: true,
         renderStatusCodes: true,

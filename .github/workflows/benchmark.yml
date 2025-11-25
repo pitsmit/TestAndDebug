@@ -20,7 +20,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=2
+          TOTAL_RUNS=50
           
           TESTS=("health-test" "serialization-test" "login-test")
           
@@ -32,8 +32,8 @@ jobs:
               docker compose -f docker-compose.express.yml up -d --build --force-recreate
               sleep 8
           
-              if (( i % 1 == 0 )); then
-                echo "🧹 Periodic Docker cleanup (every 1 runs)..."
+              if (( i % 10 == 0 )); then
+                echo "🧹 Periodic Docker cleanup (every 10 runs)..."
                 docker system prune -f --volumes
               fi
           
@@ -104,7 +104,7 @@ jobs:
 
       - name: Aggregate express results
         run: |
-          TOTAL_RUNS=2
+          TOTAL_RUNS=50
           mkdir -p final-results/express         
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
@@ -135,7 +135,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=2
+          TOTAL_RUNS=50
 
           TESTS=("health-test" "serialization-test" "login-test")
 
@@ -147,8 +147,8 @@ jobs:
               docker compose -f docker-compose.fastify.yml up -d --build --force-recreate
               sleep 8
           
-              if (( i % 1 == 0 )); then
-                echo "🧹 Periodic Docker cleanup (every 1 runs)..."
+              if (( i % 10 == 0 )); then
+                echo "🧹 Periodic Docker cleanup (every 10 runs)..."
                 docker system prune -f --volumes
               fi
 
@@ -214,7 +214,7 @@ jobs:
 
       - name: Aggregate fastify results
         run: |
-          TOTAL_RUNS=2
+          TOTAL_RUNS=50
           mkdir -p final-results/fastify         
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
@@ -267,9 +267,9 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
-          node scripts/generate-comparison.js 2 health
-          node scripts/generate-comparison.js 2 serialization
-          node scripts/generate-comparison.js 2 login
+          node scripts/generate-comparison.js 50 health
+          node scripts/generate-comparison.js 50 serialization
+          node scripts/generate-comparison.js 50 login
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4

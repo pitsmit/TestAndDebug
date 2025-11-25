@@ -11,7 +11,7 @@ async function runTest() {
         method: 'POST',
         connections: 100,
         duration: 10,
-        timeout: 5,
+        timeout: 3,
         pipelining: 1,
         latency: true,
         renderStatusCodes: true,

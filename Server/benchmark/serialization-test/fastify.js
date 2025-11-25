@@ -5,7 +5,7 @@ async function runTest() {
         url: 'http://app:3000/api/v1/feed?page=1&limit=5',
         connections: 100,
         duration: 10,
-        timeout: 5,
+        timeout: 3,
         pipelining: 1,
         latency: true,
         renderStatusCodes: true,

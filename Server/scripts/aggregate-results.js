@@ -79,7 +79,7 @@ class ResultsAggregator {
     <div class="container">
         <div class="header">
             <h1>🚀 Performance Report - ${this.framework}</h1>
-            <p>Test Type: ${this.resultFileName} | Total Runs: ${stats.total_runs}</p>
+            <p>Test Type: ${this.resultFileName}</p>
         </div>
 
         <div class="metrics-grid">
