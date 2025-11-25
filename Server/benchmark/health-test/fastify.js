@@ -4,8 +4,8 @@ async function runTest() {
     const result = await autocannon({
         url: 'http://app:3000/api/health',
         connections: 100,
-        duration: 30,
-        timeout: 10,
+        duration: 10,
+        timeout: 5,
         pipelining: 1,
         latency: true,
         renderStatusCodes: true,

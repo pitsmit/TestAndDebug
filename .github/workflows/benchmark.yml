@@ -20,7 +20,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=100
+          TOTAL_RUNS=2
           
           TESTS=("health-test" "serialization-test" "login-test")
           
@@ -30,7 +30,12 @@ jobs:
           
               docker compose -f docker-compose.express.yml down --remove-orphans --volumes
               docker compose -f docker-compose.express.yml up -d --build --force-recreate
-              sleep 10
+              sleep 8
+          
+              if (( i % 1 == 0 )); then
+                echo "🧹 Periodic Docker cleanup (every 1 runs)..."
+                docker system prune -f --volumes
+              fi
           
               echo "⏳ Waiting for Express to start for $test_name..."
               timeout 90s bash -c '
@@ -99,7 +104,7 @@ jobs:
 
       - name: Aggregate express results
         run: |
-          TOTAL_RUNS=100
+          TOTAL_RUNS=2
           mkdir -p final-results/express         
           find all-express-results -name "*.json" -exec cp {} final-results/express/ \;
           
@@ -130,7 +135,7 @@ jobs:
       - name: Run benchmark with loop
         run: |
           cd Server
-          TOTAL_RUNS=100
+          TOTAL_RUNS=2
 
           TESTS=("health-test" "serialization-test" "login-test")
 
@@ -140,7 +145,12 @@ jobs:
 
               docker compose -f docker-compose.fastify.yml down --remove-orphans --volumes
               docker compose -f docker-compose.fastify.yml up -d --build --force-recreate
-              sleep 10
+              sleep 8
+          
+              if (( i % 1 == 0 )); then
+                echo "🧹 Periodic Docker cleanup (every 1 runs)..."
+                docker system prune -f --volumes
+              fi
 
               echo "⏳ Waiting for Fastify to start for $test_name..."
               timeout 90s bash -c '
@@ -204,7 +214,7 @@ jobs:
 
       - name: Aggregate fastify results
         run: |
-          TOTAL_RUNS=100
+          TOTAL_RUNS=2
           mkdir -p final-results/fastify         
           find all-fastify-results -name "*.json" -exec cp {} final-results/fastify/ \;
           
@@ -257,9 +267,9 @@ jobs:
       - name: Generate comparison
         run: |
           cd Server
-          node scripts/generate-comparison.js 100 health
-          node scripts/generate-comparison.js 100 serialization
-          node scripts/generate-comparison.js 100 login
+          node scripts/generate-comparison.js 2 health
+          node scripts/generate-comparison.js 2 serialization
+          node scripts/generate-comparison.js 2 login
 
       - name: Upload comparison report
         uses: actions/upload-artifact@v4
