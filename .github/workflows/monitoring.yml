@@ -12,79 +12,144 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Find correct Prometheus API URL
+      - name: Debug Prometheus metrics setup
         env:
           GRAFANA_CLOUD_PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
           GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
         run: |
-          echo "🔍 Finding correct Prometheus API URL..."
+          echo "🔍 DEBUG PROMETHEUS SETUP"
+          echo "=========================="
           
           BASE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net"
           
-          # Тестируем разные API endpoints
+          # 1. Проверяем базовый доступ
+          echo "1. Testing base URL access..."
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" "$BASE_URL"
+          
+          # 2. Проверяем разные endpoints
+          echo ""
+          echo "2. Testing different API endpoints..."
           ENDPOINTS=(
-            "/api/prom/api/v1/write"
-            "/api/v1/write"
             "/api/prom/push"
+            "/api/prom/api/v1/write" 
+            "/api/v1/write"
+            "/write"
             "/prometheus/api/v1/write"
-            "/metrics/api/v1/write"
           )
           
-          CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
-          TIMESTAMP=$(date +%s)
-          TEST_METRIC="test_metric $CPU_USAGE $TIMESTAMP"
-          
           for ENDPOINT in "${ENDPOINTS[@]}"; do
-            FULL_URL="$BASE_URL$ENDPOINT"
-            echo "Testing: $FULL_URL"
+            URL="$BASE_URL$ENDPOINT"
+            echo "--- Testing: $ENDPOINT ---"
           
-            RESPONSE=$(echo "$TEST_METRIC" | \
-              curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-                -w "HTTP_STATUS:%{http_code}" \
-                --data-binary @- "$FULL_URL")
+            # Тест без аутентификации
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+            echo "No auth: HTTP $RESPONSE"
           
-            HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-            echo "Status: $HTTP_STATUS"
+            # Тест с аутентификацией
+            RESPONSE=$(curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+              -o /dev/null -w "%{http_code}" "$URL")
+            echo "With auth: HTTP $RESPONSE"
           
-            if [ "$HTTP_STATUS" = "204" ] || [ "$HTTP_STATUS" = "200" ]; then
-              echo "🎉 SUCCESS! Correct URL: $FULL_URL"
-              echo "CORRECT_URL=$FULL_URL" >> $GITHUB_ENV
-              break
+            # Подробный запрос для работающего endpoint
+            if [ "$RESPONSE" != "404" ] && [ "$RESPONSE" != "000" ]; then
+              echo "Detailed test for $URL:"
+              curl -v -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+                -X GET "$URL" 2>&1 | head -20
             fi
-            echo "---"
           done
+          
+          # 3. Проверяем credentials
+          echo ""
+          echo "3. Checking credentials..."
+          echo "User: $GRAFANA_CLOUD_PROMETHEUS_USER"
+          echo "API Key length: ${#GRAFANA_CLOUD_PROMETHEUS_API_KEY}"
+          echo "API Key prefix: ${GRAFANA_CLOUD_PROMETHEUS_API_KEY:0:10}..."
+          
+          # 4. Пробуем разные форматы аутентификации
+          echo ""
+          echo "4. Testing authentication methods..."
+          TEST_URL="$BASE_URL/api/prom/push"
+          
+          # Method 1: Basic Auth в URL
+          echo "Method 1: Basic Auth in URL"
+          AUTH_URL="https://$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY@prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" "$AUTH_URL"
+          
+          # Method 2: Basic Auth header
+          echo "Method 2: Basic Auth header"
+          AUTH_HEADER=$(echo -n "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" | base64)
+          curl -s -H "Authorization: Basic $AUTH_HEADER" \
+            -o /dev/null -w "HTTP Status: %{http_code}\n" "$TEST_URL"
+          
+          # Method 3: Bearer token
+          echo "Method 3: Bearer token"
+          curl -s -H "Authorization: Bearer $GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+            -o /dev/null -w "HTTP Status: %{http_code}\n" "$TEST_URL"
+          
+          # 5. Проверяем, что можем получить metadata
+          echo ""
+          echo "5. Testing metadata API..."
+          METADATA_URL="$BASE_URL/api/prom/api/v1/metadata"
+          curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+            "$METADATA_URL" | head -5
+          
+          echo "=========================="
+          echo "DEBUG COMPLETE"
 
-      - name: Send metrics using working API key
+      - name: Test metrics sending with detailed output
         env:
-          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}  # Используем ключ, который уже работает для аннотаций
+          GRAFANA_CLOUD_PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
+          GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
         run: |
-          echo "📊 Sending metrics using existing API key..."
+          echo "🚀 TESTING METRICS SENDING"
+          echo "=========================="
           
           BASE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net"
           WRITE_URL="$BASE_URL/api/prom/push"
           
-          # Получаем User ID из работающего ключа (обычно это первая часть до :)
-          USER_ID=$(echo "$GRAFANA_API_KEY" | cut -d':' -f1)
-          API_KEY=$(echo "$GRAFANA_API_KEY" | cut -d':' -f2)
+          CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
+          TIMESTAMP=$(date +%s)
           
-          echo "User ID: $USER_ID"
-          echo "Using existing Grafana API key"
+          echo "Sample metric: github_actions_cpu_usage $CPU_USAGE $TIMESTAMP"
+          echo "Target URL: $WRITE_URL"
           
-          for i in {1..5}; do
-            CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
-            MEMORY_PERCENT=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
-            TIMESTAMP=$(date +%s)
+          # Тест 1: Простой запрос
+          echo ""
+          echo "Test 1: Simple metric push"
+          RESPONSE=$(echo "test_metric $CPU_USAGE $TIMESTAMP" | \
+            curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+              -w "HTTP_STATUS:%{http_code}" \
+              -H "Content-Type: text/plain" \
+              --data-binary @- "$WRITE_URL")
           
-            echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
+          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Response: $(echo "$RESPONSE" | sed 's/HTTP_STATUS:[0-9]*//')"
           
-            # Пробуем отправить с существующим ключом
-            echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" | \
-              curl -s -u "$USER_ID:$API_KEY" \
-                -H "Content-Type: text/plain" \
-                --data-binary @- "$WRITE_URL" && echo "✅ Sent" || echo "❌ Failed"
+          # Тест 2: С правильным форматом Prometheus
+          echo ""
+          echo "Test 2: With Prometheus format"
+          METRICS_DATA="# HELP test_cpu CPU usage from GitHub Actions
+          # TYPE test_cpu gauge
+          test_cpu $CPU_USAGE $TIMESTAMP"
           
-            sleep 10
-          done
+          RESPONSE=$(echo "$METRICS_DATA" | \
+            curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+              -w "HTTP_STATUS:%{http_code}" \
+              -H "Content-Type: text/plain" \
+              --data-binary @- "$WRITE_URL")
+          
+          HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Response: $(echo "$RESPONSE" | sed 's/HTTP_STATUS:[0-9]*//')"
+          
+          # Тест 3: Проверяем через 10 секунд, что метрика принята
+          echo ""
+          echo "Test 3: Checking if metric was stored"
+          sleep 10
+          QUERY_URL="$BASE_URL/api/prom/api/v1/query?query=test_cpu"
+          curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+            "$QUERY_URL" | jq . 2>/dev/null || echo "Query failed or no data"
 
       - name: Create simple dashboard
         run: |
