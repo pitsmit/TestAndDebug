@@ -21,34 +21,30 @@ jobs:
           GRAFANA_USER: ${{ secrets.GRAFANA_USER }}
           GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
         run: |
-          echo "📊 Sending CI/CD metrics to Grafana Cloud..."
+          echo "📊 Sending metrics to Grafana Cloud with Service Account Token..."
           
-          if [ -z "$GRAFANA_USER" ] || [ -z "$GRAFANA_API_KEY" ]; then
-            echo "⚠️ Grafana credentials not set, creating static dashboard"
-          else
-            cat > /tmp/metrics.json << 'EOM'
-          {
-            "streams": [
-              {
-                "stream": {
-                  "job": "github-actions",
-                  "repo": "${{ github.repository }}",
-                  "branch": "${{ github.ref_name }}"
-                },
-                "values": [
-                  [ "$(date +%s)000000000", "workflow_completed{status=\"success\"} 1" ]
-                ]
-              }
-            ]
-          }
-          EOM
+          # Для Service Account Token используем Bearer token
           curl -X POST \
-          -u "$GRAFANA_USER:$GRAFANA_API_KEY" \
-          -H "Content-Type: application/json" \
-          "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push" \
-          --data-binary @/tmp/metrics.json
-          echo "✅ Metrics sent to Grafana Cloud"
-          fi
+            -H "Authorization: Bearer $GRAFANA_API_KEY" \
+            -H "Content-Type: application/json" \
+            "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push" \
+            --data-binary @- << EOF
+            {
+              "streams": [
+                {
+                  "stream": {
+                    "job": "github-actions",
+                    "repo": "${{ github.repository }}",
+                    "branch": "${{ github.ref_name }}"
+                  },
+                  "values": [
+                    [ "$(date +%s)000000000", "workflow_completed{status=\"success\"} 1" ]
+                  ]
+                }
+              ]
+            }
+            EOF
+            echo "✅ Metrics sent to Grafana Cloud"
 
       - name: Create status page
         run: |
