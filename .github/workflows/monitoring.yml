@@ -20,6 +20,9 @@ jobs:
         run: |
           echo "📊 Sending metrics to Grafana Cloud..."
           
+          # Правильный endpoint для записи метрик
+          PROMETHEUS_WRITE_URL="$GRAFANA_CLOUD_PROMETHEUS_URL/api/v1/write"
+          
           for i in {1..5}; do
             CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
             MEMORY_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
@@ -28,24 +31,21 @@ jobs:
             MEMORY_PERCENT=$(echo "scale=2; $MEMORY_USED*100/$MEMORY_TOTAL" | bc)
             TIMESTAMP=$(date +%s)
           
-            # Формируем метрики в формате Prometheus
-            METRICS_DATA="github_actions_cpu_usage $CPU_USAGE $TIMESTAMP
-            github_actions_memory_usage_bytes $MEMORY_USED $TIMESTAMP
-            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP"
+            echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            echo "Sending metrics:"
-            echo "$METRICS_DATA"
-          
-            # Отправляем в Prometheus Grafana Cloud
-            echo "$METRICS_DATA" | curl \
+            # Формируем данные в формате Prometheus
+            cat << EOF | curl -s \
               -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-              -X POST \
-              -H "Content-Type: application/json" \
               --data-binary @- \
-              "$GRAFANA_CLOUD_PROMETHEUS_URL/api/v1/write"
-          
+              "$PROMETHEUS_WRITE_URL"
+            github_actions_cpu_usage $CPU_USAGE $TIMESTAMP
+            github_actions_memory_usage_bytes $MEMORY_USED $TIMESTAMP
+            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP
+            EOF
+            
+            echo "✅ Metrics sent successfully"
             sleep 10
-          done
+            done
 
       - name: Create simple dashboard
         run: |
