@@ -54,17 +54,18 @@ jobs:
             echo "---"
           done
 
-      - name: Send metrics using correct endpoint
+      - name: Send metrics with header auth
         env:
           GRAFANA_CLOUD_PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
           GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
         run: |
-          echo "📊 Sending metrics to Prometheus..."
+          echo "📊 Sending metrics with header authentication..."
           
           BASE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net"
           WRITE_URL="$BASE_URL/api/prom/push"
           
-          echo "Using URL: $WRITE_URL"
+          # Кодируем credentials в Base64
+          AUTH_HEADER=$(echo -n "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" | base64 -w0)
           
           for i in {1..5}; do
             CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
@@ -73,20 +74,24 @@ jobs:
           
             echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            # Формируем данные в правильном формате
-            METRICS_DATA="# TYPE github_actions_cpu_usage gauge
-            github_actions_cpu_usage $CPU_USAGE $TIMESTAMP
-            # TYPE github_actions_memory_usage_percent gauge  
-            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP"
-            
-            echo "Sending metrics..."
-            echo "$METRICS_DATA" | \
-            curl -v -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-          -H "Content-Type: text/plain" \
-            --data-binary @- "$WRITE_URL" 2>&1 | grep -E "(HTTP/1.1|success)"
-            
+            METRICS_DATA="github_actions_cpu_usage $CPU_USAGE $TIMESTAMP"
+          
+            curl -X POST \
+              -H "Authorization: Basic $AUTH_HEADER" \
+              -H "Content-Type: text/plain" \
+              --data-binary "$METRICS_DATA" \
+              "$WRITE_URL"
+          
+            echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" | \
+              curl -X POST \
+                -H "Authorization: Basic $AUTH_HEADER" \
+                -H "Content-Type: text/plain" \
+                --data-binary @- \
+                "$WRITE_URL"
+          
+            echo "✅ Metrics sent"
             sleep 10
-            done
+          done
 
       - name: Create simple dashboard
         run: |
