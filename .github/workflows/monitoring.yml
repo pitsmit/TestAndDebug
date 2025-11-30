@@ -16,6 +16,22 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check Grafana permissions
+        env:
+          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
+        run: |
+          echo "🔍 Checking Grafana permissions..."
+
+          # Проверяем доступ к разным endpoint'ам
+          ENDPOINTS=("user/preferences" "datasources" "folders" "annotations")
+
+          for endpoint in "${ENDPOINTS[@]}"; do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: Bearer $GRAFANA_API_KEY" \
+              "https://pitsmit.grafana.net/api/$endpoint")
+            echo "  $endpoint: $RESPONSE"
+          done
+
       - name: Send CI/CD metrics to Grafana
         env:
           GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
