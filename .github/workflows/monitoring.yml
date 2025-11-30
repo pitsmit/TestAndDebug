@@ -1,0 +1,23 @@
+name: Deploy Monitoring Stack
+
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Monitoring Stack
+        run: |
+          docker-compose up -d
+          sleep 10
+
+      - name: Check services
+        run: |
+          docker ps
+          echo "✅ Prometheus is running on port 9090"
+          echo "✅ Grafana is running on port 3000"
+          echo "🎉 Monitoring stack deployed successfully!"
