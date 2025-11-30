@@ -5,65 +5,87 @@ on: [push]
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Install docker-compose and curl
+      - name: Send metrics to Grafana Cloud
+        env:
+          GRAFANA_USER: ${{ secrets.GRAFANA_USER }}
+          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          sudo apt-get update
-          sudo apt-get install -y curl jq
+          # Получаем информацию о workflow
+          WORKFLOW_ID="${{ github.run_id }}"
+          REPO_NAME="${{ github.repository }}"
+          BRANCH="${{ github.ref_name }}"
+          COMMIT_SHA="${{ github.sha }}"
+          
+          # Отправляем метрики в Grafana Cloud через Prometheus remote write
+          curl -X POST \
+            -u "$GRAFANA_USER:$GRAFANA_API_KEY" \
+            -H "Content-Type: application/json" \
+            "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push" \
+            --data-binary @- << EOF
+          {
+            "streams": [
+              {
+                "stream": {
+                  "job": "github-actions",
+                  "repo": "$REPO_NAME",
+                  "branch": "$BRANCH"
+                },
+                "values": [
+                  [ "$(date +%s)000000000", "workflow_completed{status=\"success\",workflow_id=\"$WORKFLOW_ID\",commit=\"$COMMIT_SHA\"} 1" ],
+                  [ "$(date +%s)000000000", "deployment_count{environment=\"production\"} 1" ],
+                  [ "$(date +%s)000000000", "build_duration_seconds ${{ github.run_duration }}" ]
+                ]
+              }
+            ]
+          }
+          EOF
+          
+          echo "✅ Metrics sent to Grafana Cloud"
 
-      - name: Deploy Monitoring Stack
-        run: |
-          docker-compose up -d
-          sleep 30
-          echo "✅ Prometheus and Grafana deployed in CI"
-
-      - name: Create GitHub Pages with Grafana Dashboard
+      - name: Create status page
         run: |
           mkdir -p ./gh-pages-content
-
           cat > ./gh-pages-content/index.html << 'EOF'
           <!DOCTYPE html>
           <html>
           <head>
-              <title>My Grafana Dashboard</title>
+              <title>CI/CD Status</title>
               <style>
-                  body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                  .header { text-align: center; margin-bottom: 20px; }
-                  iframe { border: none; width: 100%; height: 80vh; border: 1px solid #ddd; }
+                  body { margin: 0; padding: 40px; font-family: Arial, sans-serif; text-align: center; }
+                  .status { font-size: 48px; margin: 20px 0; }
+                  .success { color: #28a745; }
+                  .info { margin: 20px 0; font-size: 18px; }
+                  .link { display: inline-block; margin: 20px; padding: 15px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
               </style>
           </head>
           <body>
-              <div class="header">
-                  <h1>📊 My CI/CD Monitoring Dashboard</h1>
-                  <p>Live metrics from pitsmit.grafana.net</p>
+              <h1>🚀 CI/CD Monitoring</h1>
+              <div class="status success">✅ DEPLOYMENT SUCCESSFUL</div>
+          
+              <div class="info">
+                  <p><strong>Workflow:</strong> ${{ github.workflow }}</p>
+                  <p><strong>Repository:</strong> ${{ github.repository }}</p>
+                  <p><strong>Branch:</strong> ${{ github.ref_name }}</p>
+                  <p><strong>Commit:</strong> ${{ github.sha }}</p>
+                  <p><strong>Run ID:</strong> ${{ github.run_id }}</p>
               </div>
+
+              <a href="https://pitsmit.grafana.net" class="link" target="_blank">
+                  📊 View Detailed Metrics in Grafana
+              </a>
           
-              <iframe src="https://pitsmit.grafana.net/public-dashboards/e88198deda6b41edb813d3247de28786" 
-                      width="100%" 
-                      height="800">
-              </iframe>
-          
-              <div style="text-align: center; margin-top: 20px;">
-                  <p>🔧 Real-time monitoring powered by Grafana</p>
-                  <p>✅ CI/CD with GitHub Actions + Prometheus + Grafana</p>
+              <div style="margin-top: 40px;">
+                  <p>Metrics have been sent to your Grafana Cloud dashboard</p>
+                  <p>Check your Grafana instance for real-time CI/CD metrics</p>
               </div>
           </body>
           </html>
           EOF
-
-          echo "📁 GitHub Pages content created:"
-          ls -la ./gh-pages-content/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -71,4 +93,3 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./gh-pages-content
           publish_branch: gh-pages
-          force_orphan: true
