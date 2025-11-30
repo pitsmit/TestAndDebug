@@ -20,32 +20,28 @@ jobs:
         run: |
           echo "📊 Sending metrics to Grafana Cloud..."
           
-          # Правильный endpoint для записи метрик
           PROMETHEUS_WRITE_URL="$GRAFANA_CLOUD_PROMETHEUS_URL/api/v1/write"
           
           for i in {1..5}; do
             CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
-            MEMORY_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-            MEMORY_FREE=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
-            MEMORY_USED=$((MEMORY_TOTAL - MEMORY_FREE))
-            MEMORY_PERCENT=$(echo "scale=2; $MEMORY_USED*100/$MEMORY_TOTAL" | bc)
+            MEMORY_PERCENT=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
             TIMESTAMP=$(date +%s)
           
             echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            # Формируем данные в формате Prometheus
-            cat << EOF | curl -s \
-              -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-              --data-binary @- \
-              "$PROMETHEUS_WRITE_URL"
-            github_actions_cpu_usage $CPU_USAGE $TIMESTAMP
-            github_actions_memory_usage_bytes $MEMORY_USED $TIMESTAMP
-            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP
-            EOF
-            
-            echo "✅ Metrics sent successfully"
+            # Отправляем каждую метрику отдельно
+            echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" | \
+              curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+                --data-binary @- "$PROMETHEUS_WRITE_URL"
+          
+            echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" | \
+              curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+                --data-binary @- "$PROMETHEUS_WRITE_URL"
+          
             sleep 10
-            done
+          done
+          
+          echo "✅ All metrics sent"
 
       - name: Create simple dashboard
         run: |
