@@ -12,56 +12,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Send deployment annotation to Grafana
+      - name: Send metrics to Grafana Cloud
         env:
-          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
+          GRAFANA_CLOUD_PROMETHEUS_URL: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_URL }}
+          GRAFANA_CLOUD_PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
+          GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
         run: |
-          echo "📊 Sending deployment info to Grafana..."
-          
-          curl -X POST \
-            -H "Authorization: Bearer $GRAFANA_API_KEY" \
-            -H "Content-Type: application/json" \
-            "https://pitsmit.grafana.net/api/annotations" \
-            -d "{
-              \"text\": \"🚀 Deployed: ${{ github.repository }}@${{ github.ref_name }}\",
-              \"tags\": [\"deployment\", \"ci-cd\"],
-              \"time\": $(date +%s)000
-            }"
-          
-          echo "✅ Annotation created in Grafana"
-
-      - name: Collect and send metrics to Grafana
-        env:
-          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
-        run: |
-          echo "📊 Collecting system metrics..."
+          echo "📊 Sending metrics to Grafana Cloud..."
           
           for i in {1..5}; do
-            # Получаем метрики системы
-            CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
-            MEMORY_USED=$(free -m | awk 'NR==2{printf "%.2f", $3*100/$2 }')
-            TIMESTAMP=$(date +%s)000
+            CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
+            MEMORY_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+            MEMORY_FREE=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+            MEMORY_USED=$((MEMORY_TOTAL - MEMORY_FREE))
+            MEMORY_PERCENT=$(echo "scale=2; $MEMORY_USED*100/$MEMORY_TOTAL" | bc)
+            TIMESTAMP=$(date +%s)
           
-            echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_USED}%"
+            # Формируем метрики в формате Prometheus
+            METRICS_DATA="github_actions_cpu_usage $CPU_USAGE $TIMESTAMP
+            github_actions_memory_usage_bytes $MEMORY_USED $TIMESTAMP
+            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP"
           
-            # Отправляем аннотацию с метриками
-            curl -X POST \
-              -H "Authorization: Bearer $GRAFANA_API_KEY" \
+            echo "Sending metrics:"
+            echo "$METRICS_DATA"
+          
+            # Отправляем в Prometheus Grafana Cloud
+            echo "$METRICS_DATA" | curl \
+              -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+              -X POST \
               -H "Content-Type: application/json" \
-              "https://pitsmit.grafana.net/api/annotations" \
-              -d "{
-                \"text\": \"📊 Metrics - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_USED}%\",
-                \"tags\": [\"metrics\", \"cpu\", \"memory\", \"ci-cd\"],
-                \"time\": $TIMESTAMP
-              }"
+              --data-binary @- \
+              "$GRAFANA_CLOUD_PROMETHEUS_URL/api/v1/write"
           
-            # Ждем 10 секунд перед следующим замером
-            if [ $i -lt 5 ]; then
-              sleep 10
-            fi
+            sleep 10
           done
-          
-          echo "✅ Metrics sent to Grafana"
 
       - name: Create simple dashboard
         run: |
