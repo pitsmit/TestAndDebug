@@ -5,6 +5,8 @@ on: [push]
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -28,8 +30,9 @@ jobs:
 
       - name: Create GitHub Pages with Grafana Dashboard
         run: |
-          mkdir -p public
-          cat > public/index.html << 'EOF'
+          mkdir -p ./gh-pages-content
+
+          cat > ./gh-pages-content/index.html << 'EOF'
           <!DOCTYPE html>
           <html>
           <head>
@@ -59,10 +62,13 @@ jobs:
           </html>
           EOF
 
-      - name: Deploy to gh-pages branch
+          echo "📁 GitHub Pages content created:"
+          ls -la ./gh-pages-content/
+
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          publish_dir: ./gh-pages-content
           publish_branch: gh-pages
           force_orphan: true
