@@ -24,6 +24,7 @@ jobs:
         run: |
           docker-compose up -d
           sleep 30
+          echo "✅ Prometheus and Grafana deployed in CI"
 
       - name: Create GitHub Pages with Grafana Dashboard
         run: |
@@ -45,7 +46,6 @@ jobs:
                   <p>Live metrics from pitsmit.grafana.net</p>
               </div>
           
-              <!-- ТВОЙ ПУБЛИЧНЫЙ ДАШБОРД -->
               <iframe src="https://pitsmit.grafana.net/public-dashboards/e88198deda6b41edb813d3247de28786" 
                       width="100%" 
                       height="800">
@@ -58,27 +58,11 @@ jobs:
           </body>
           </html>
           EOF
-          
-          echo "✅ GitHub Pages page created with Grafana dashboard!"
 
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: './public'
-
-  deploy-pages:
-    needs: deploy
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          force_orphan: true
