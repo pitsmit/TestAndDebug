@@ -27,12 +27,8 @@ jobs:
           if [ -z "$GRAFANA_USER" ] || [ -z "$GRAFANA_API_KEY" ]; then
             echo "⚠️ Grafana credentials not set, creating static dashboard"
           else
-            # Отправляем метрики в Grafana Cloud
-            curl -X POST \
-              -u "$GRAFANA_USER:$GRAFANA_API_KEY" \
-              -H "Content-Type: application/json" \
-              "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push" \
-              --data-binary @- << EOF
+            # Создаем временный файл с метриками
+            cat > /tmp/metrics.json << EOM
             {
               "streams": [
                 {
@@ -47,14 +43,22 @@ jobs:
                 }
               ]
             }
-            EOF
+            EOM
+          
+            # Отправляем метрики в Grafana Cloud
+            curl -X POST \
+              -u "$GRAFANA_USER:$GRAFANA_API_KEY" \
+              -H "Content-Type: application/json" \
+              "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push" \
+              --data-binary @/tmp/metrics.json
+          
             echo "✅ Metrics sent to Grafana Cloud"
           fi
 
       - name: Create status page
         run: |
           mkdir -p ./gh-pages-content
-          cat > ./gh-pages-content/index.html << 'EOF'
+          cat > ./gh-pages-content/index.html << 'EOM'
           <!DOCTYPE html>
           <html>
           <head>
@@ -147,7 +151,7 @@ jobs:
               </script>
           </body>
           </html>
-          EOF
+          EOM
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
