@@ -12,85 +12,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Find correct Prometheus credentials
-        run: |
-          echo "🔍 FINDING CORRECT PROMETHEUS CREDENTIALS"
-          echo "=========================================="
-          
-          # Способ 1: Проверим Grafana Cloud документацию
-          echo "1. Prometheus credentials should be:"
-          echo "   - URL: https://prometheus-XXX.grafana.net/api/prom"
-          echo "   - User: YOUR_USER_ID (numeric)"
-          echo "   - Password: API Key with 'MetricsPublisher' role"
-          echo ""
-          
-          # Способ 2: Попробуем получить информацию из Grafana API
-          echo "2. Checking available data sources via Grafana API..."
-          if [ -n "${{ secrets.GRAFANA_API_KEY }}" ]; then
-            echo "GRAFANA_API_KEY is available, checking data sources..."
-            curl -s -H "Authorization: Bearer ${{ secrets.GRAFANA_API_KEY }}" \
-              "https://pitsmit.grafana.net/api/datasources" | \
-              jq '.[] | select(.type=="prometheus") | {name, url, user, access}' 2>/dev/null || echo "Cannot query data sources"
-          else
-            echo "GRAFANA_API_KEY not available in this context"
-          fi
-          
-          echo ""
-          echo "3. To get correct credentials:"
-          echo "   - Go to Grafana Cloud → Your stack → Details"
-          echo "   - Find 'Prometheus' section" 
-          echo "   - Copy:"
-          echo "     * Remote Write URL"
-          echo "     * Username (numeric)"
-          echo "     * Create API Key with 'MetricsPublisher' role"
-          echo ""
-          echo "4. Current issue:"
-          echo "   - glsa_ token is for Grafana API, not Prometheus"
-          echo "   - Need separate Prometheus credentials"
-
-      - name: Test with POST request to correct endpoint
+      - name: Send system metrics to Prometheus
         env:
-          GRAFANA_CLOUD_PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
-          GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
+          PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}
+          PROMETHEUS_USER: ${{ secrets.PROMETHEUS_USER }}
+          PROMETHEUS_API_KEY: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          echo "🚀 TESTING PROMETHEUS PUSH WITH POST"
-          echo "===================================="
-          
-          BASE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net"
-          WRITE_URL="$BASE_URL/api/prom/push"
-          
-          CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
-          TIMESTAMP=$(date +%s)
-          
-          echo "URL: $WRITE_URL"
-          echo "User: $GRAFANA_CLOUD_PROMETHEUS_USER"
-          echo "Metric: test_cpu $CPU_USAGE $TIMESTAMP"
-          
-          # Правильный POST запрос
-          echo ""
-          echo "Sending POST request..."
-          RESPONSE=$(echo "test_cpu $CPU_USAGE $TIMESTAMP" | \
-            curl -v -X POST \
-              -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-              -H "Content-Type: text/plain" \
-              --data-binary @- \
-              "$WRITE_URL" 2>&1)
-          
-          echo "Full response:"
-          echo "$RESPONSE"
-          
-          # Проверяем успешность
-          if echo "$RESPONSE" | grep -q "HTTP/.* 204\|HTTP/.* 200"; then
-            echo "✅ SUCCESS! Metric accepted"
-          else
-            echo "❌ Failed to send metric"
-            echo "Check:"
-            echo "1. User should be numeric ID (not glsa_)"
-            echo "2. API Key should have 'MetricsPublisher' role" 
-            echo "3. URL should be correct Prometheus endpoint"
-          fi
+          for i in {1..5}; do
+            CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
+            MEMORY_PERCENT=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
+            TIMESTAMP=$(date +%s)
 
-      - name: Create simple dashboard
+            echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" | \
+              curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
+                --data-binary @- "$PROMETHEUS_URL/api/v1/write"
+
+            echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" | \
+              curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
+                --data-binary @- "$PROMETHEUS_URL/api/v1/write"
+
+            sleep 10
+          done
+
+      - name: Create dashboard
         run: |
           mkdir -p ./gh-pages-content
           cat > ./gh-pages-content/index.html << 'EOF'
@@ -113,7 +57,6 @@ jobs:
           <h1>🚀 CI/CD Dashboard</h1>
           <p>Deployment monitoring with Grafana</p>
           </div>
-          
           <div class="card">
           <h2>Current Deployment</h2>
           <div class="metrics">
@@ -131,11 +74,9 @@ jobs:
           </div>
           </div>
           </div>
-          
           <a href="https://pitsmit.grafana.net" class="link" target="_blank">
           📊 Open Grafana for CPU/Memory Metrics
           </a>
-          
           <div class="card">
           <h3>What's monitored in Grafana:</h3>
           <ul>
