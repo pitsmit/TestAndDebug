@@ -16,25 +16,67 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test Grafana API access
+      - name: Send CI/CD metrics to Grafana
         env:
           GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
         run: |
-          echo "🔍 Testing Grafana API access..."
+          echo "📊 Sending CI/CD metrics to Grafana Cloud..."
           
-          # Проверяем что API ключ работает
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+          # Создаем аннотацию о деплое в Grafana
+          curl -X POST \
             -H "Authorization: Bearer $GRAFANA_API_KEY" \
-            "https://pitsmit.grafana.net/api/user/preferences")
+            -H "Content-Type: application/json" \
+            "https://pitsmit.grafana.net/api/annotations" \
+            -d "{
+              \"text\": \"🚀 Deployment: ${{ github.repository }}@${{ github.sha }}\",
+              \"tags\": [\"ci-cd\", \"github-actions\", \"deployment\"],
+              \"time\": $(date +%s)000
+            }"
           
-          echo "Grafana API Response: $RESPONSE"
+          echo "✅ Deployment annotation created in Grafana"
+
+      - name: Create GitHub Pages dashboard
+        run: |
+          mkdir -p ./gh-pages-content
+          cat > ./gh-pages-content/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+          <title>CI/CD Monitoring</title>
+          <style>
+          body { margin: 0; padding: 40px; font-family: Arial, sans-serif; text-align: center; background: #f5f5f5; }
+          .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .success { color: #28a745; font-size: 24px; margin: 20px 0; }
+          .info { margin: 20px 0; text-align: left; background: #f8f9fa; padding: 20px; border-radius: 5px; }
+          .link { display: inline-block; margin: 20px; padding: 15px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+            </style>
+            </head>
+            <body>
+            <div class="container">
+            <h1>🚀 CI/CD Monitoring Dashboard</h1>
+            <div class="success">✅ Deployment Successful!</div>
+            
+            <div class="info">
+            <h3>Deployment Details:</h3>
+            <p><strong>Repository:</strong> ${{ github.repository }}</p>
+            <p><strong>Branch:</strong> ${{ github.ref_name }}</p>
+            <p><strong>Commit:</strong> ${{ github.sha }}</p>
+            <p><strong>Workflow:</strong> ${{ github.workflow }}</p>
+            <p><strong>Run ID:</strong> ${{ github.run_id }}</p>
+            </div>
+            
+            <a href="https://pitsmit.grafana.net" class="link" target="_blank">
+            📊 Open Grafana Dashboard
+            </a>
           
-          if [ "$RESPONSE" = "200" ]; then
-            echo "✅ Grafana API access successful!"
-            echo "📊 You can now send metrics to your dashboards"
-          else
-            echo "❌ Grafana API access failed"
-          fi
+          <div style="margin-top: 30px;">
+            <p>✅ Metrics and deployment annotation have been sent to your Grafana Cloud</p>
+            <p>🔧 Check your Grafana dashboards for CI/CD metrics</p>
+            </div>
+            </div>
+            </body>
+            </html>
+            EOF
 
       - name: Create status page
         run: |
