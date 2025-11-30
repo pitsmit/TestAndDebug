@@ -12,25 +12,59 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Send metrics to Grafana Cloud
+      - name: Find correct Prometheus API URL
         env:
-          GRAFANA_CLOUD_PROMETHEUS_URL: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_URL }}
           GRAFANA_CLOUD_PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
           GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
         run: |
-          echo "📊 Sending metrics to Grafana Cloud..."
-          echo "=== DEBUG INFO ==="
-          echo "URL: $GRAFANA_CLOUD_PROMETHEUS_URL"
-          echo "User: $GRAFANA_CLOUD_PROMETHEUS_USER"
-          echo "API Key length: ${#GRAFANA_CLOUD_PROMETHEUS_API_KEY}"
+          echo "🔍 Finding correct Prometheus API URL..."
           
-          # Убираем лишний /api/prom из URL если есть
-          CLEAN_URL="${GRAFANA_CLOUD_PROMETHEUS_URL%/api/prom}"
-          PROMETHEUS_WRITE_URL="$CLEAN_URL/api/prom/api/v1/write"
+          BASE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net"
           
-          echo "Clean URL: $CLEAN_URL"
-          echo "Write URL: $PROMETHEUS_WRITE_URL"
-          echo "=================="
+          # Тестируем разные API endpoints
+          ENDPOINTS=(
+            "/api/prom/api/v1/write"
+            "/api/v1/write"
+            "/api/prom/push"
+            "/prometheus/api/v1/write"
+            "/metrics/api/v1/write"
+          )
+          
+          CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
+          TIMESTAMP=$(date +%s)
+          TEST_METRIC="test_metric $CPU_USAGE $TIMESTAMP"
+          
+          for ENDPOINT in "${ENDPOINTS[@]}"; do
+            FULL_URL="$BASE_URL$ENDPOINT"
+            echo "Testing: $FULL_URL"
+          
+            RESPONSE=$(echo "$TEST_METRIC" | \
+              curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+                -w "HTTP_STATUS:%{http_code}" \
+                --data-binary @- "$FULL_URL")
+          
+            HTTP_STATUS=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+            echo "Status: $HTTP_STATUS"
+          
+            if [ "$HTTP_STATUS" = "204" ] || [ "$HTTP_STATUS" = "200" ]; then
+              echo "🎉 SUCCESS! Correct URL: $FULL_URL"
+              echo "CORRECT_URL=$FULL_URL" >> $GITHUB_ENV
+              break
+            fi
+            echo "---"
+          done
+
+      - name: Send metrics using correct URL
+        env:
+          GRAFANA_CLOUD_PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
+          GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
+        run: |
+          if [ -z "$CORRECT_URL" ]; then
+            echo "❌ No working URL found"
+            exit 1
+          fi
+          
+          echo "📊 Sending metrics using: $CORRECT_URL"
           
           for i in {1..5}; do
             CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
@@ -39,15 +73,15 @@ jobs:
           
             echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            # Отправляем метрики
             echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" | \
               curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-                --data-binary @- "$PROMETHEUS_WRITE_URL" && echo "✅ CPU metric sent" || echo "❌ Failed to send CPU metric"
+                --data-binary @- "$CORRECT_URL"
           
             echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" | \
               curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-                --data-binary @- "$PROMETHEUS_WRITE_URL" && echo "✅ Memory metric sent" || echo "❌ Failed to send memory metric"
+                --data-binary @- "$CORRECT_URL"
           
+            echo "✅ Metrics sent"
             sleep 10
           done
 
