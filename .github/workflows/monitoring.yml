@@ -19,29 +19,47 @@ jobs:
           GRAFANA_CLOUD_PROMETHEUS_API_KEY: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_API_KEY }}
         run: |
           echo "📊 Sending metrics to Grafana Cloud..."
+          echo "=== DEBUG INFO ==="
+          echo "URL: $GRAFANA_CLOUD_PROMETHEUS_URL"
+          echo "User: $GRAFANA_CLOUD_PROMETHEUS_USER"
+          echo "API Key length: ${#GRAFANA_CLOUD_PROMETHEUS_API_KEY}"
+          echo "=================="
+          
+          # Проверяем URL
+          if [[ "$GRAFANA_CLOUD_PROMETHEUS_URL" != *"grafana.net"* ]]; then
+            echo "❌ ERROR: URL doesn't contain 'grafana.net'"
+            echo "Current URL: $GRAFANA_CLOUD_PROMETHEUS_URL"
+            echo "Expected format: https://prometheus-XXX.grafana.net/api/prom"
+            exit 1
+          fi
           
           PROMETHEUS_WRITE_URL="$GRAFANA_CLOUD_PROMETHEUS_URL/api/v1/write"
+          echo "Write URL: $PROMETHEUS_WRITE_URL"
           
-          for i in {1..5}; do
+          # Тестовый запрос для проверки аутентификации
+          echo "Testing authentication..."
+          curl -v -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+            "$GRAFANA_CLOUD_PROMETHEUS_URL/api/v1/metadata" 2>&1 | grep -E "(HTTP|WWW-Authenticate|error)"
+          
+          for i in {1..2}; do
             CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
             MEMORY_PERCENT=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
             TIMESTAMP=$(date +%s)
           
             echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            # Отправляем каждую метрику отдельно
-            echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" | \
-              curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-                --data-binary @- "$PROMETHEUS_WRITE_URL"
+            # Подробный вывод отправляемых данных
+            METRIC_DATA="github_actions_cpu_usage $CPU_USAGE $TIMESTAMP"
+            echo "Sending: $METRIC_DATA"
           
-            echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" | \
-              curl -s -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
-                --data-binary @- "$PROMETHEUS_WRITE_URL"
+            # Отправляем с подробным логированием
+            curl -v -u "$GRAFANA_CLOUD_PROMETHEUS_USER:$GRAFANA_CLOUD_PROMETHEUS_API_KEY" \
+              --data-binary "$METRIC_DATA" \
+              "$PROMETHEUS_WRITE_URL" 2>&1 | grep -E "(> POST|> Host|< HTTP|< Content|< Location|error)"
           
-            sleep 10
+            echo "---"
+            sleep 5
           done
-          
-          echo "✅ All metrics sent"
 
       - name: Create simple dashboard
         run: |
