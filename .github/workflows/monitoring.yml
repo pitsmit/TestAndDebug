@@ -16,35 +16,25 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Send metrics to Grafana Cloud
+      - name: Test Grafana API access
         env:
-          GRAFANA_USER: ${{ secrets.GRAFANA_USER }}
           GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
         run: |
-          echo "📊 Sending metrics to Grafana Cloud with Service Account Token..."
+          echo "🔍 Testing Grafana API access..."
           
-          # Для Service Account Token используем Bearer token
-          curl -X POST \
+          # Проверяем что API ключ работает
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $GRAFANA_API_KEY" \
-            -H "Content-Type: application/json" \
-            "https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push" \
-            --data-binary @- << EOF
-            {
-              "streams": [
-                {
-                  "stream": {
-                    "job": "github-actions",
-                    "repo": "${{ github.repository }}",
-                    "branch": "${{ github.ref_name }}"
-                  },
-                  "values": [
-                    [ "$(date +%s)000000000", "workflow_completed{status=\"success\"} 1" ]
-                  ]
-                }
-              ]
-            }
-            EOF
-            echo "✅ Metrics sent to Grafana Cloud"
+            "https://pitsmit.grafana.net/api/user/preferences")
+          
+          echo "Grafana API Response: $RESPONSE"
+          
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Grafana API access successful!"
+            echo "📊 You can now send metrics to your dashboards"
+          else
+            echo "❌ Grafana API access failed"
+          fi
 
       - name: Create status page
         run: |
