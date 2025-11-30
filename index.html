@@ -1,91 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>CI/CD Monitoring Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>CI/CD Dashboard</title>
 <style>
-body { margin: 0; padding: 40px; font-family: Arial, sans-serif; background: #f5f5f5; }
-.container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-.header { text-align: center; margin-bottom: 30px; }
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
-.metric-card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; }
-.metric-value { font-size: 32px; font-weight: bold; color: #007bff; }
-.metric-label { font-size: 14px; color: #666; margin-top: 5px; }
-.chart-container { margin: 30px 0; }
-.link { display: inline-block; margin: 20px 0; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+body { font-family: Arial; margin: 40px; background: #f0f0f0; }
+.card { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+.metric { text-align: center; padding: 15px; background: #f8f9fa; border-radius: 6px; }
+.value { font-size: 24px; font-weight: bold; color: #007bff; }
+.label { color: #666; margin-top: 5px; }
+.link { display: block; text-align: center; margin: 20px 0; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
 </style>
 </head>
 <body>
-<div class="container">
-<div class="header">
-<h1>🚀 CI/CD Monitoring Dashboard</h1>
-<p>Real-time deployment metrics and analytics</p>
+<div class="card">
+<h1>🚀 CI/CD Dashboard</h1>
+<p>Deployment monitoring with Grafana</p>
 </div>
 
+<div class="card">
+<h2>Current Deployment</h2>
 <div class="metrics">
-<div class="metric-card">
-<div class="metric-value">15</div>
-<div class="metric-label">Total Builds</div>
+<div class="metric">
+<div class="value">16</div>
+<div class="label">Build Number</div>
 </div>
-<div class="metric-card">
-<div class="metric-value">✅</div>
-<div class="metric-label">Current Status</div>
+<div class="metric">
+<div class="value">main</div>
+<div class="label">Branch</div>
 </div>
-<div class="metric-card">
-<div class="metric-value">main</div>
-<div class="metric-label">Branch</div>
+<div class="metric">
+<div class="value">✅</div>
+<div class="label">Status</div>
 </div>
-<div class="metric-card">
-<div class="metric-value">19801783529</div>
-<div class="metric-label">Run ID</div>
 </div>
 </div>
 
-<div class="chart-container">
-<canvas id="deploymentChart" width="400" height="200"></canvas>
+<a href="https://pitsmit.grafana.net" class="link" target="_blank">
+📊 Open Grafana for CPU/Memory Metrics
+</a>
+
+<div class="card">
+<h3>What's monitored in Grafana:</h3>
+<ul>
+<li>📊 CPU Usage</li>
+<li>💾 Memory Consumption</li>
+<li>🚀 Deployment Events</li>
+<li>⏱️ Response Times</li>
+</ul>
 </div>
-
-<div style="text-align: center;">
-  <a href="https://pitsmit.grafana.net" class="link" target="_blank">
-  📊 Open Grafana Dashboard
-  </a>
-  </div>
-
-<div style="margin-top: 30px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
-                                         <h3>📈 CI/CD Metrics Being Collected:</h3>
-                                         <ul>
-                                         <li>✅ Workflow completion status</li>
-                                         <li>⏱️ Build duration</li>
-                                         <li>🚀 Deployment frequency</li>
-                                         <li>🔧 Service health</li>
-                                         </ul>
-  </div>
-  </div>
-
-<script>
-const ctx = document.getElementById('deploymentChart').getContext('2d');
-new Chart(ctx, {
-type: 'line',
-data: {
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  datasets: [{
-    label: 'Deployments This Week',
-    data: [3, 5, 2, 7, 4, 6, 3],
-    borderColor: '#007bff',
-    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-    fill: true
-  }]
-},
-options: {
-  responsive: true,
-  plugins: {
-    title: {
-      display: true,
-      text: 'Deployment Frequency'
-    }
-  }
-}
-});
-  </script>
-  </body>
-  </html>
+</body>
+</html>
