@@ -31,8 +31,7 @@ jobs:
             # Формируем в формате Prometheus remote write protocol
             cat > /tmp/metrics.txt << METRICS
             github_actions_cpu_usage $CPU_USAGE $TIMESTAMP
-            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP
-            METRICS
+            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP METRICS
           
             # Пробуем разные Content-Type
             for CONTENT_TYPE in \
