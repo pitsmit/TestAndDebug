@@ -4,48 +4,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install and run Alloy
+      - name: Test connection
         env:
           PROM_USER: "2822739"
           PROM_TOKEN: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          # Скачиваем Alloy
-          wget -q https://github.com/grafana/alloy/releases/download/v1.6.1/alloy-1.6.1.linux-amd64.tar.gz
-          tar -xzf alloy-1.6.1.linux-amd64.tar.gz
-          cd alloy-1.6.1.linux-amd64
-          
-          # Конфиг Alloy
-          cat > config.alloy << 'CONFIG'
-          prometheus.scrape "github_actions" {
-            targets = [
-              { __address__ = "localhost:9100", job = "github-actions" }
-            ]
-            forward_to = [prometheus.remote_write.grafanacloud.receiver]
-          }
-          
-          prometheus.remote_write "grafanacloud" {
-            endpoint {
-              url = "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
-              basic_auth {
-                username = "$PROM_USER"
-                password = "$PROM_TOKEN"
-              }
-            }
-          }
-          CONFIG
-          
-          # Запускаем node_exporter
-          wget -q https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
-          tar -xzf node_exporter-1.6.1.linux-amd64.tar.gz
-          cd node_exporter-1.6.1.linux-amd64
-          ./node_exporter &
-          
-          # Ждем и запускаем Alloy
-          sleep 3
-          cd ../..
-          ./alloy run config.alloy &
-          ALLOY_PID=$!
-          
-          # Работает 60 секунд
-          sleep 60
-          kill $ALLOY_PID
+          curl -u "$PROM_USER:$PROM_TOKEN" -v "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/api/v1/metadata" 2>&1 | head -20
+
+      - name: Send one metric
+        env:
+          PROM_USER: "2822739"
+          PROM_TOKEN: ${{ secrets.PROMETHEUS_API_KEY }}
+        run: |
+          echo "test_metric 1 $(date +%s)" | \
+          curl -u "$PROM_USER:$PROM_TOKEN" \
+            -X POST \
+            -H "Content-Type: text/plain" \
+            --data-binary @- \
+            "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push" \
+            && echo " Sent"
