@@ -36,7 +36,7 @@ jobs:
             memory_usage{{job="github-actions"}} {mem}"""
             
             resp = requests.post(url, headers=headers, data=data.encode('utf-8'))
-          print(f"CPU: {cpu}%, MEM: {mem}%, Status: {resp.status_code}")
+            print(f"CPU: {cpu}%, MEM: {mem}%, Status: {resp.status_code}")
             
             time.sleep(10)
             EOF
