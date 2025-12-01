@@ -12,45 +12,79 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Send metrics in node_exporter format
-        env:
-          PROMETHEUS_USER: "2822739"
-          PROMETHEUS_API_KEY: ${{ secrets.PROMETHEUS_API_KEY }}
+      - name: Start local monitoring stack
         run: |
-          echo "📊 Sending metrics in node_exporter format..."
+          echo "🚀 Starting local monitoring stack..."
           
-          WRITE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
+          # Создаем prometheus.yml для GitHub Actions
+          cat > prometheus-ga.yml << 'PROMETHEUS'
+          global:
+            scrape_interval: 15s
+          
+          scrape_configs:
+            - job_name: 'github-actions'
+              static_configs:
+                - targets: ['localhost:8080']  # Будем слушать на этом порту
+          PROMETHEUS
+          
+          # Запускаем Prometheus с кастомным конфигом
+          docker run -d \
+            --name prometheus-ga \
+            -p 9090:9090 \
+            -v $(pwd)/prometheus-ga.yml:/etc/prometheus/prometheus.yml \
+            prom/prometheus:latest
+          
+          echo "✅ Prometheus started on port 9090"
+
+      - name: Collect and expose metrics
+        run: |
+          echo "📊 Starting metrics exporter..."
+          
+          # Создаем простой HTTP сервер для отдачи метрик
+          python3 -m http.server 8080 --directory /tmp/metrics &
+          SERVER_PID=$!
           
           for i in {1..5}; do
-            CPU_SECONDS=$(grep 'cpu ' /proc/stat | awk '{print $2+$3+$4+$5+$6+$7+$8}')
-            MEMORY_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-            MEMORY_FREE=$(grep MemFree /proc/meminfo | awk '{print $2}')
-            TIMESTAMP=$(date +%s)000
+            CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
+            MEMORY_PERCENT=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
           
-            echo "🔄 Cycle $i"
+            echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            # Создаем файл БЕЗ heredoc (проще)
-            echo "# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode." > /tmp/metrics.prom
-            echo "# TYPE node_cpu_seconds_total counter" >> /tmp/metrics.prom
-            echo "node_cpu_seconds_total{cpu=\"0\",mode=\"idle\"} $CPU_SECONDS $TIMESTAMP" >> /tmp/metrics.prom
-            echo "# HELP node_memory_MemTotal_bytes Memory information field MemTotal_bytes." >> /tmp/metrics.prom
-            echo "# TYPE node_memory_MemTotal_bytes gauge" >> /tmp/metrics.prom
-            echo "node_memory_MemTotal_bytes $MEMORY_TOTAL $TIMESTAMP" >> /tmp/metrics.prom
-            echo "# HELP node_memory_MemFree_bytes Memory information field MemFree_bytes." >> /tmp/metrics.prom
-            echo "# TYPE node_memory_MemFree_bytes gauge" >> /tmp/metrics.prom
-            echo "node_memory_MemFree_bytes $MEMORY_FREE $TIMESTAMP" >> /tmp/metrics.prom
+            # Создаем метрики в формате Prometheus
+            cat > /tmp/metrics/index.html << METRICS
+            # HELP github_actions_cpu_usage CPU usage percentage
+            # TYPE github_actions_cpu_usage gauge
+            github_actions_cpu_usage $CPU_USAGE
+            # HELP github_actions_memory_usage_percent Memory usage percentage
+            # TYPE github_actions_memory_usage_percent gauge
+            github_actions_memory_usage_percent $MEMORY_PERCENT
+            # HELP github_actions_build_info Build information
+            # TYPE github_actions_build_info gauge
+            github_actions_build_info{job="${{ github.job }}", run_number="${{ github.run_number }}", ref="${{ github.ref_name }}"} 1
+            METRICS
           
-            # Отправляем
-            echo "Sending metrics..."
-            curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
-              -X POST \
-              -H "Content-Type: text/plain; version=0.0.4; charset=utf-8" \
-              --data-binary @/tmp/metrics.prom \
-              "$WRITE_URL"
+            echo "✅ Metrics exposed at http://localhost:8080"
           
-            echo "✅ Sent"
-            sleep 10
+            # Даем время Prometheus собрать метрики
+            sleep 15
           done
+          
+          # Останавливаем сервер
+          kill $SERVER_PID
+          echo "📊 Metrics collection completed"
+
+      - name: Check Prometheus metrics
+        run: |
+          echo "🔍 Checking if Prometheus collected metrics..."
+          
+          # Даем время на сбор
+          sleep 10
+          
+          # Проверяем метрики через Prometheus API
+          curl -s "http://localhost:9090/api/v1/query?query=github_actions_cpu_usage" | jq .
+          curl -s "http://localhost:9090/api/v1/query?query=github_actions_memory_usage_percent" | jq .
+          
+          echo "📈 Check Grafana at http://localhost:3000 (if running locally)"
 
       - name: Create dashboard
         run: |
@@ -92,16 +126,16 @@ jobs:
           </div>
           </div>
           </div>
-          <a href="https://pitsmit.grafana.net" class="link" target="_blank">
-          📊 Open Grafana for CPU/Memory Metrics
+          <a href="http://localhost:3000" class="link" target="_blank">
+          📊 Open Local Grafana (if running)
           </a>
           <div class="card">
-          <h3>What's monitored in Grafana:</h3>
+          <h3>What's monitored:</h3>
           <ul>
-          <li>📊 CPU Usage</li>
-          <li>💾 Memory Consumption</li>
-          <li>🚀 Deployment Events</li>
-          <li>⏱️ Response Times</li>
+          <li>📊 CPU Usage: $(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))%</li>
+          <li>💾 Memory: $(free | awk 'NR==2{printf "%.1f%%", $3*100/$2}')</li>
+          <li>🚀 GitHub Actions Job: ${{ github.job }}</li>
+          <li>⏱️ Real-time metrics collection</li>
           </ul>
           </div>
           </body>
@@ -114,3 +148,10 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./gh-pages-content
           publish_branch: gh-pages
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "🧹 Cleaning up..."
+          docker stop prometheus-ga 2>/dev/null || true
+          docker rm prometheus-ga 2>/dev/null || true
