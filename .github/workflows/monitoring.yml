@@ -4,21 +4,36 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Send metrics with promtool
+      - name: Install VictoriaMetrics agent
+        run: |
+          wget https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.93.4/vmutils-linux-amd64-v1.93.4.tar.gz
+          tar -xzf vmutils-linux-amd64-v1.93.4.tar.gz
+
+      - name: Send metrics to Grafana Cloud
         env:
           PROM_USER: "2822739"
           PROM_TOKEN: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          # Установка promtool
-          wget -q https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
-          tar -xzf prometheus-2.45.0.linux-amd64.tar.gz
-          cd prometheus-2.45.0.linux-amd64
-          
-          # Тестовый запрос через promtool
-          ./promtool tsdb create-blocks-from openmetrics <(echo "test_metric 1") /tmp
-          echo "✅ promtool works"
-          
-          # Просто проверка что аутентификация работает
-          echo "Testing auth..."
-          curl -u "$PROM_USER:$PROM_TOKEN" -s -o /dev/null -w "%{http_code}" \
-            "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/api/v1/query?query=up"
+          ./vmagent -promscrape.config='
+          scrape_configs:
+            - job_name: github_actions
+              static_configs:
+                - targets: ["localhost:8429"]
+            ' -remoteWrite.url=https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push \
+            -remoteWrite.basicAuth.username=$PROM_USER \
+            -remoteWrite.basicAuth.password=$PROM_TOKEN \
+            &
+                    
+                    VMAGENT_PID=$!
+                    
+                    for i in {1..10}; do
+                      CPU=$(grep 'cpu ' /proc/stat | awk '{print ($2+$4)*100/($2+$4+$5)}')
+                      MEM=$(free | awk 'NR==2{print $3*100/$2}')
+                      
+                      echo "github_actions_cpu_usage $CPU" | curl -X POST -d @- http://localhost:8429/api/v1/import/prometheus
+                      echo "github_actions_memory_usage $MEM" | curl -X POST -d @- http://localhost:8429/api/v1/import/prometheus
+                      
+                      sleep 10
+                    done
+            
+            kill $VMAGENT_PID
