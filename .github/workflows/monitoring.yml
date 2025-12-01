@@ -12,25 +12,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Send system metrics to Prometheus
+      - name: Send system metrics to Grafana Cloud Prometheus
         env:
-          PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}
-          PROMETHEUS_USER: ${{ secrets.PROMETHEUS_USER }}
+          PROMETHEUS_USER: "2822739"
           PROMETHEUS_API_KEY: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
+          echo "📊 Sending metrics to Grafana Cloud Prometheus..."
+          
+          WRITE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
+          
           for i in {1..5}; do
             CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
             MEMORY_PERCENT=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
             TIMESTAMP=$(date +%s)
-
+          
+            echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
+          
+            # Отправляем CPU метрику
             echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" | \
               curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
-                --data-binary @- "$PROMETHEUS_URL/api/v1/write"
-
+                -X POST \
+                -H "Content-Type: text/plain" \
+                --data-binary @- "$WRITE_URL"
+          
+            # Отправляем Memory метрику  
             echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" | \
               curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
-                --data-binary @- "$PROMETHEUS_URL/api/v1/write"
-
+                -X POST \
+                -H "Content-Type: text/plain" \
+                --data-binary @- "$WRITE_URL"
+          
             sleep 10
           done
 
