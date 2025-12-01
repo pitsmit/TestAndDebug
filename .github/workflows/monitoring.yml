@@ -39,4 +39,3 @@ jobs:
             print(f"CPU: {cpu}%, MEM: {mem}%, Status: {resp.status_code}")
             
             time.sleep(10)
-            EOF
