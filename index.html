@@ -21,7 +21,7 @@ body { font-family: Arial; margin: 40px; background: #f0f0f0; }
 <h2>Current Deployment</h2>
 <div class="metrics">
 <div class="metric">
-<div class="value">36</div>
+<div class="value">38</div>
 <div class="label">Build Number</div>
 </div>
 <div class="metric">
@@ -34,16 +34,16 @@ body { font-family: Arial; margin: 40px; background: #f0f0f0; }
 </div>
 </div>
 </div>
-<a href="https://pitsmit.grafana.net" class="link" target="_blank">
-📊 Open Grafana for CPU/Memory Metrics
+<a href="http://localhost:3000" class="link" target="_blank">
+📊 Open Local Grafana (if running)
 </a>
 <div class="card">
-<h3>What's monitored in Grafana:</h3>
+<h3>What's monitored:</h3>
 <ul>
-<li>📊 CPU Usage</li>
-<li>💾 Memory Consumption</li>
-<li>🚀 Deployment Events</li>
-<li>⏱️ Response Times</li>
+<li>📊 CPU Usage: $(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))%</li>
+<li>💾 Memory: $(free | awk 'NR==2{printf "%.1f%%", $3*100/$2}')</li>
+<li>🚀 GitHub Actions Job: deploy</li>
+<li>⏱️ Real-time metrics collection</li>
 </ul>
 </div>
 </body>
