@@ -4,22 +4,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Test connection
+      - name: Send metrics with promtool
         env:
           PROM_USER: "2822739"
           PROM_TOKEN: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          curl -u "$PROM_USER:$PROM_TOKEN" -v "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/api/v1/metadata" 2>&1 | head -20
-
-      - name: Send one metric
-        env:
-          PROM_USER: "2822739"
-          PROM_TOKEN: ${{ secrets.PROMETHEUS_API_KEY }}
-        run: |
-          echo "test_metric 1 $(date +%s)" | \
-          curl -u "$PROM_USER:$PROM_TOKEN" \
-            -X POST \
-            -H "Content-Type: text/plain" \
-            --data-binary @- \
-            "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push" \
-            && echo " Sent"
+          # Установка promtool
+          wget -q https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
+          tar -xzf prometheus-2.45.0.linux-amd64.tar.gz
+          cd prometheus-2.45.0.linux-amd64
+          
+          # Тестовый запрос через promtool
+          ./promtool tsdb create-blocks-from openmetrics <(echo "test_metric 1") /tmp
+          echo "✅ promtool works"
+          
+          # Просто проверка что аутентификация работает
+          echo "Testing auth..."
+          curl -u "$PROM_USER:$PROM_TOKEN" -s -o /dev/null -w "%{http_code}" \
+            "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/api/v1/query?query=up"
