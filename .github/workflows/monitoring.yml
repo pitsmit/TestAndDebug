@@ -11,36 +11,31 @@ jobs:
         run: |
           pip install prometheus-client requests > /dev/null 2>&1
           
-          python3 -c "
-          import time, os, subprocess, requests
-          from prometheus_client import CollectorRegistry, Gauge, generate_latest
-          
-          url = 'https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push'
-          user = os.environ['PROM_USER']
-          token = os.environ['PROM_TOKEN']
-          
-          for _ in range(5):
-              # CPU
-              cmd = \"grep 'cpu ' /proc/stat | awk '{u=\\\$2+\\\$4; t=\\\$2+\\\$4+\\\$5; print (t==0)?0:u/t*100}'\" 
-              cpu = float(subprocess.check_output(cmd, shell=True).decode().strip())
-          
-              # Memory
-              cmd = \"free | awk 'NR==2{print \\\$3*100/\\\$2}'\"
-              mem = float(subprocess.check_output(cmd, shell=True).decode().strip())
-          
-              registry = CollectorRegistry()
-              Gauge('cpu_usage', '', registry=registry).set(cpu)
-              Gauge('memory_usage', '', registry=registry).set(mem)
-          
-              data = generate_latest(registry)
-          
-              resp = requests.post(url, data=data, auth=(user, token), 
-                                 headers={'Content-Type': 'text/plain'}, timeout=5)
-          
-              if resp.status_code == 204:
-                  print(f'OK: CPU={cpu:.1f}%, MEM={mem:.1f}%')
-              else:
-                  print(f'FAIL: {resp.status_code}')
-          
-              time.sleep(10)
-          "
+          python3 << 'EOF'
+  import time, os, subprocess, requests
+  from prometheus_client import CollectorRegistry, Gauge, generate_latest
+  
+  url = 'https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push'
+  user = os.environ['PROM_USER']
+  token = os.environ['PROM_TOKEN']
+
+for _ in range(5):
+  cpu = float(subprocess.check_output("grep 'cpu ' /proc/stat | awk '{print ($2+$4)*100/($2+$4+$5)}'", shell=True).decode().strip())
+  mem = float(subprocess.check_output("free | awk 'NR==2{print $3*100/$2}'", shell=True).decode().strip())
+  
+  registry = CollectorRegistry()
+  Gauge('cpu_usage', '', registry=registry).set(cpu)
+  Gauge('memory_usage', '', registry=registry).set(mem)
+  
+  data = generate_latest(registry)
+  
+  resp = requests.post(url, data=data, auth=(user, token),
+  headers={'Content-Type': 'text/plain'}, timeout=5)
+
+  if resp.status_code == 204:
+    print(f'OK: CPU={cpu:.1f}%, MEM={mem:.1f}%')
+  else:
+    print(f'FAIL: {resp.status_code}')
+
+  time.sleep(10)
+  EOF
