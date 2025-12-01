@@ -20,40 +20,45 @@ jobs:
           PROMETHEUS_USER: "2822739"
           PROMETHEUS_API_KEY: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          python3 -c "
+          cat > send_metrics.py << 'PYTHON_END'
           import time
+          import os
           import requests
           from prometheus_client import CollectorRegistry, Gauge
           from prometheus_client.exposition import generate_latest
           
           WRITE_URL = 'https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push'
-          USER = '$PROMETHEUS_USER'
-          API_KEY = '$PROMETHEUS_API_KEY'
+          USER = os.environ.get('PROMETHEUS_USER')
+          API_KEY = os.environ.get('PROMETHEUS_API_KEY')
           
-          for i in range(10):
-              # Получаем метрики системы
+          # GitHub context из переменных окружения
+          GITHUB_RUN_NUMBER = os.environ.get('GITHUB_RUN_NUMBER', 'unknown')
+          GITHUB_REPOSITORY = os.environ.get('GITHUB_REPOSITORY', 'unknown')
+          GITHUB_JOB = os.environ.get('GITHUB_JOB', 'unknown')
+          GITHUB_REF_NAME = os.environ.get('GITHUB_REF_NAME', 'unknown')
+          
+          def get_system_metrics():
               import subprocess
           
               # CPU usage
-              cpu_result = subprocess.run(
-                  \"awk '{u=\\\$2+\\\$4; t=\\\$2+\\\$4+\\\$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat)\",
-                  shell=True, capture_output=True, text=True
-              )
-              cpu_usage = float(cpu_result.stdout.strip())
+              cmd = "awk '{u=\\$2+\\$4; t=\\$2+\\$4+\\$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat)"
+              result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+              cpu_usage = float(result.stdout.strip() or 0)
           
-              # Memory
-              mem_result = subprocess.run(
-                  \"free | awk 'NR==2{printf \\\"%.2f\\\", \\\$3*100/\\\$2}'\",
-                  shell=True, capture_output=True, text=True
-              )
-              memory_percent = float(mem_result.stdout.strip())
+              # Memory percentage
+              cmd = "free | awk 'NR==2{printf \"%.2f\", \\$3*100/\\$2}'"
+              result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+              memory_percent = float(result.stdout.strip() or 0)
           
-              # Load
-              load_result = subprocess.run(
-                  \"cat /proc/loadavg | awk '{print \\\$1}'\",
-                  shell=True, capture_output=True, text=True
-              )
-              load_avg = float(load_result.stdout.strip())
+              # Load average
+              cmd = "cat /proc/loadavg | awk '{print \\$1}'"
+              result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+              load_avg = float(result.stdout.strip() or 0)
+          
+              return cpu_usage, memory_percent, load_avg
+          
+          for i in range(10):
+              cpu_usage, memory_percent, load_avg = get_system_metrics()
           
               print(f'Cycle {i+1}: CPU={cpu_usage}%, Memory={memory_percent}%, Load={load_avg}')
           
@@ -62,41 +67,49 @@ jobs:
           
               g1 = Gauge('github_actions_cpu_usage', 'CPU usage percentage', 
                         ['job', 'run', 'repo'], registry=registry)
-              g1.labels(job='github-actions', run='${{ github.run_number }}', 
-                       repo='${{ github.repository }}').set(cpu_usage)
+              g1.labels(job='github-actions', run=GITHUB_RUN_NUMBER, 
+                       repo=GITHUB_REPOSITORY).set(cpu_usage)
           
               g2 = Gauge('github_actions_memory_usage_percent', 'Memory usage percentage',
                         ['job', 'run', 'repo'], registry=registry)
-              g2.labels(job='github-actions', run='${{ github.run_number }}',
-                       repo='${{ github.repository }}').set(memory_percent)
+              g2.labels(job='github-actions', run=GITHUB_RUN_NUMBER,
+                       repo=GITHUB_REPOSITORY).set(memory_percent)
           
               g3 = Gauge('github_actions_load_average', 'System load average',
                         ['job', 'run', 'repo'], registry=registry)
-              g3.labels(job='github-actions', run='${{ github.run_number }}',
-                       repo='${{ github.repository }}').set(load_avg)
+              g3.labels(job='github-actions', run=GITHUB_RUN_NUMBER,
+                       repo=GITHUB_REPOSITORY).set(load_avg)
           
               g4 = Gauge('github_actions_build_info', 'Build information',
                         ['job', 'run', 'repo', 'ref'], registry=registry)
-              g4.labels(job='${{ github.job }}', run='${{ github.run_number }}',
-                       repo='${{ github.repository }}', ref='${{ github.ref_name }}').set(1)
+              g4.labels(job=GITHUB_JOB, run=GITHUB_RUN_NUMBER,
+                       repo=GITHUB_REPOSITORY, ref=GITHUB_REF_NAME).set(1)
           
               # Генерируем данные в правильном формате
               data = generate_latest(registry)
           
               # Отправляем
-              response = requests.post(
-                  WRITE_URL,
-                  data=data,
-                  auth=(USER, API_KEY),
-                  headers={'Content-Type': 'application/vnd.google.protobuf; proto=prometheus.MetricFamily; encoding=delimited'}
-              )
+              try:
+                  response = requests.post(
+                      WRITE_URL,
+                      data=data,
+                      auth=(USER, API_KEY),
+                      headers={'Content-Type': 'application/vnd.google.protobuf; proto=prometheus.MetricFamily; encoding=delimited'},
+                      timeout=10
+                  )
           
-              print(f'Status: {response.status_code}')
-              if response.status_code != 204 and response.status_code != 200:
-                  print(f'Error: {response.text}')
+                  print(f'Status: {response.status_code}')
+                  if response.status_code == 204 or response.status_code == 200:
+                      print('✅ Success')
+                  else:
+                      print(f'Error: {response.text[:100]}')
+              except Exception as e:
+                  print(f'Request failed: {e}')
           
               time.sleep(5)
           
           print('✅ All metrics sent to Grafana Cloud')
           print('📊 View at: https://pitsmit.grafana.net')
-          "
+          PYTHON_END
+          
+          python3 send_metrics.py
