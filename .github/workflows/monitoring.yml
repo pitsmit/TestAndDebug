@@ -10,53 +10,93 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Send metrics to Grafana Cloud
+      - name: Setup Python and install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install prometheus-client requests
+
+      - name: Send metrics via Python client
         env:
           PROMETHEUS_USER: "2822739"
           PROMETHEUS_API_KEY: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          echo "📊 Sending metrics to Grafana Cloud..."
+          python3 -c "
+          import time
+          import requests
+          from prometheus_client import CollectorRegistry, Gauge
+          from prometheus_client.exposition import generate_latest
           
-          WRITE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
+          WRITE_URL = 'https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push'
+          USER = '$PROMETHEUS_USER'
+          API_KEY = '$PROMETHEUS_API_KEY'
           
-          for i in {1..10}; do
-            CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
-            MEMORY_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-            MEMORY_FREE=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
-            MEMORY_USED=$((MEMORY_TOTAL - MEMORY_FREE))
-            MEMORY_PERCENT=$(echo "scale=2; $MEMORY_USED*100/$MEMORY_TOTAL" | bc)
-            LOAD=$(cat /proc/loadavg | awk '{print $1}')
-            TIMESTAMP=$(date +%s)000000000
+          for i in range(10):
+              # Получаем метрики системы
+              import subprocess
           
-            echo "Cycle $i: CPU=${CPU_USAGE}%, Memory=${MEMORY_PERCENT}%, Load=$LOAD"
+              # CPU usage
+              cpu_result = subprocess.run(
+                  \"awk '{u=\\\$2+\\\$4; t=\\\$2+\\\$4+\\\$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat)\",
+                  shell=True, capture_output=True, text=True
+              )
+              cpu_usage = float(cpu_result.stdout.strip())
           
-            # Создаем файл с метриками
-            echo "# TYPE github_actions_cpu_usage gauge" > /tmp/metrics.txt
-            echo "# HELP github_actions_cpu_usage CPU usage percentage" >> /tmp/metrics.txt
-            echo "github_actions_cpu_usage{job=\"github-actions\",run=\"${{ github.run_number }}\",repo=\"${{ github.repository }}\"} $CPU_USAGE $TIMESTAMP" >> /tmp/metrics.txt
+              # Memory
+              mem_result = subprocess.run(
+                  \"free | awk 'NR==2{printf \\\"%.2f\\\", \\\$3*100/\\\$2}'\",
+                  shell=True, capture_output=True, text=True
+              )
+              memory_percent = float(mem_result.stdout.strip())
           
-            echo "# TYPE github_actions_memory_usage_percent gauge" >> /tmp/metrics.txt
-            echo "# HELP github_actions_memory_usage_percent Memory usage percentage" >> /tmp/metrics.txt
-            echo "github_actions_memory_usage_percent{job=\"github-actions\",run=\"${{ github.run_number }}\",repo=\"${{ github.repository }}\"} $MEMORY_PERCENT $TIMESTAMP" >> /tmp/metrics.txt
+              # Load
+              load_result = subprocess.run(
+                  \"cat /proc/loadavg | awk '{print \\\$1}'\",
+                  shell=True, capture_output=True, text=True
+              )
+              load_avg = float(load_result.stdout.strip())
           
-            echo "# TYPE github_actions_load_average gauge" >> /tmp/metrics.txt
-            echo "# HELP github_actions_load_average System load average" >> /tmp/metrics.txt
-            echo "github_actions_load_average{job=\"github-actions\",run=\"${{ github.run_number }}\",repo=\"${{ github.repository }}\"} $LOAD $TIMESTAMP" >> /tmp/metrics.txt
+              print(f'Cycle {i+1}: CPU={cpu_usage}%, Memory={memory_percent}%, Load={load_avg}')
           
-            echo "# TYPE github_actions_build_info gauge" >> /tmp/metrics.txt
-            echo "# HELP github_actions_build_info Build information" >> /tmp/metrics.txt
-            echo "github_actions_build_info{job=\"${{ github.job }}\",run=\"${{ github.run_number }}\",repo=\"${{ github.repository }}\",ref=\"${{ github.ref_name }}\"} 1 $TIMESTAMP" >> /tmp/metrics.txt
+              # Создаем регистр метрик
+              registry = CollectorRegistry()
           
-            # Отправляем метрики
-            curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
-              -X POST \
-              -H "Content-Type: text/plain; version=0.0.4" \
-              --data-binary @/tmp/metrics.txt \
-              "$WRITE_URL"
+              g1 = Gauge('github_actions_cpu_usage', 'CPU usage percentage', 
+                        ['job', 'run', 'repo'], registry=registry)
+              g1.labels(job='github-actions', run='${{ github.run_number }}', 
+                       repo='${{ github.repository }}').set(cpu_usage)
           
-            echo "Metrics sent"
-            sleep 5
-          done
+              g2 = Gauge('github_actions_memory_usage_percent', 'Memory usage percentage',
+                        ['job', 'run', 'repo'], registry=registry)
+              g2.labels(job='github-actions', run='${{ github.run_number }}',
+                       repo='${{ github.repository }}').set(memory_percent)
           
-          echo "✅ All metrics sent to Grafana Cloud"
-          echo "📊 View at: https://pitsmit.grafana.net"
+              g3 = Gauge('github_actions_load_average', 'System load average',
+                        ['job', 'run', 'repo'], registry=registry)
+              g3.labels(job='github-actions', run='${{ github.run_number }}',
+                       repo='${{ github.repository }}').set(load_avg)
+          
+              g4 = Gauge('github_actions_build_info', 'Build information',
+                        ['job', 'run', 'repo', 'ref'], registry=registry)
+              g4.labels(job='${{ github.job }}', run='${{ github.run_number }}',
+                       repo='${{ github.repository }}', ref='${{ github.ref_name }}').set(1)
+          
+              # Генерируем данные в правильном формате
+              data = generate_latest(registry)
+          
+              # Отправляем
+              response = requests.post(
+                  WRITE_URL,
+                  data=data,
+                  auth=(USER, API_KEY),
+                  headers={'Content-Type': 'application/vnd.google.protobuf; proto=prometheus.MetricFamily; encoding=delimited'}
+              )
+          
+              print(f'Status: {response.status_code}')
+              if response.status_code != 204 and response.status_code != 200:
+                  print(f'Error: {response.text}')
+          
+              time.sleep(5)
+          
+          print('✅ All metrics sent to Grafana Cloud')
+          print('📊 View at: https://pitsmit.grafana.net')
+          "
