@@ -29,26 +29,26 @@ jobs:
           
             echo "🔄 Cycle $i"
           
-            # Формат node_exporter (как настоящий Prometheus метрики)
-            cat > /tmp/metrics.prom << METRICS
-            # HELP node_cpu_seconds_total Seconds the CPUs spent in each mode.
-            # TYPE node_cpu_seconds_total counter
-            node_cpu_seconds_total{cpu="0",mode="idle"} $CPU_SECONDS $TIMESTAMP
-            # HELP node_memory_MemTotal_bytes Memory information field MemTotal_bytes.
-            # TYPE node_memory_MemTotal_bytes gauge
-            node_memory_MemTotal_bytes $MEMORY_TOTAL $TIMESTAMP
-            # HELP node_memory_MemFree_bytes Memory information field MemFree_bytes.
-            # TYPE node_memory_MemFree_bytes gauge
-            node_memory_MemFree_bytes $MEMORY_FREE $TIMESTAMP
-            METRICS
-            
-            # Отправляем с правильным форматом
-            curl -v -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
-            -X POST \
-            -H "Content-Type: text/plain; version=0.0.4; charset=utf-8" \
-            --data-binary @/tmp/metrics.prom \
-            "$WRITE_URL" 2>&1 | grep -E "HTTP|< Content"
-              
+            # Создаем файл БЕЗ heredoc (проще)
+            echo "# HELP node_cpu_seconds_total Seconds the CPUs spent in each mode." > /tmp/metrics.prom
+            echo "# TYPE node_cpu_seconds_total counter" >> /tmp/metrics.prom
+            echo "node_cpu_seconds_total{cpu=\"0\",mode=\"idle\"} $CPU_SECONDS $TIMESTAMP" >> /tmp/metrics.prom
+            echo "# HELP node_memory_MemTotal_bytes Memory information field MemTotal_bytes." >> /tmp/metrics.prom
+            echo "# TYPE node_memory_MemTotal_bytes gauge" >> /tmp/metrics.prom
+            echo "node_memory_MemTotal_bytes $MEMORY_TOTAL $TIMESTAMP" >> /tmp/metrics.prom
+            echo "# HELP node_memory_MemFree_bytes Memory information field MemFree_bytes." >> /tmp/metrics.prom
+            echo "# TYPE node_memory_MemFree_bytes gauge" >> /tmp/metrics.prom
+            echo "node_memory_MemFree_bytes $MEMORY_FREE $TIMESTAMP" >> /tmp/metrics.prom
+          
+            # Отправляем
+            echo "Sending metrics..."
+            curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
+              -X POST \
+              -H "Content-Type: text/plain; version=0.0.4; charset=utf-8" \
+              --data-binary @/tmp/metrics.prom \
+              "$WRITE_URL"
+          
+            echo "✅ Sent"
             sleep 10
           done
 
