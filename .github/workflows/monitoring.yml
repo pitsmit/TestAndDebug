@@ -14,11 +14,11 @@ jobs:
           
           # Python скрипт
           python3 << 'EOF'
-            import time, subprocess, requests, base64
-            
-            url = "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
-            auth = base64.b64encode(b"2822739:$PROM_TOKEN").decode()
-            headers = {
+          import time, subprocess, requests, base64
+          
+          url = "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
+          auth = base64.b64encode(b"2822739:$PROM_TOKEN").decode()
+          headers = {
           "Authorization": f"Basic {auth}",
           "Content-Type": "application/vnd.google.protobuf; proto=prometheus.MetricFamily; encoding=delimited"
           }
