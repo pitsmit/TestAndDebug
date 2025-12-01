@@ -28,27 +28,25 @@ jobs:
           
             echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            # Формируем в формате Prometheus remote write protocol
-            cat > /tmp/metrics.txt << METRICS
-            github_actions_cpu_usage $CPU_USAGE $TIMESTAMP
-            github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP METRICS
+            # Создаем файл с метриками
+            echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" > /tmp/metrics.txt
+            echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" >> /tmp/metrics.txt
           
             # Пробуем разные Content-Type
-            for CONTENT_TYPE in \
-              "application/x-protobuf" \
-              "application/vnd.google.protobuf" \
-              "text/plain; version=0.0.4" \
-              "application/openmetrics-text; version=1.0.0" \
-              "text/plain"
+            for CONTENT_TYPE in "application/x-protobuf" "application/vnd.google.protobuf" "text/plain; version=0.0.4" "application/openmetrics-text; version=1.0.0" "text/plain"
             do
               echo "Trying Content-Type: $CONTENT_TYPE"
-                curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
+              curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
                 -X POST \
-              -H "Content-Type: $CONTENT_TYPE" \
+                -H "Content-Type: $CONTENT_TYPE" \
                 --data-binary @/tmp/metrics.txt \
-                "$WRITE_URL" && echo "✅ Success with $CONTENT_TYPE" && break
+                "$WRITE_URL"
+              if [ $? -eq 0 ]; then
+                echo "✅ Success with $CONTENT_TYPE"
+                break
+              fi
             done
-            
+          
             sleep 10
           done
 
