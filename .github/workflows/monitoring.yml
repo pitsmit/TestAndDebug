@@ -40,6 +40,9 @@ jobs:
         run: |
           echo "📊 Starting metrics exporter..."
           
+          # Создаем директорию для метрик
+          mkdir -p /tmp/metrics
+          
           # Создаем простой HTTP сервер для отдачи метрик
           python3 -m http.server 8080 --directory /tmp/metrics &
           SERVER_PID=$!
@@ -50,18 +53,16 @@ jobs:
           
             echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
           
-            # Создаем метрики в формате Prometheus
-            cat > /tmp/metrics/index.html << METRICS
-            # HELP github_actions_cpu_usage CPU usage percentage
-            # TYPE github_actions_cpu_usage gauge
-            github_actions_cpu_usage $CPU_USAGE
-            # HELP github_actions_memory_usage_percent Memory usage percentage
-            # TYPE github_actions_memory_usage_percent gauge
-            github_actions_memory_usage_percent $MEMORY_PERCENT
-            # HELP github_actions_build_info Build information
-            # TYPE github_actions_build_info gauge
-            github_actions_build_info{job="${{ github.job }}", run_number="${{ github.run_number }}", ref="${{ github.ref_name }}"} 1
-            METRICS
+            # Создаем метрики в формате Prometheus БЕЗ heredoc
+            echo "# HELP github_actions_cpu_usage CPU usage percentage" > /tmp/metrics/index.html
+            echo "# TYPE github_actions_cpu_usage gauge" >> /tmp/metrics/index.html
+            echo "github_actions_cpu_usage $CPU_USAGE" >> /tmp/metrics/index.html
+            echo "# HELP github_actions_memory_usage_percent Memory usage percentage" >> /tmp/metrics/index.html
+            echo "# TYPE github_actions_memory_usage_percent gauge" >> /tmp/metrics/index.html
+            echo "github_actions_memory_usage_percent $MEMORY_PERCENT" >> /tmp/metrics/index.html
+            echo "# HELP github_actions_build_info Build information" >> /tmp/metrics/index.html
+            echo "# TYPE github_actions_build_info gauge" >> /tmp/metrics/index.html
+            echo "github_actions_build_info{job=\"${{ github.job }}\", run_number=\"${{ github.run_number }}\", ref=\"${{ github.ref_name }}\"} 1" >> /tmp/metrics/index.html
           
             echo "✅ Metrics exposed at http://localhost:8080"
           
@@ -70,7 +71,7 @@ jobs:
           done
           
           # Останавливаем сервер
-          kill $SERVER_PID
+          kill $SERVER_PID 2>/dev/null || true
           echo "📊 Metrics collection completed"
 
       - name: Check Prometheus metrics
