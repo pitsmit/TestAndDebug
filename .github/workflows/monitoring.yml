@@ -4,36 +4,39 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install VictoriaMetrics agent
-        run: |
-          wget https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.93.4/vmutils-linux-amd64-v1.93.4.tar.gz
-          tar -xzf vmutils-linux-amd64-v1.93.4.tar.gz
-
-      - name: Send metrics to Grafana Cloud
+      - name: Send metrics with simple script
         env:
           PROM_USER: "2822739"
           PROM_TOKEN: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          ./vmagent -promscrape.config='
-          scrape_configs:
-            - job_name: github_actions
-              static_configs:
-                - targets: ["localhost:8429"]
-            ' -remoteWrite.url=https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push \
-            -remoteWrite.basicAuth.username=$PROM_USER \
-            -remoteWrite.basicAuth.password=$PROM_TOKEN \
-            &
-                    
-                    VMAGENT_PID=$!
-                    
-                    for i in {1..10}; do
-                      CPU=$(grep 'cpu ' /proc/stat | awk '{print ($2+$4)*100/($2+$4+$5)}')
-                      MEM=$(free | awk 'NR==2{print $3*100/$2}')
-                      
-                      echo "github_actions_cpu_usage $CPU" | curl -X POST -d @- http://localhost:8429/api/v1/import/prometheus
-                      echo "github_actions_memory_usage $MEM" | curl -X POST -d @- http://localhost:8429/api/v1/import/prometheus
-                      
-                      sleep 10
-                    done
+          # Устанавливаем Python
+          pip install requests > /dev/null
+          
+          # Python скрипт
+          python3 << 'EOF'
+            import time, subprocess, requests, base64
             
-            kill $VMAGENT_PID
+            url = "https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
+            auth = base64.b64encode(b"2822739:$PROM_TOKEN").decode()
+            headers = {
+          "Authorization": f"Basic {auth}",
+          "Content-Type": "application/vnd.google.protobuf; proto=prometheus.MetricFamily; encoding=delimited"
+          }
+          
+          for i in range(5):
+            cpu = float(subprocess.check_output("grep 'cpu ' /proc/stat | awk '{print ($2+$4)*100/($2+$4+$5)}'", shell=True).decode().strip())
+            mem = float(subprocess.check_output("free | awk 'NR==2{print $3*100/$2}'", shell=True).decode().strip())
+            
+            # Формат Prometheus remote write
+            data = f"""# TYPE cpu_usage gauge
+          # HELP cpu_usage CPU usage
+            cpu_usage{{job="github-actions"}} {cpu}
+            # TYPE memory_usage gauge
+            # HELP memory_usage Memory usage
+            memory_usage{{job="github-actions"}} {mem}"""
+            
+            resp = requests.post(url, headers=headers, data=data.encode('utf-8'))
+          print(f"CPU: {cpu}%, MEM: {mem}%, Status: {resp.status_code}")
+            
+            time.sleep(10)
+            EOF
