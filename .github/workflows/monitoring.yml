@@ -12,41 +12,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Send metrics in correct format
+      - name: Send metrics in node_exporter format
         env:
           PROMETHEUS_USER: "2822739"
           PROMETHEUS_API_KEY: ${{ secrets.PROMETHEUS_API_KEY }}
         run: |
-          echo "📊 Sending metrics..."
+          echo "📊 Sending metrics in node_exporter format..."
           
           WRITE_URL="https://prometheus-prod-39-prod-eu-north-0.grafana.net/api/prom/push"
           
           for i in {1..5}; do
-            CPU_USAGE=$(awk '{u=$2+$4; t=$2+$4+$5; if (t==0) print 0; else print u/t*100;}' <(grep 'cpu ' /proc/stat))
-            MEMORY_PERCENT=$(free | awk 'NR==2{printf "%.1f", $3*100/$2}')
-            TIMESTAMP=$(date +%s)000000000
+            CPU_SECONDS=$(grep 'cpu ' /proc/stat | awk '{print $2+$3+$4+$5+$6+$7+$8}')
+            MEMORY_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+            MEMORY_FREE=$(grep MemFree /proc/meminfo | awk '{print $2}')
+            TIMESTAMP=$(date +%s)000
           
-            echo "🔄 Cycle $i - CPU: ${CPU_USAGE}%, Memory: ${MEMORY_PERCENT}%"
+            echo "🔄 Cycle $i"
           
-            # Создаем файл с метриками
-            echo "github_actions_cpu_usage $CPU_USAGE $TIMESTAMP" > /tmp/metrics.txt
-            echo "github_actions_memory_usage_percent $MEMORY_PERCENT $TIMESTAMP" >> /tmp/metrics.txt
-          
-            # Пробуем разные Content-Type
-            for CONTENT_TYPE in "application/x-protobuf" "application/vnd.google.protobuf" "text/plain; version=0.0.4" "application/openmetrics-text; version=1.0.0" "text/plain"
-            do
-              echo "Trying Content-Type: $CONTENT_TYPE"
-              curl -s -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
-                -X POST \
-                -H "Content-Type: $CONTENT_TYPE" \
-                --data-binary @/tmp/metrics.txt \
-                "$WRITE_URL"
-              if [ $? -eq 0 ]; then
-                echo "✅ Success with $CONTENT_TYPE"
-                break
-              fi
-            done
-          
+            # Формат node_exporter (как настоящий Prometheus метрики)
+            cat > /tmp/metrics.prom << METRICS
+            # HELP node_cpu_seconds_total Seconds the CPUs spent in each mode.
+            # TYPE node_cpu_seconds_total counter
+            node_cpu_seconds_total{cpu="0",mode="idle"} $CPU_SECONDS $TIMESTAMP
+            # HELP node_memory_MemTotal_bytes Memory information field MemTotal_bytes.
+            # TYPE node_memory_MemTotal_bytes gauge
+            node_memory_MemTotal_bytes $MEMORY_TOTAL $TIMESTAMP
+            # HELP node_memory_MemFree_bytes Memory information field MemFree_bytes.
+            # TYPE node_memory_MemFree_bytes gauge
+            node_memory_MemFree_bytes $MEMORY_FREE $TIMESTAMP
+            METRICS
+            
+            # Отправляем с правильным форматом
+            curl -v -u "$PROMETHEUS_USER:$PROMETHEUS_API_KEY" \
+            -X POST \
+            -H "Content-Type: text/plain; version=0.0.4; charset=utf-8" \
+            --data-binary @/tmp/metrics.prom \
+            "$WRITE_URL" 2>&1 | grep -E "HTTP|< Content"
+              
             sleep 10
           done
 
